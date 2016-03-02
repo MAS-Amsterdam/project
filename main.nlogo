@@ -25,7 +25,7 @@
 ;
 ; 1) total_dirty: this variable represents the amount of dirty cells in the environment.
 ; 2) time: the total simulation time.
-globals [total_dirty time color_list available_colors]
+globals [total_dirty time color_list available_colors day]
 
 
 ; --- Agents ---
@@ -377,11 +377,11 @@ SLIDER
 133
 772
 166
-dirt_pct
-dirt_pct
-num_agents * threshold * 0.16
-100
-14.2
+button_each
+button_each
+1
+10
+5
 1
 1
 NIL
@@ -422,10 +422,10 @@ NIL
 1
 
 BUTTON
-6
-243
-393
-276
+388
+245
+775
+278
 NIL
 setup
 NIL
@@ -447,7 +447,7 @@ num_agents
 num_agents
 2
 7
-2
+5
 1
 1
 NIL
@@ -462,235 +462,33 @@ vision_radius
 vision_radius
 0
 100
-34
+33
 1
 1
 NIL
 HORIZONTAL
-
-MONITOR
-457
-276
-773
-321
-Intention of vacuum 1
-[intention] of vacuum 0
-17
-1
-11
-
-MONITOR
-114
-276
-459
-321
-Desire of vacuum 1
-[desire] of vacuum 0
-17
-1
-11
-
-MONITOR
-6
-320
-774
-365
-Beliefs of vacuum 1
-[beliefs] of vacuum 0
-17
-1
-11
-
-MONITOR
-5
-465
-772
-510
-Beliefs of vacuum 2
-[beliefs] of vacuum 1
-17
-1
-11
-
-MONITOR
-6
-276
-115
-321
-Color of vacuum 1
-[own_color] of vacuum 0
-17
-1
-11
-
-MONITOR
-5
-421
-115
-466
-Color of vacuum 2
-[own_color] of vacuum 1
-17
-1
-11
-
-MONITOR
-452
-421
-772
-466
-Intention of vacuum 2
-[intention] of vacuum 1
-17
-1
-11
-
-MONITOR
-115
-421
-452
-466
-Desire of vacuum 2
-[desire] of vacuum 1
-17
-1
-11
-
-MONITOR
-5
-566
-113
-611
-Color of vacuum 3
-[own_color] of vacuum 2
-17
-1
-11
-
-MONITOR
-5
-610
-772
-655
-Beliefs of vacuum 3
-[beliefs] of vacuum 2
-17
-1
-11
-
-MONITOR
-453
-566
-772
-611
-Intention of vacuum 3
-[intention] of vacuum 2
-17
-1
-11
-
-MONITOR
-113
-566
-453
-611
-Desire of vacuum 3
-[desire] of vacuum 2
-17
-1
-11
-
-MONITOR
-6
-364
-385
-409
-Outgoing messages vacuum 1
-sort ([outgoing_messages] of vacuum 0)
-17
-1
-11
-
-MONITOR
-385
-364
-774
-409
-Incoming messages vacuum 1
-[incoming_messages] of vacuum 0
-17
-1
-11
-
-MONITOR
-5
-508
-389
-553
-Outgoing messages vacuum 2
-sort ([outgoing_messages] of vacuum 1)
-17
-1
-11
-
-MONITOR
-388
-508
-772
-553
-Incoming messages vacuum 2
-[incoming_messages] of vacuum 1
-17
-1
-11
-
-MONITOR
-6
-653
-389
-698
-Outgoing messages vacuum 3
-sort ([outgoing_messages] of vacuum 2)
-17
-1
-11
-
-MONITOR
-389
-653
-772
-698
-Incoming messages vacuum 3
-[incoming_messages] of vacuum 2
-17
-1
-11
 
 MONITOR
 7
 47
 771
 92
-Time to complete the task.
-time
+Days to complete the task.
+day
 17
 1
 11
 
-SLIDER
-404
-242
-576
-275
-threshold
-threshold
+INPUTBOX
+10
+245
+385
+305
+pattern_name
+smile
+1
 0
-10
-10
-1
-1
-NIL
-HORIZONTAL
+String
 
 @#$#@#$#@
 ## WHAT IS IT?
