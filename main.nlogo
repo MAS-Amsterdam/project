@@ -1,358 +1,88 @@
-; UVA/VU - Multi-Agent Systems
-; Lecturers: T. Bosse & M.C.A. Klein
-; Lab assistants: D. Formolo & L. Medeiros
+globals [csv fileList day status high_score tmp]
 
-
-
-; --- Assignment 4.2 & 4.3 - Template ---
-; Please use this template as a basis for the code to generate the behaviour of your team of vacuum cleaners.
-; However, feel free to extend this with any variable or method you think is necessary.
-
-
-; --- Settable variables ---
-; The following settable variables are given as part of the 'Interface' (hence, these variables do not need to be declared in the code):
-;
-; 1) dirt_pct: this variable represents the percentage of dirty cells in the environment.
-;
-; 2) num_agents: number of vacuum cleaner agents in the simularion.
-;
-; 3) vision_radius: distance (in terms of number of cells) that the agents can 'see'
-; For instance, if this radius is 3, then agents will be able to observe dirt in a cell that is 3 cells away from their own location.
-
-
-; --- Global variables ---
-; The following global variables are given.
-;
-; 1) total_dirty: this variable represents the amount of dirty cells in the environment.
-; 2) time: the total simulation time.
-globals [total_dirty time color_list available_colors day]
-
-
-; --- Agents ---
-; The following types of agent (called 'breeds' in NetLogo) are given.
-;
-; 1) vacuums: vacuum cleaner agents.
-breed [vacuums vacuum]
-
-
-; --- Local variables ---
-; The following local variables are given.
-;
-; 1) beliefs: the agent's belief base about locations that contain dirt
-; 2) desire: the agent's current desire
-; 3) intention: the agent's current intention
-; 4) own_color: the agent's belief about its own target color
-; 5) other_colors: the agent's belief about the target colors of other agents
-; 6) outgoing_messages: list of messages sent by the agent to other agents
-; 7) incoming_messages: list of messages received by the agent from other agents
-; 8) all_out: the messages to be sent to other agents (so it does not send the same messages again)
-vacuums-own [beliefs desire intention own_color other_colors outgoing_messages all_out incoming_messages color_record observed]
-
-
-; --- Setup ---
 to setup
-   clear-all
-
-  set time 0
-
-  set color_list n-of num_agents [yellow green blue red pink brown grey]
-  set available_colors color_list
-
-  setup-patches
-  setup-vacuums
-  setup-ticks
+  clear-all
+  openFile
 end
 
-
-; --- Main processing cycle ---
 to go
-  ; This method executes the main processing cycle of an agent.
-  ; For Assignment 4.2 and 4.3, this involves updating desires, beliefs and intentions, executing actions, and sending messages (and advancing the tick counter).
-  update-vision ; new method
-  update-desires
-  update-beliefs
-  update-intentions
-  execute-actions
-  send-messages
-  tick
-end
-
-
-
-to update-vision
-  ask patches [set plabel ""]
-     ask vacuums [
-       ifelse (own_color != white)
-   [foreach (n-values num_agents [?]) [
-     ask vacuum ? [
-       set color item ? color_list
-       set own_color color]]
-    let oc own_color
-    ask patches in-cone-nowrap (vision_radius / 100 * 12) 360
-   [
-    set plabel-color oc
-     set plabel "*"
-    ]]
-   [
-     let oc own_color
-    ask patches in-cone-nowrap (vision_radius / 100 * 12) 360
-   [
-    set plabel-color oc
-     set plabel "*"
-    ]
-   ]
-   ]
-
-end
-
-; --- Setup patches ---
-to setup-patches
-  ; In this method you may create the environment (patches), using colors to define cells with various types of dirt.
-
-  set total_dirty  round(( dirt_pct / 100 * 25 * 25 ))
-  ; ask n-of total_dirty patches [set pcolor grey]
-  ;ask n-of total_dirty patches [set pcolor one-of color_list ]
-
-  foreach color_list [
-    ask n-of threshold patches with [pcolor = black] [
-      set pcolor ?
-    ]
-  ]
-  let already_set (count patches with [pcolor != black])
-  ask n-of (total_dirty - already_set) patches with [pcolor = black][set pcolor one-of color_list ]
-  ;ask patches [ set plabel "+" ]
 
 end
 
 
-; --- Setup vacuums ---
-to setup-vacuums
-  ; In this method you may create the vacuum cleaner agents.
- ; In this method you may create the vacuum cleaner agents.
-  create-vacuums num_agents [
-   setxy (( random 24) - 12 ) ((random 24) - 12)]
-
-   ask vacuums [
-   set all_out []
-   set beliefs []
-   set outgoing_messages []
-       set incoming_messages []
 
 
-;   foreach (n-values num_agents [?]) [ ask vacuum ?
-;     [
-;       set color item ? color_list
-;       set own_color color
-;       ; new in a
-;       set other_colors  ( remove own_color color_list)
-;
-;       ]
-;   ]
-      set observed []
-       set color_record []
+; Don't touch these codes. The file needs to be in the format that the first lines have the width and height as comman separated
+; The following lines have to have a binary representation of the pattern. Each line should have number of characters equal to the width
+; separated by commas. Anything longer than the width will be ignored. I haven't implemented the guard code for lines less than the width.
+; Since it is getting late tonight and Kaixin needs to start with her part and since the check isn't absolutely necessary right now, but would
+; be required when we deploy the code and is more a flexibility issue. I will implement it over the weekend.
 
-       ;foreach (n-values num_agents [?])
-       let total_color num_agents
-       foreach (n-values total_color [?]) [
-         let ele (list (item ? color_list) 0)
-         show ele
-         set color_record (fput ele color_record)
-         ]
+to openFile
 
-     set color white
-     set own_color white
-   let oc own_color
-    ask patches in-cone-nowrap (vision_radius / 100 * 12) 360
-   [
-    set plabel-color oc
-     set plabel "*"
-    ]
+  file-open pattern_name
+  let width 0
+  let height 0
+  let delim ","
 
-   ]
+  set csv file-read-line
+  set tmp split csv delim
 
-end
+  set width read-from-string item 0 tmp
+  set height read-from-string item 1 tmp
 
+  resize-world 0 (width - 1) 0 ( height - 1)
+  set-patch-size 500 / width
 
-; --- Setup ticks ---
-to setup-ticks
-  ; In this method you may start the tick counter.
-   reset-ticks
-end
+  let x 0
+  let y 0
 
-
-; --- Update desires ---
-to update-desires
-  ; You should update your agent's desires here.
-  ; Keep in mind that now you have more than one agent.
-
-  ask vacuums [
-    if (own_color != white)
+  while [not file-at-end?]
+  [
+    set csv file-read-line
+    set tmp split csv delim
+    foreach tmp
     [
-      let oc own_color
-      set desire (count patches with [pcolor = oc])
-
+      ifelse (? = "1")
+      [
+        ask patch x y [set pcolor green]
+        set x x + 1
+        if (x = width)
+        [
+          set x 0
+          set y y + 1
+        ]
+      ]
+      [
+        set x x + 1
+        if (x = width)
+        [
+          set x 0
+          set y y + 1
+        ]
+      ]
     ]
   ]
 
-  ;foreach (n-values num_agents [?]) [ask vacuum ? [set desire (count patches with [pcolor = (item ? color_list)])]]
-
+  file-close
 end
 
-
-; --- Update beliefs ---
-to update-beliefs
- ; You should update your agent's beliefs here.
- ; Please remember that you should use this method whenever your agents changes its position.
- ; Also note that this method should distinguish between two cases, namely updating beliefs based on 1) observed information and 2) received messages.
-  ask vacuums [
-;
-
-    ifelse (own_color = white)
-    [
-      let ob observed
-      let around ((patches) in-cone-nowrap (vision_radius / 100 * 12) 360) with [(pcolor != black) and (not member? self ob)]
-      show around
-
-      foreach (color_record) [
-         ;show ?
-         let clr (first ?)
-         let count_clr (last ?)
-         let around_clr (around with [pcolor = clr])
-         let l (count around_clr)
-         set count_clr ((l) + count_clr)
-
-         ; if this count_clr is greater than the threshold (and the color is avaliable) then set the agent's color to the color
-         if ((count_clr > threshold) and (member? clr available_colors)) [
-           set color clr
-           set available_colors (remove clr available_colors)
-           set own_color clr
-           ]
-
-         let pos  (position ? color_record) ; the index of the one color record
-         set color_record (replace-item pos color_record (list clr count_clr)) ;replace
-         ]
-      set observed (patch-set around observed)
-      ]
-   ; set beliefs remove intention beliefs
-
-   ; update the belief with the new information from other agents
-   [set beliefs (patch-set incoming_messages beliefs)
-   set incoming_messages []
-
-   let oc own_color
-   let around (((patches) in-cone-nowrap (vision_radius / 100 * 12) 360) with [pcolor = oc])
-   let old_b beliefs
-   let new_b (patch-set around old_b)
-   set beliefs new_b
-   set beliefs sort-on [distance myself] beliefs
-
-  ; update the message to be sent (out)
-  ; out = newly discovered dirts - the location of the dirts the agent already sent, which is outgoing_message
-  ; each message, there is the color of the dirt and the location of the dirt?
-
-  let around_others (((patches) in-cone-nowrap (vision_radius / 100 * 12) 360) with [(pcolor != oc) and (pcolor != black)])
-  set around_others sort-on [distance myself] around_others
-  ; remove the elements of message_out from around_others to obtain the newly discovered patches
-  foreach (around_others) [
-     ; fput
-     ; if it is in the outgoing messages before then I disgard it
-     ifelse (member? ? all_out)
-     []; simply disgard it
-     [ ; otherwise, we prepare to send the message, i.e. update the out box
-       set outgoing_messages (fput ? outgoing_messages) ; as my current message to be sent
-       set all_out (fput ? all_out)
-       ]
-     ]
-   ]
-show color_record
-]
-end
-
-
-; --- Update intentions ---
-to update-intentions
-  ; You should update your agent's intentions here.
-    ; You should update your agent's intentions here.
-  ask vacuums[
-    ifelse (beliefs = [])
-    [set intention nobody]
-    [set intention (first beliefs)]
-
-  ]
-end
-
-
-; --- Execute actions ---
-to execute-actions
-  ; Here you should put the code related to the actions performed by your agent: moving, cleaning, and (actively) looking around.
-  ; Please note that your agents should perform only one action per tick!
-
-
-  ask vacuums [
-
-    ifelse (own_color != white)
-
-    [ifelse (desire = 0)
-    [stop]
-    [
-
-    ifelse (intention != nobody)[
-    face intention
-    ]
-    [ ifelse can-move? 1
-      [fd 1]
-      [right random 360]
-      ]
-
-    if (own_color = pcolor)[
-      set pcolor black; if it is dirty then I clean it
-      ; set intention nobody
-      set beliefs remove intention beliefs
-      set beliefs sort beliefs
-      ]
-      if can-move? 1 [fd 1]
-    ]]
-
-    [
-      ifelse can-move? 1
-      [fd 1]
-      [right random 360]
-    ]
-  ]
-end
-
-
-; --- Send messages ---
-to send-messages
-  ; Here should put the code related to sending messages to other agents.
-  ; Note that this could be seen as a special case of executing actions, but for conceptual clarity it has been put in a separate method.
-  ask vacuums [
-     foreach (outgoing_messages) [
-     let pcl ([pcolor] of ?)
-     let msg ?
-     ask vacuums
-     [
-       ; if the agent's color is the same as pcl, then add the message to the agent's inbox
-       if (color = pcl)
-       [
-         set incoming_messages (fput msg incoming_messages)
-         ]
-      ]
-   ]
-     set outgoing_messages []
-
-  ]
-
+to-report split [ string delim ]
+  report reduce [
+    ifelse-value (?2 = delim)
+      [ lput "" ?1 ]
+      [ lput word last ?1 ?2 but-last ?1 ]
+  ] fput [""] n-values (length string) [ substring string ? (? + 1) ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
 786
 46
-1334
-615
-12
-12
-21.52
+1295
+576
+-1
+-1
+125.0
 1
 10
 1
@@ -362,10 +92,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--12
-12
--12
-12
+0
+3
+0
+3
 1
 1
 1
@@ -480,37 +210,52 @@ day
 11
 
 INPUTBOX
-10
-245
-189
-305
+9
+290
+188
+350
 pattern_name
-smile
+test.txt
 1
 0
 String
 
 MONITOR
-269
-258
-424
+268
 303
-NIL
-Highest_Score
+423
+348
+Highest Score
+high_score
 17
 1
 11
 
 MONITOR
-516
-256
-775
+515
 301
-NIL
+774
+346
 Status
+status
 17
 1
 11
+
+SLIDER
+6
+248
+770
+281
+num_hours
+num_hours
+3
+7
+5
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
