@@ -422,10 +422,10 @@ NIL
 1
 
 BUTTON
-388
-245
-775
-278
+198
+460
+585
+493
 NIL
 setup
 NIL
@@ -462,7 +462,7 @@ vision_radius
 vision_radius
 0
 100
-33
+38
 1
 1
 NIL
@@ -482,13 +482,35 @@ day
 INPUTBOX
 10
 245
-385
+189
 305
 pattern_name
 smile
 1
 0
 String
+
+MONITOR
+269
+258
+424
+303
+NIL
+Highest_Score
+17
+1
+11
+
+MONITOR
+516
+256
+775
+301
+NIL
+Status
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
