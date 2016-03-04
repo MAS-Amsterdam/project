@@ -1,10 +1,11 @@
-globals [csv fileList day status high_score tmp
+globals [csv fileList day status high_score goal noise
+  width height
   buttons
-
   ]
 ;breed[buttons button]
 to setup
   clear-all
+  set noise 2
   openFile
   setup-button
 
@@ -17,14 +18,87 @@ end
 
 
 to setup-button
-  foreach n-values button_each [?][
-    let positive []
-    let negative []
-    let btn (list  positive negative)
+  set buttons []
+;
+;  foreach n-values (button_each * num_agents) [?][
+;    let positive []
+;    let negative []
+;    let btn (list  positive negative)
+;    set buttons fput btn buttons
+;  ]
 
+  ;initialise
+  let goal_combination first goal
+  foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
+
+  let solution_length ( round ( button_each * num_agents / 2 ) + 1 )
+ foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
+ [
+   show buttons
+   show "@@@@@@@@@@"
+   let choose_num round (( length goal_combination ) / ( solution_length - 1 ))
+   let chosen n-of choose_num goal_combination
+   let pos []
+   let neg []
+   foreach chosen [
+     ifelse (? >= 0)[
+       set pos (lput ? pos)
+     ][
+
+     set neg ( lput (-1 * ?) neg )]
+   ]
+
+   let noise_vals n-of noise (n-values (length goal_combination) [?])
+
+   foreach noise_vals [
+     ifelse ((member? ? pos) or (member? ? neg) )[
+
+       ][
+       ifelse (random 2 > 0)[
+         set pos fput ? pos
+         ][
+         set neg fput ? neg
+         ]
+       ]
+     ]
+   set buttons fput (list pos neg) buttons
+   show buttons
+   show "^^^^^^^^"
+
+   ]; buttons with random values towards the goal
+
+ ; a tidy up button
+
+  show buttons
+  show "************************"
+
+  foreach buttons [
+    perform-action  ?
   ]
 
-  ;
+  show buttons
+  show "************************"
+  let last_pos []
+  let last_neg []
+  ask patches [
+    let index (width * pycor + pxcor)
+    if ((pcolor = black) and (member? index (first goal)))[set last_pos (lput index (last_pos))] ; should be green and is green now
+
+    if ((pcolor = green) and (member? index (last goal)))[set last_neg (lput index (last_neg))]; should be black but is green now
+    show "---------------------"
+    show pxcor
+    show pycor
+    show last_pos
+    show last_neg
+
+    ]
+
+  show "--------------------"
+  let last_btn (list last_pos last_neg)
+  ;set buttons lput (last_btn) buttons
+  show last_btn
+
+  perform-action last_btn
 
   ;max-pxcor
   ;create-buttons 3
@@ -35,7 +109,29 @@ end
 
 
 
+to perform-action [act]
+  show act
 
+  let pos first act
+  let neg last act
+  foreach pos [
+    let y floor( ? / width )
+    let x ( ? - y * width )
+    ;show x
+    ;show y
+    ask patch x y [set pcolor green]
+
+    ]
+
+    foreach neg [
+    let y floor( ? / width )
+    let x ( ? - y * width )
+    ask patch x y [set pcolor black]
+
+    ]
+
+
+end
 
 
 
@@ -70,12 +166,11 @@ end
 to openFile
 
   file-open pattern_name
-  let width 0
-  let height 0
+  set goal list [] []
   let delim ","
 
   set csv file-read-line
-  set tmp split csv delim
+  let tmp split csv delim
 
   set width read-from-string item 0 tmp
   set height read-from-string item 1 tmp
@@ -92,9 +187,14 @@ to openFile
     set tmp split csv delim
     foreach tmp
     [
+      let positive first goal
+      let negative last goal
+
       ifelse (? = "1")
       [
         ask patch x y [set pcolor green]
+        ; positive
+        set goal (list (fput (x + y * width) positive) negative)
         set x x + 1
         if (x = width)
         [
@@ -103,6 +203,8 @@ to openFile
         ]
       ]
       [
+        ; negative
+        set goal (list positive (fput (x + y * width) negative))
         set x x + 1
         if (x = width)
         [
@@ -160,7 +262,7 @@ button_each
 button_each
 1
 10
-5
+2
 1
 1
 NIL
@@ -202,9 +304,9 @@ NIL
 
 BUTTON
 188
-291
-575
-324
+293
+348
+326
 NIL
 setup
 NIL
@@ -226,7 +328,7 @@ num_agents
 num_agents
 2
 7
-5
+2
 1
 1
 NIL
@@ -241,7 +343,7 @@ vision_radius
 vision_radius
 0
 100
-38
+31
 1
 1
 NIL
@@ -298,13 +400,24 @@ SLIDER
 281
 num_hours
 num_hours
-3
-7
-5
+button_each * num_agents / 2
+button_each * num_agents
+6
 1
 1
 NIL
 HORIZONTAL
+
+MONITOR
+359
+291
+775
+352
+NIL
+goal
+17
+1
+15
 
 @#$#@#$#@
 ## WHAT IS IT?
