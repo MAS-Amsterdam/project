@@ -1,13 +1,62 @@
-globals [csv fileList day status high_score tmp]
+globals [csv fileList day status high_score tmp
+  buttons
 
+  ]
+;breed[buttons button]
 to setup
   clear-all
   openFile
+  setup-button
+
 end
 
 to go
 
 end
+
+
+
+to setup-button
+  foreach n-values button_each [?][
+    let positive []
+    let negative []
+    let btn (list  positive negative)
+
+  ]
+
+  ;
+
+  ;max-pxcor
+  ;create-buttons 3
+
+
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -78,8 +127,8 @@ end
 GRAPHICS-WINDOW
 786
 46
-1295
-576
+1296
+577
 -1
 -1
 125.0
@@ -152,10 +201,10 @@ NIL
 1
 
 BUTTON
-198
-460
-585
-493
+188
+291
+575
+324
 NIL
 setup
 NIL
@@ -221,10 +270,10 @@ test.txt
 String
 
 MONITOR
-268
-303
-423
-348
+625
+535
+780
+580
 Highest Score
 high_score
 17
@@ -232,10 +281,10 @@ high_score
 11
 
 MONITOR
-515
-301
-774
-346
+527
+579
+786
+624
 Status
 status
 17
