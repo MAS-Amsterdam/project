@@ -18,6 +18,8 @@ end
 ; Since it is getting late tonight and Kaixin needs to start with her part and since the check isn't absolutely necessary right now, but would
 ; be required when we deploy the code and is more a flexibility issue. I will implement it over the weekend.
 
+; The world is setup differently this time. The (0,0) origin is at the bottom left, like the positive quadrant of a graph. So, Y starts from 31 instead of 0 at the top left corner.
+
 to openFile
 
   file-open pattern_name
@@ -35,7 +37,7 @@ to openFile
   set-patch-size 500 / width
 
   let x 0
-  let y 0
+  let y 31
 
   while [not file-at-end?]
   [
@@ -50,7 +52,7 @@ to openFile
         if (x = width)
         [
           set x 0
-          set y y + 1
+          set y y - 1
         ]
       ]
       [
@@ -58,7 +60,7 @@ to openFile
         if (x = width)
         [
           set x 0
-          set y y + 1
+          set y y - 1
         ]
       ]
     ]
@@ -78,11 +80,11 @@ end
 GRAPHICS-WINDOW
 786
 46
-1295
-576
+1209
+490
 -1
 -1
-125.0
+12.91
 1
 10
 1
@@ -93,9 +95,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+31
 0
-3
+31
 1
 1
 1
@@ -215,7 +217,7 @@ INPUTBOX
 188
 350
 pattern_name
-test.txt
+Smile.txt
 1
 0
 String
