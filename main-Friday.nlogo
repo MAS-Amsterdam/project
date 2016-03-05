@@ -1,20 +1,27 @@
 globals [csv fileList day status high_score goal noise noise_dis
   width height
-  buttons buttons_dis
+  buttons buttons_dis buttons_all
   ]
-;breed[buttons button]
+turtles-own[n_bt; the oder of buttons it owns, relating to the matrix buttons_all
+  bt;buttons it owns
+  ]
 to setup
   clear-all
-  set noise 2; the randomly set points in each button that belongs to solution.
+  set noise 3; the randomly set points in each button that belongs to solution.
   set noise_dis 8; the randomly set points in each button that not belongs to solution.
   openFile
   setup-button
+  setup-agents
   assign-buttons
 end
 
 to go
+;perform-action item 1 buttons
 
 end
+
+
+
 ;==============variable explanation=============================================================================
 ;goal: a list with two lists, the first list indicates the "on" positions, the second indicates "off" positions.
 ;solution_length:the number of buttons that leads to the pattern. The last one button cleans the random sets in the previous buttons.
@@ -23,11 +30,12 @@ end
 ;chosen: a list consisting of the elements in the goal_combination that is chosen to a solution button.
 ;buttons: the matrix consisting of lists, each of which is one button that leads to the pattern.
 ;buttons_dis: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
+;buttons_all: the matrix consisting of lists, each of which is one button, with the buttons leading to the solution coming first.
 ;noise_dis: number of random elements in each disturbing button.
 ;noise_dis_vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
 ;==============the design of the buttons=======================================================================
 ;
-
+;==============the assignment of buttons to turtles============================================================
 
 to setup-button
   set buttons []
@@ -101,7 +109,7 @@ to setup-button
 
   ;max-pxcor
   ;create-buttons 3
-
+ show buttons
   ;2. buttons not leading to patterns,i.e. disturb the agents.
    set buttons_dis []
 
@@ -116,11 +124,10 @@ to setup-button
     ]
 
    set buttons_dis fput (list pos_d neg_d ) buttons_dis
-   show buttons_dis
 
    ]
 
-
+ set buttons_all sentence buttons buttons_dis
 
 end
 
@@ -150,13 +157,27 @@ to perform-action [act]
 
 end
 
+to setup-agents
+  create-turtles num_agents
+end
 
-
-to assign-buttons
-
-
-
-
+to assign-buttons; randomly assign the buttons to the turtles
+  let remain_bt buttons_all
+  show remain_bt
+  ask turtles[
+   set bt []
+   set n_bt []
+   foreach n-values button_each [?][
+   let n_button ( random  (length remain_bt ))
+   set bt  lput (item n_button remain_bt) bt
+   set n_bt lput ((position  (item n_button remain_bt) buttons_all )  + 1 ) n_bt
+   set remain_bt (remove (item n_button remain_bt) remain_bt )
+show bt
+show n_bt
+show remain_bt
+show ")))))))))))))))))))"
+   ]
+  ]
 end
 
 
@@ -250,8 +271,8 @@ end
 GRAPHICS-WINDOW
 786
 46
-1295
-576
+1296
+577
 -1
 -1
 125.0
@@ -275,10 +296,10 @@ ticks
 30.0
 
 SLIDER
-6
-133
-772
-166
+5
+135
+282
+168
 button_each
 button_each
 1
@@ -292,7 +313,7 @@ HORIZONTAL
 BUTTON
 6
 101
-390
+158
 134
 NIL
 go
@@ -307,10 +328,10 @@ NIL
 1
 
 BUTTON
-389
-101
-772
-134
+160
+102
+279
+135
 NIL
 go
 T
@@ -324,10 +345,10 @@ NIL
 1
 
 BUTTON
-188
-293
-348
-326
+171
+204
+331
+266
 NIL
 setup
 NIL
@@ -341,10 +362,10 @@ NIL
 1
 
 SLIDER
-6
+282
+136
+559
 169
-772
-202
 num_agents
 num_agents
 2
@@ -356,10 +377,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-5
-206
-772
-239
+3
+171
+281
+204
 vision_radius
 vision_radius
 0
@@ -380,17 +401,6 @@ day
 17
 1
 11
-
-INPUTBOX
-9
-290
-188
-350
-pattern_name
-test.txt
-1
-0
-String
 
 MONITOR
 625
@@ -415,27 +425,172 @@ status
 11
 
 SLIDER
-6
-248
-770
-281
+282
+171
+563
+204
 num_hours
 num_hours
 button_each * num_agents / 2
 button_each * num_agents
-4
+5
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-359
-291
-775
-352
+331
+207
+777
+268
 NIL
 goal
+17
+1
+15
+
+BUTTON
+4
+265
+109
+298
+button 1
+perform-action item 0 buttons
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+4
+300
+109
+333
+button 2
+perform-action item 1 buttons
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+4
+335
+109
+368
+button 3
+perform-action item 2 buttons
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+4
+370
+109
+403
+button 4
+perform-action item 3 buttons
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+112
+265
+331
+326
+button of turtle 1
+[n_bt] of turtle 0
+17
+1
+15
+
+MONITOR
+332
+266
+779
+327
+button content of turtle 1
+[bt] of turtle 0
+17
+1
+15
+
+INPUTBOX
+3
+205
+183
+265
+pattern_name
+test.txt
+1
+0
+String
+
+MONITOR
+110
+326
+330
+387
+button of turtle 2
+[n_bt] of turtle 1
+17
+1
+15
+
+MONITOR
+111
+387
+330
+448
+button of turtle 3
+[n_bt] of turtle 2
+17
+1
+15
+
+MONITOR
+333
+326
+779
+387
+button content of turtle 2
+[bt] of turtle 1
+17
+1
+15
+
+MONITOR
+331
+389
+777
+450
+button content of turtle 3
+[bt] of turtle 2
 17
 1
 15
