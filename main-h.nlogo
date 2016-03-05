@@ -1,26 +1,32 @@
-globals [csv fileList day status high_score goal noise
+globals [csv fileList day status high_score goal noise noise_dis
   width height
-  buttons
+  buttons buttons_dis
   ]
 ;breed[buttons button]
 to setup
   clear-all
-  set noise 2
+  set noise 2; the randomly set points in each button that belongs to solution.
+  set noise_dis 8; the randomly set points in each button that not belongs to solution.
   openFile
   setup-button
-
+  assign-buttons
 end
 
 to go
 
 end
-
+;==============variable explanation=============================================================================
 ;goal: a list with two lists, the first list indicates the "on" positions, the second indicates "off" positions.
 ;solution_length:the number of buttons that leads to the pattern. The last one button cleans the random sets in the previous buttons.
+;noise: number of random elements in each solution button.
+;noise_vals:a list consisting of the randomly chosen position in the goal_combination list, with the length eq to noise.
+;chosen: a list consisting of the elements in the goal_combination that is chosen to a solution button.
 ;buttons: the matrix consisting of lists, each of which is one button that leads to the pattern.
 ;buttons_dis: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
-
-
+;noise_dis: number of random elements in each disturbing button.
+;noise_dis_vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
+;==============the design of the buttons=======================================================================
+;
 
 
 to setup-button
@@ -36,26 +42,28 @@ to setup-button
   ;initialise
   let goal_combination first goal
   foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
-
   let solution_length ( round ( button_each * num_agents / 2 ) + 1 )
- foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
- [
-;   show buttons
-;   show "@@@@@@@@@@"
+
+
+  ;1. buttons leading to solution
+  foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
+
+  [
    let choose_num round (( length goal_combination ) / ( solution_length - 1 ))
    let chosen n-of choose_num goal_combination
+
    let pos []
    let neg []
    foreach chosen [
      ifelse (? >= 0)[
        set pos (lput ? pos)
      ][
-
      set neg ( lput (-1 * ?) neg )]
    ]
 
-   let noise_vals n-of noise (n-values (length goal_combination) [?])
-
+  ; buttons with random values towards the goal
+   let noise_vals n-of noise (n-values (length goal_combination) [?]);randomly choose positions in the goal with the number of noise
+   ; check if the random positions is already in the buttons, if not add it to the button.
    foreach noise_vals [
      ifelse ((member? ? pos) or (member? ? neg) )[
 
@@ -68,22 +76,13 @@ to setup-button
        ]
      ]
    set buttons fput (list pos neg) buttons
-;   show buttons
-;   show "^^^^^^^^"
-
-   ]; buttons with random values towards the goal
+   ]
 
 
 
-;  show buttons
-;  show "************************"
 
-  foreach buttons [    perform-action  ?  ]
-
-;  show buttons
-;  show "************************"
-  ; a tidy up button
-  ; set the last button in the buttons that leads to the pattern.
+  foreach buttons [ perform-action  ? ]
+ ; a tidy up button
   let last_pos []
   let last_neg []
   ask patches [
@@ -91,34 +90,35 @@ to setup-button
     if ((pcolor = black) and (member? index (first goal)))[set last_pos (lput index (last_pos))] ; should be green and is green now
 
     if ((pcolor = green) and (member? index (last goal)))[set last_neg (lput index (last_neg))]; should be black but is green now
-    show "---------------------"
-    show pxcor
-    show pycor
-    show last_pos
-    show last_neg
-
     ]
 
-  show "--------------------"
-  let last_btn (list last_pos last_neg)
-  ;set buttons lput (last_btn) buttons
-  show last_btn
 
-  perform-action last_btn
+   let last_btn (list last_pos last_neg)
+   set buttons lput (last_btn) buttons
+  ;  show last_btn
 
-;generate other buttons not leading to patterns,i.e. disturb the agents.
+   perform-action last_btn
 
-; foreach n-values  ( button_each * num_agents - solution_length ) [?][
-  ; let
+  ;max-pxcor
+  ;create-buttons 3
 
+  ;2. buttons not leading to patterns,i.e. disturb the agents.
+   set buttons_dis []
 
-; ]
+    foreach n-values  ( button_each * num_agents - solution_length ) [?][
+    let num_random   random ( floor ( width * height / 2 ) );the number of elements in each button_dis
+   let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
+    let pos_d  []
+    let neg_d  []
+    foreach noise_dis_vals [
+    ifelse (random 2 > 0)[set pos_d fput ? pos_d]
+    [set neg_d fput ? neg_d];randomly set the sign (on/off) to the elements
+    ]
 
+   set buttons_dis fput (list pos_d neg_d ) buttons_dis
+   show buttons_dis
 
-
-
-
-
+   ]
 
 
 
@@ -127,7 +127,7 @@ end
 
 
 to perform-action [act]
-  show act
+ ; show act
 
   let pos first act
   let neg last act
@@ -152,7 +152,12 @@ end
 
 
 
+to assign-buttons
 
+
+
+
+end
 
 
 
@@ -184,8 +189,6 @@ to openFile
 
   file-open pattern_name
   set goal list [] []
-  set width 0
-  set height 0
   let delim ","
 
   set csv file-read-line
@@ -193,12 +196,11 @@ to openFile
 
   set width read-from-string item 0 tmp
   set height read-from-string item 1 tmp
-
   resize-world 0 (width - 1) 0 ( height - 1)
   set-patch-size 500 / width
 
   let x 0
-  let y 31
+  let y 0
 
   while [not file-at-end?]
   [
@@ -218,7 +220,7 @@ to openFile
         if (x = width)
         [
           set x 0
-          set y y - 1
+          set y y + 1
         ]
       ]
       [
@@ -228,7 +230,7 @@ to openFile
         if (x = width)
         [
           set x 0
-          set y y - 1
+          set y y + 1
         ]
       ]
     ]
@@ -248,11 +250,11 @@ end
 GRAPHICS-WINDOW
 786
 46
-1296
-577
+1295
+576
 -1
 -1
-15.625
+125.0
 1
 10
 1
@@ -263,9 +265,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-31
+3
 0
-31
+3
 1
 1
 1
@@ -347,7 +349,7 @@ num_agents
 num_agents
 2
 7
-2
+3
 1
 1
 NIL
@@ -385,7 +387,7 @@ INPUTBOX
 188
 350
 pattern_name
-Smile.txt
+test.txt
 1
 0
 String
@@ -421,7 +423,7 @@ num_hours
 num_hours
 button_each * num_agents / 2
 button_each * num_agents
-6
+4
 1
 1
 NIL
