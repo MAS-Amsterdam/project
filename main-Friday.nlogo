@@ -10,32 +10,65 @@ to setup
   set noise 3; the randomly set points in each button that belongs to solution.
   set noise_dis 8; the randomly set points in each button that not belongs to solution.
   openFile
+  setup-patches
   setup-button
   setup-agents
   assign-buttons
 end
+
+to show-goal-pattern
+  clear-all
+  openFile
+
+end
+
+
+
+
 
 to go
 ;perform-action item 1 buttons
 
 end
 
+;==============Questions?
+;the initial state is black? or other color?
 
-
-;==============variable explanation=============================================================================
+;==============variable related to the setup of buttons=============================================================================
 ;goal: a list with two lists, the first list indicates the "on" positions, the second indicates "off" positions.
 ;solution_length:the number of buttons that leads to the pattern. The last one button cleans the random sets in the previous buttons.
 ;noise: number of random elements in each solution button.
 ;noise_vals:a list consisting of the randomly chosen position in the goal_combination list, with the length eq to noise.
+;choose_num: the extent to which a button's result is similar to the goal.An absolte value.
 ;chosen: a list consisting of the elements in the goal_combination that is chosen to a solution button.
 ;buttons: the matrix consisting of lists, each of which is one button that leads to the pattern.
 ;buttons_dis: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
 ;buttons_all: the matrix consisting of lists, each of which is one button, with the buttons leading to the solution coming first.
 ;noise_dis: number of random elements in each disturbing button.
 ;noise_dis_vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
-;==============the design of the buttons=======================================================================
-;
+;==============the design of the buttons========================================================================
+;Every agent has the same number of buttons, so the total number of buttons in the model is decided by the multiplication of (button_each * num_agents).
+;We set first half of the total buttons to be the solution, i.e. a list of buttons leading to the goal. ( if the total number of the buttons is odd, we set first ( half + 0.5 ) buttons to be the solution.
+;All the solutions buttons form the matrix called "buttons", the remaining buttons form the matrix called "buttons_dis".
+;Each solutions buttons in the matrix "buttons" except the last one , gets equal amount part of similarity to the goal pattern, but different elements of the goal pattern.
+;The last button in the solution matrix is set to tidy up all the indifference to the goal pattern, by performing/pressing the pervious buttons in sequene and compared the outcome with the goal pattern.
+;All of the buttons in the matrix is nothing more than randomly set buttons.
+;All the buttons form the matrix called "buttons_all", in which the solution buttons come before the remaining buttons. And the sequence in this matrxi determines the serial number for the button.
+
+
+
 ;==============the assignment of buttons to turtles============================================================
+;Randomly assigned. The serial number for the button is the sequence of the buttons in the matrix "button_all", it is always that the first half or first (half + 0.5) buttons is the solution buttons.
+;
+;==============the initial states=============================================================================
+;it is assumed that the initial state is black, i.e. all lights off.
+
+
+
+to setup-patches
+  ask patches[set pcolor black ]
+end
+
 
 to setup-button
   set buttons []
@@ -54,11 +87,15 @@ to setup-button
 
 
   ;1. buttons leading to solution
+
+  let choose_num floor (( length goal_combination ) / ( solution_length - 1 ))
   foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
 
   [
-   let choose_num round (( length goal_combination ) / ( solution_length - 1 ))
-   let chosen n-of choose_num goal_combination
+
+   let remian_g_c goal_combination
+   let chosen n-of choose_num remian_g_c
+   set remian_g_c (remove chosen remian_g_c )
 
    let pos []
    let neg []
@@ -68,6 +105,8 @@ to setup-button
      ][
      set neg ( lput (-1 * ?) neg )]
    ]
+
+
 
   ; buttons with random values towards the goal
    let noise_vals n-of noise (n-values (length goal_combination) [?]);randomly choose positions in the goal with the number of noise
@@ -110,7 +149,8 @@ to setup-button
   ;max-pxcor
   ;create-buttons 3
  show buttons
-  ;2. buttons not leading to patterns,i.e. disturb the agents.
+
+  ;2. buttons not leading to patterns,i.e. disturbing the agents.
    set buttons_dis []
 
     foreach n-values  ( button_each * num_agents - solution_length ) [?][
@@ -158,7 +198,7 @@ to perform-action [act]
 end
 
 to setup-agents
-  create-turtles num_agents
+  create-turtles num_agents [ set label ( who + 1)]
 end
 
 to assign-buttons; randomly assign the buttons to the turtles
@@ -172,28 +212,10 @@ to assign-buttons; randomly assign the buttons to the turtles
    set bt  lput (item n_button remain_bt) bt
    set n_bt lput ((position  (item n_button remain_bt) buttons_all )  + 1 ) n_bt
    set remain_bt (remove (item n_button remain_bt) remain_bt )
-show bt
-show n_bt
-show remain_bt
-show ")))))))))))))))))))"
+
    ]
   ]
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -271,8 +293,8 @@ end
 GRAPHICS-WINDOW
 786
 46
-1296
-577
+1295
+576
 -1
 -1
 125.0
@@ -345,10 +367,10 @@ NIL
 1
 
 BUTTON
-171
-204
-331
-266
+563
+141
+723
+203
 NIL
 setup
 NIL
@@ -594,6 +616,34 @@ button content of turtle 3
 17
 1
 15
+
+MONITOR
+113
+449
+329
+510
+buttons of turtle 2
+[n_bt] of turtle 3
+17
+1
+15
+
+BUTTON
+184
+210
+331
+266
+NIL
+show-goal-pattern
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
