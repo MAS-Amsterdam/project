@@ -427,7 +427,7 @@ to openFile
   set-patch-size 500 / width
 
   let x 0
-  let y 0
+  let y height - 1
 
   while [not file-at-end?]
   [
@@ -648,7 +648,7 @@ HORIZONTAL
 MONITOR
 331
 207
-777
+775
 268
 NIL
 goal
@@ -752,7 +752,7 @@ INPUTBOX
 183
 265
 pattern_name
-test1.txt
+NIL
 1
 0
 String

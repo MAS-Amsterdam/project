@@ -37,7 +37,7 @@ to openFile
   set-patch-size 500 / width
 
   let x 0
-  let y 31
+  let y height-1
 
   while [not file-at-end?]
   [
@@ -80,11 +80,11 @@ end
 GRAPHICS-WINDOW
 786
 46
-1209
-490
+1296
+577
 -1
 -1
-12.91
+15.625
 1
 10
 1
