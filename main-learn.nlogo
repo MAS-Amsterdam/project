@@ -440,24 +440,24 @@ to openFile
 
       ifelse (? = "1")
       [
-        ask patch x y [set pcolor green]
+        ;ask patch x y [set pcolor green]
         ; positive
         set goal (list (fput (x + y * width) positive) negative)
         set x x + 1
         if (x = width)
         [
           set x 0
-          set y y + 1
+          set y y - 1
         ]
       ]
       [
         ; negative
-        set goal (list positive (fput (x + y * width) negative))
+        set goal (list positive (fput (x + (y) * width) negative))
         set x x + 1
         if (x = width)
         [
           set x 0
-          set y y + 1
+          set y y - 1
         ]
       ]
     ]
@@ -477,11 +477,11 @@ end
 GRAPHICS-WINDOW
 1309
 23
-1819
-554
+1818
+553
 -1
 -1
-71.42857142857143
+15.625
 1
 10
 1
@@ -492,9 +492,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-6
+31
 0
-6
+31
 1
 1
 1
@@ -752,7 +752,7 @@ INPUTBOX
 183
 265
 pattern_name
-NIL
+Smile.txt
 1
 0
 String
