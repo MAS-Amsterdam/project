@@ -440,7 +440,7 @@ to openFile
 
       ifelse (? = "1")
       [
-        ;ask patch x y [set pcolor green]
+        ask patch x y [set pcolor green]
         ; positive
         set goal (list (fput (x + y * width) positive) negative)
         set x x + 1
@@ -477,8 +477,8 @@ end
 GRAPHICS-WINDOW
 1309
 23
-1818
-553
+1819
+554
 -1
 -1
 15.625
