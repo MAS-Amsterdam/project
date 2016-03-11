@@ -145,6 +145,7 @@ to setup-button
   ; Part one: buttons leading to solution
 
   let choose_num floor (( length goal_combination ) / ( solution_length - 1 )) ; the least number of propositions in each button
+
   ; here we use floor to avoid running out of propositions before the tidy up step (the last step)
   foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
 
@@ -264,6 +265,7 @@ to learn
   show action_communication
   show "action_communication"
 
+
 end
 
 
@@ -271,9 +273,10 @@ end
 to show-vision
   ;visulize of the vision,setting plabels in the vision
    ask turtles [
+    set own_color color
     let oc own_color
        ask patches in-cone-nowrap vision_radius 360
-          [;set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
+          [set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
            set plabel-color oc
            set plabel "*"    ]
       ]
@@ -342,7 +345,7 @@ to update-belief-observation [num];update the action matrix, which is also theh 
        if((item ? before_world = 0 )and (item ?  after_world = 1 ))[set ac_t (item ? visionindex) * 3 + 0]
        if((item ? before_world = 1 )and (item ?  after_world = 1 ))[set ac_f (item ? visionindex) * 3 + 1]
 
-        ;add new information to action, which is also the belief base
+        ;add new information to action, which is also belief base
         if ( ac_t >  0 );if there is something learnt about true knowledge
         [ifelse (member? ac_t item 0 (item num action ))[][set action replace-item num action (list (lput ac_t (item 0 (item num action )) ) item 1 (item num action))]]
         if ( ac_f >  0 );if there is something learnt about false knowledge
@@ -390,7 +393,6 @@ to update-belief-communication
     set action action_communication
     ]
 end
-
 
 
 
@@ -460,8 +462,6 @@ to assign-buttons; randomly assign the buttons to the turtles
    ]
   ]
 end
-
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 725
@@ -499,7 +499,7 @@ button_each
 button_each
 1
 10
-5
+2
 1
 1
 NIL
@@ -565,7 +565,7 @@ num_agents
 num_agents
 2
 7
-4
+2
 1
 1
 NIL
@@ -819,7 +819,7 @@ noise
 noise
 0
 13
-12
+1
 1
 1
 NIL
