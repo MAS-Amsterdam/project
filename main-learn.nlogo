@@ -34,7 +34,7 @@ to setup
   set color_list n-of num_agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
 
   reset-ticks
-  openFile; set up the goal pattern.
+  open_file; set up the goal pattern.
   setup-patches
   setup-button
   setup-agents
@@ -50,7 +50,7 @@ end
 
 ; to load the goal pattern
 
-to openFile
+to open_file
 
   file-open pattern_name
   set goal list [] []
@@ -78,7 +78,7 @@ to openFile
 
       ifelse (? = "1")
       [
-        ask patch x y [set pcolor green]
+        ; ask patch x y [set pcolor green]
         ; positive
         set goal (list (fput (x + y * width) positive) negative)
         set x x + 1
@@ -112,12 +112,15 @@ to-report split [ string delim ]
   ] fput [""] n-values (length string) [ substring string ? (? + 1) ]
 end
 
-; to display the goal
-
-to show-goal-pattern
+; to load and display the goal
+to load-and-display-goal
   clear-all
-  openFile
-
+  open_file
+  foreach (first goal) [
+    let x ? mod width
+    let y floor (? / width)
+    ask patch x y [set pcolor green]
+    ]
 end
 
 to setup-patches
@@ -736,10 +739,10 @@ button of Agent 2
 BUTTON
 190
 36
-337
+339
 92
-show goal
-show-goal-pattern
+load and display
+load-and-display-goal
 NIL
 1
 T
