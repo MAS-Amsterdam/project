@@ -4,7 +4,7 @@ globals [csv fileList day status high_score width height
 
   ;=========================buttons related variables==============================================
   ; noise ; the randomly set points in each button that belongs to solution.
-  noise_dis; the randomly set points in each button that not belongs to solution.
+  ; noise_dis; the randomly set points in each button that not belongs to solution.
   buttons; the initialized buttons. And this sequence decides the index of the button during the whole simulation.
   button-of-the-hour; ( Not used till now) the button choosen to be pressed in current hour
 
@@ -24,12 +24,13 @@ turtles-own[own_color; color set to the agent
 
   ;======================beliefs===================================================================
   action; Beliefs about the world of the agents. list of action (matrix)s, each of which is related to one button, the same sequence as in buttons.
+  ; Robert: why a list of actions / matries?
   ;action_communication:this is also beliefs, but not agents own, it is a shared, so global variables.
   ]
 to setup
   clear-all
-  set noise 12; the randomly set points in each button that belongs to solution.
-  set noise_dis 8; the randomly set points in each button that not belongs to solution.
+  ;set noise 12; the randomly set points in each button that belongs to solution.
+  ; set noise_dis 8; the randomly set points in each button that not belongs to solution.
   set color_list n-of num_agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
 
   reset-ticks
@@ -58,7 +59,6 @@ to learn
 
   show action_communication
   show "action_communication"
-
 
 end
 
@@ -257,23 +257,27 @@ end
 
 
 to setup-button
-  let buttons_solution []
+  ; the total number of buttons =  num_agent * button_each
+  ; we choose the first half and one more of the buttons as the plan
 
-  ;initialise
+  let buttons_solution [] ; the solution plan to be achieved
+
+  ;change the goal representation so patches to be set to black are represented as a negative number
   let goal_combination first goal
   foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
-  let solution_length ( round ( button_each * num_agents / 2 ) + 1 )
+  let solution_length ( round ( button_each * num_agents / 2 ) + 1 ) ; the total number of steps for this plan
 
+  ;----------------------------------------------------------
+  ; Part one: buttons leading to solution
 
-  ;1. buttons leading to solution
-
-  let choose_num floor (( length goal_combination ) / ( solution_length - 1 ))
+  let choose_num floor (( length goal_combination ) / ( solution_length - 1 )) ; the least number of propositions in each button
+  ; here we use floor to avoid running out of propositions before the tidy up step (the last step)
   foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
 
   [
-   let remian_g_c goal_combination
-   let chosen n-of choose_num remian_g_c
-   set remian_g_c (remove chosen remian_g_c )
+   let remain_g_c goal_combination
+   let chosen n-of choose_num remain_g_c
+   set remain_g_c (remove chosen remain_g_c ) ; the remaining ones to be satisfied/choosen in further steps
 
    let pos []
    let neg []
@@ -282,10 +286,8 @@ to setup-button
        set pos (lput ? pos)
      ][
      set neg ( lput (-1 * ?) neg )]
-   ]
-
-
-
+   ] ; initialise the pair of pos and neg
+  ;-----------------------------------------
   ; buttons with random values towards the goal
    let noise_vals n-of noise (n-values (length goal_combination) [?]);randomly choose positions in the goal with the number of noise
    ; check if the random positions is already in the buttons, if not add it to the button.
@@ -305,7 +307,7 @@ to setup-button
 
 
 
-
+  let noise_dis  (choose_num + noise) ; the number of propositions in the noise buttons
   foreach buttons_solution [ perform-action  ? ]
  ; a tidy up button
   let last_pos []
@@ -454,10 +456,10 @@ to-report split [ string delim ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-793
-23
-1303
-554
+725
+44
+1235
+575
 -1
 -1
 15.625
@@ -489,7 +491,7 @@ button_each
 button_each
 1
 10
-2
+5
 1
 1
 NIL
@@ -570,17 +572,17 @@ vision_radius
 vision_radius
 0
 4
-1
+3
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-498
-392
-667
-437
+497
+395
+666
+440
 Days to complete the task.
 day
 17
@@ -596,17 +598,17 @@ num_hours
 num_hours
 button_each * num_agents / 2
 button_each * num_agents
-4
+7.5
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-359
-31
-616
-92
+479
+35
+685
+96
 NIL
 goal
 17
@@ -801,19 +803,47 @@ button-of-the-hour
 15
 
 SLIDER
-38
-235
-210
-268
+22
+222
+298
+255
 noise
 noise
 0
 13
-13
+12
 1
 1
 NIL
 HORIZONTAL
+
+BUTTON
+344
+36
+468
+93
+Clear Display
+ask patches [set pcolor black]
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+594
+136
+694
+181
+Total buttons
+num_agents * button_each
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
