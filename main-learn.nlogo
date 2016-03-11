@@ -48,6 +48,77 @@ end
 ; ========================== The Setup part =======================
 ; =================================================================
 
+; to load the goal pattern
+
+to openFile
+
+  file-open pattern_name
+  set goal list [] []
+  let delim ","
+
+  set csv file-read-line
+  let tmp split csv delim
+
+  set width read-from-string item 0 tmp
+  set height read-from-string item 1 tmp
+  resize-world 0 (width - 1) 0 ( height - 1)
+  set-patch-size 500 / width
+
+  let x 0
+  let y height - 1
+
+  while [not file-at-end?]
+  [
+    set csv file-read-line
+    set tmp split csv delim
+    foreach tmp
+    [
+      let positive first goal
+      let negative last goal
+
+      ifelse (? = "1")
+      [
+        ask patch x y [set pcolor green]
+        ; positive
+        set goal (list (fput (x + y * width) positive) negative)
+        set x x + 1
+        if (x = width)
+        [
+          set x 0
+          set y y - 1
+        ]
+      ]
+      [
+        ; negative
+        set goal (list positive (fput (x + (y) * width) negative))
+        set x x + 1
+        if (x = width)
+        [
+          set x 0
+          set y y - 1
+        ]
+      ]
+    ]
+  ]
+
+  file-close
+end
+
+to-report split [ string delim ]
+  report reduce [
+    ifelse-value (?2 = delim)
+      [ lput "" ?1 ]
+      [ lput word last ?1 ?2 but-last ?1 ]
+  ] fput [""] n-values (length string) [ substring string ? (? + 1) ]
+end
+
+; to display the goal
+
+to show-goal-pattern
+  clear-all
+  openFile
+
+end
 
 to setup-patches
   ask patches[set pcolor black ]
@@ -143,31 +214,6 @@ to setup-button
 
 end
 
-;================================main function for learning====================================================
-to learn
-   ; learning process for one day
-  foreach n-values ( button_each * num_agents) [?]; press all the buttons in original sequence and learn the actions.After planning part is ready, "button_each * num_agents"should be replaced by (length buttons_current)
-
-    [
-    update-vision_before_action
-    perform-action item ? buttons ; press the button sequence. Should be buttons_current (results of plannning), but now I use buttons instead.
-    update-vision_after_action
-    update-belief-observation ?   ; after planning part is ready, '?' should be replaced by the index of current implemented button. The index should be referred to the position in  variable "buttons".
-    ask turtles[fd 1]             ;after planning part is ready, this should be replaced by the intended direcrion and forward.
-    ]
-  communicate                     ; communicate at night, to combine action of each agents, and set every one's action(i.e. belief ) the same.
-  update-belief-communication     ;set each agent's belief same to shared belief base.
-
-  show action_communication
-  show "action_communication"
-
-end
-
-
-to show-goal-pattern
-  clear-all
-  openFile
-end
 
 to setup-agents
   create-turtles num_agents [
@@ -193,6 +239,27 @@ end
 
 to go
 ;perform-action item 1 buttons
+end
+
+
+;================================main function for learning====================================================
+to learn
+   ; learning process for one day
+  foreach n-values ( button_each * num_agents) [?]; press all the buttons in original sequence and learn the actions.After planning part is ready, "button_each * num_agents"should be replaced by (length buttons_current)
+
+    [
+    update-vision_before_action
+    perform-action item ? buttons ; press the button sequence. Should be buttons_current (results of plannning), but now I use buttons instead.
+    update-vision_after_action
+    update-belief-observation ?   ; after planning part is ready, '?' should be replaced by the index of current implemented button. The index should be referred to the position in  variable "buttons".
+    ask turtles[fd 1]             ;after planning part is ready, this should be replaced by the intended direcrion and forward.
+    ]
+  communicate                     ; communicate at night, to combine action of each agents, and set every one's action(i.e. belief ) the same.
+  update-belief-communication     ;set each agent's belief same to shared belief base.
+
+  show action_communication
+  show "action_communication"
+
 end
 
 
@@ -393,75 +460,6 @@ end
 
 
 
-
-
-; Don't touch these codes. The file needs to be in the format that the first lines have the width and height as comman separated
-; The following lines have to have a binary representation of the pattern. Each line should have number of characters equal to the width
-; separated by commas. Anything longer than the width will be ignored. I haven't implemented the guard code for lines less than the width.
-; Since it is getting late tonight and Kaixin needs to start with her part and since the check isn't absolutely necessary right now, but would
-; be required when we deploy the code and is more a flexibility issue. I will implement it over the weekend.
-
-to openFile
-
-  file-open pattern_name
-  set goal list [] []
-  let delim ","
-
-  set csv file-read-line
-  let tmp split csv delim
-
-  set width read-from-string item 0 tmp
-  set height read-from-string item 1 tmp
-  resize-world 0 (width - 1) 0 ( height - 1)
-  set-patch-size 500 / width
-
-  let x 0
-  let y height - 1
-
-  while [not file-at-end?]
-  [
-    set csv file-read-line
-    set tmp split csv delim
-    foreach tmp
-    [
-      let positive first goal
-      let negative last goal
-
-      ifelse (? = "1")
-      [
-        ask patch x y [set pcolor green]
-        ; positive
-        set goal (list (fput (x + y * width) positive) negative)
-        set x x + 1
-        if (x = width)
-        [
-          set x 0
-          set y y - 1
-        ]
-      ]
-      [
-        ; negative
-        set goal (list positive (fput (x + (y) * width) negative))
-        set x x + 1
-        if (x = width)
-        [
-          set x 0
-          set y y - 1
-        ]
-      ]
-    ]
-  ]
-
-  file-close
-end
-
-to-report split [ string delim ]
-  report reduce [
-    ifelse-value (?2 = delim)
-      [ lput "" ?1 ]
-      [ lput word last ?1 ?2 but-last ?1 ]
-  ] fput [""] n-values (length string) [ substring string ? (? + 1) ]
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 725
