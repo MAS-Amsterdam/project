@@ -23,8 +23,9 @@ turtles-own[own_color; color set to the agent
   after_world; the states of observed world (within vision) of an agent after the action.0 represents black, 1 represents green.
 
   ;======================beliefs===================================================================
-  action; Beliefs about the world of the agents. list of action (matrix)s, each of which is related to one button, the same sequence as in buttons.
+  action; Beliefs about the world of the agents. A list of matices. The matrix takes the form of {{know-true}{know-false}}, which is related to one button. The sequence of the matrices in the list is the same as in "buttons".
   ; Robert: why a list of actions / matries?
+  ; H: modified the explaination. See if it more clearly?
   ;action_communication:this is also beliefs, but not agents own, it is a shared, so global variables.
   ]
 to setup
@@ -195,12 +196,12 @@ to setup-button
 
 
    perform-action last_btn
+  ;----------------------------------------------------------
+  ; Part tow: buttons not leading to patterns,i.e. disturbing the agents.
 
-  ;2. buttons not leading to patterns,i.e. disturbing the agents.
    let disturbing_buttons []
    let noise_dis  (choose_num + noise) ; the number of propositions in the disturbing buttons
     foreach n-values  ( button_each * num_agents - solution_length ) [?][
-    let num_random   random ( floor ( width * height / 2 ) );the number of elements in each button_dis
     let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
     let pos_d  []
     let neg_d  []
@@ -272,7 +273,7 @@ to show-vision
    ask turtles [
     let oc own_color
        ask patches in-cone-nowrap vision_radius 360
-          [set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
+          [;set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
            set plabel-color oc
            set plabel "*"    ]
       ]
@@ -341,7 +342,7 @@ to update-belief-observation [num];update the action matrix, which is also theh 
        if((item ? before_world = 0 )and (item ?  after_world = 1 ))[set ac_t (item ? visionindex) * 3 + 0]
        if((item ? before_world = 1 )and (item ?  after_world = 1 ))[set ac_f (item ? visionindex) * 3 + 1]
 
-        ;add new information to action, which is also belief base
+        ;add new information to action, which is also the belief base
         if ( ac_t >  0 );if there is something learnt about true knowledge
         [ifelse (member? ac_t item 0 (item num action ))[][set action replace-item num action (list (lput ac_t (item 0 (item num action )) ) item 1 (item num action))]]
         if ( ac_f >  0 );if there is something learnt about false knowledge
@@ -459,8 +460,6 @@ to assign-buttons; randomly assign the buttons to the turtles
    ]
   ]
 end
-
-
 
 
 @#$#@#$#@
