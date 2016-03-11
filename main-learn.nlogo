@@ -42,6 +42,107 @@ to setup
   show-vision;show the agents' vision by * mark.
 end
 
+
+
+; =================================================================
+; ========================== The Setup part =======================
+; =================================================================
+
+
+to setup-patches
+  ask patches[set pcolor black ]
+end
+
+
+to setup-button
+  ; the total number of buttons =  num_agent * button_each
+  ; we choose the first half and one more of the buttons as the plan
+
+  let solution_buttons [] ; the solution plan to be achieved
+
+  ;change the goal representation so patches to be set to black are represented as a negative number
+  let goal_combination first goal
+  foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
+  let total_buttons button_each * num_agents
+  let solution_length ( round ( total_buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
+
+  ;----------------------------------------------------------
+  ; Part one: buttons leading to solution
+
+  let choose_num floor (( length goal_combination ) / ( solution_length - 1 )) ; the least number of propositions in each button
+  ; here we use floor to avoid running out of propositions before the tidy up step (the last step)
+  foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
+
+  [
+   let remain_g_c goal_combination
+   let chosen n-of choose_num remain_g_c
+   set remain_g_c (remove chosen remain_g_c ) ; the remaining ones to be satisfied/choosen in further steps
+
+   let pos []
+   let neg []
+   foreach chosen [
+     ifelse (? >= 0)[
+       set pos (lput ? pos)
+     ][
+     set neg ( lput (-1 * ?) neg )]
+   ] ; initialise the pair of pos and neg
+  ;-----------------------------------------
+  ; buttons with random values towards the goal
+   let noise_vals n-of noise (n-values (length goal_combination) [?]);randomly choose positions in the goal with the number of noise
+   ; check if the random positions is already in the buttons, if not add it to the button.
+   foreach noise_vals [
+     ifelse ((member? ? pos) or (member? ? neg) )[
+
+       ][
+       ifelse (random 2 > 0)[
+         set pos fput ? pos
+         ][
+         set neg fput ? neg
+         ]
+       ]
+     ]
+   set solution_buttons fput (list pos neg) solution_buttons
+   ]
+
+
+
+  foreach solution_buttons [ perform-action  ? ]
+ ; a tidy up button
+  let last_pos []
+  let last_neg []
+   ask patches [
+    let index (width * pycor + pxcor)
+    if ((pcolor = black) and (member? index (first goal)))[set last_pos (lput index (last_pos))] ; should be green and is green now
+    if ((pcolor = green) and (member? index (last goal)))[set last_neg (lput index (last_neg))]; should be black but is green now
+    ]
+
+   let last_btn (list last_pos last_neg)
+   set solution_buttons lput (last_btn) solution_buttons
+
+
+   perform-action last_btn
+
+  ;2. buttons not leading to patterns,i.e. disturbing the agents.
+   let disturbing_buttons []
+   let noise_dis  (choose_num + noise) ; the number of propositions in the disturbing buttons
+    foreach n-values  ( button_each * num_agents - solution_length ) [?][
+    let num_random   random ( floor ( width * height / 2 ) );the number of elements in each button_dis
+    let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
+    let pos_d  []
+    let neg_d  []
+    foreach noise_dis_vals [
+    ifelse (random 2 > 0)[set pos_d fput ? pos_d]
+    [set neg_d fput ? neg_d];randomly set the sign (on/off) to the elements
+    ]
+
+   set disturbing_buttons fput (list pos_d neg_d ) disturbing_buttons
+
+    ]
+
+     set buttons sentence solution_buttons disturbing_buttons ; append the disturbing buttons to the solution buttons
+
+end
+
 ;================================main function for learning====================================================
 to learn
    ; learning process for one day
@@ -84,6 +185,15 @@ to setup-agents
     foreach (n-values num_agents [?]) [ ask turtle ? [ set color item ? color_list] ];set different colors to agents.
 end
 
+
+
+; =================================================================
+; ========================== The Go part ==========================
+; =================================================================
+
+to go
+;perform-action item 1 buttons
+end
 
 
 
@@ -214,12 +324,6 @@ end
 
 
 
-to go
-;perform-action item 1 buttons
-end
-
-
-
 ;==============variable related to the setup of buttons=============================================================================
 ;goal: a list with two lists, the first list indicates the "on" positions, the second indicates "off" positions.
 ;solution_length:the number of buttons that leads to the pattern. The last one button cleans the random sets in the previous buttons.
@@ -251,104 +355,8 @@ end
 
 
 
-to setup-patches
-  ask patches[set pcolor black ]
-end
-
-
-to setup-button
-  ; the total number of buttons =  num_agent * button_each
-  ; we choose the first half and one more of the buttons as the plan
-
-  let solution_buttons [] ; the solution plan to be achieved
-
-  ;change the goal representation so patches to be set to black are represented as a negative number
-  let goal_combination first goal
-  foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
-  let total_buttons button_each * num_agents
-  let solution_length ( round ( total_buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
-
-  ;----------------------------------------------------------
-  ; Part one: buttons leading to solution
-
-  let choose_num floor (( length goal_combination ) / ( solution_length - 1 )) ; the least number of propositions in each button
-  ; here we use floor to avoid running out of propositions before the tidy up step (the last step)
-  foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
-
-  [
-   let remain_g_c goal_combination
-   let chosen n-of choose_num remain_g_c
-   set remain_g_c (remove chosen remain_g_c ) ; the remaining ones to be satisfied/choosen in further steps
-
-   let pos []
-   let neg []
-   foreach chosen [
-     ifelse (? >= 0)[
-       set pos (lput ? pos)
-     ][
-     set neg ( lput (-1 * ?) neg )]
-   ] ; initialise the pair of pos and neg
-  ;-----------------------------------------
-  ; buttons with random values towards the goal
-   let noise_vals n-of noise (n-values (length goal_combination) [?]);randomly choose positions in the goal with the number of noise
-   ; check if the random positions is already in the buttons, if not add it to the button.
-   foreach noise_vals [
-     ifelse ((member? ? pos) or (member? ? neg) )[
-
-       ][
-       ifelse (random 2 > 0)[
-         set pos fput ? pos
-         ][
-         set neg fput ? neg
-         ]
-       ]
-     ]
-   set solution_buttons fput (list pos neg) solution_buttons
-   ]
-
-
-
-  foreach solution_buttons [ perform-action  ? ]
- ; a tidy up button
-  let last_pos []
-  let last_neg []
-   ask patches [
-    let index (width * pycor + pxcor)
-    if ((pcolor = black) and (member? index (first goal)))[set last_pos (lput index (last_pos))] ; should be green and is green now
-    if ((pcolor = green) and (member? index (last goal)))[set last_neg (lput index (last_neg))]; should be black but is green now
-    ]
-
-   let last_btn (list last_pos last_neg)
-   set solution_buttons lput (last_btn) solution_buttons
-
-
-   perform-action last_btn
-
-  ;2. buttons not leading to patterns,i.e. disturbing the agents.
-   let disturbing_buttons []
-   let noise_dis  (choose_num + noise) ; the number of propositions in the disturbing buttons
-    foreach n-values  ( button_each * num_agents - solution_length ) [?][
-    let num_random   random ( floor ( width * height / 2 ) );the number of elements in each button_dis
-    let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
-    let pos_d  []
-    let neg_d  []
-    foreach noise_dis_vals [
-    ifelse (random 2 > 0)[set pos_d fput ? pos_d]
-    [set neg_d fput ? neg_d];randomly set the sign (on/off) to the elements
-    ]
-
-   set disturbing_buttons fput (list pos_d neg_d ) disturbing_buttons
-
-    ]
-
-     set buttons sentence solution_buttons disturbing_buttons ; append the disturbing buttons to the solution buttons
-
-end
-
-
 
 to perform-action [act]
- ; show act, which is a button
 
   let pos first act
   let neg last act
@@ -732,7 +740,7 @@ BUTTON
 36
 337
 92
-NIL
+show goal
 show-goal-pattern
 NIL
 1
@@ -822,7 +830,7 @@ BUTTON
 36
 468
 93
-Clear Display
+clear display
 ask patches [set pcolor black]
 NIL
 1
