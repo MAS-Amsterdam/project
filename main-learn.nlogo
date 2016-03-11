@@ -23,7 +23,7 @@ turtles-own[own_color; color set to the agent
 
   ;======================beliefs===================================================================
   action; Beliefs about the world of the agents. list of action (matrix)s, each of which is related to one button, the same sequence as in buttons.
-
+  ;action_communication:this is also beliefs, but not agents own, it is a shared, so global variables.
   ]
 to setup
   clear-all
