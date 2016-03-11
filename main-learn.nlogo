@@ -1,212 +1,213 @@
-globals [csv fileList day status high_score goal noise noise_dis
-  width height
-  buttons buttons_dis buttons_all
+globals [csv fileList day status high_score width height
   color_list; color for different agents
-  v_index;variable used when transforming the vision patches to index.
-  b_w;variable used when transforming the vision patches states into index
-  ac_t;(local) action learnt in a specific event,true variables
-  ac_f;(local) action learnt in a specific event,false variables
-  ac;list {ac_t, ac_f}
-  action_all; combine all the agents learning outcome one button by one button(updat for each button).
-  action_all_button; combine all the agents learning outcome
+  goal ;the goal pattern
+
+  ;=========================buttons related variables==============================================
+  noise ; the randomly set points in each button that belongs to solution.
+  noise_dis; the randomly set points in each button that not belongs to solution.
+  buttons; the initialized buttons. And this sequence decides the index of the button during the whole simulation.
+  button-of-the-hour; ( Not used till now) the button choosen to be pressed in current hour
+
+  ;========================communication related variables=========================================
+  action_communication; combine all the agents learning outcome at night. And set it to all the agents at the start of the day.
+  buttons_current;( Not used till now) the button sequences to be implemented by current round(i.e. today). The results of learning.
   ]
-turtles-own[n_bt; the oder of buttons it owns, relating to the matrix buttons_all
-  bt;buttons it owns
+turtles-own[own_color; color set to the agent
+  buttons_assigned; the order of buttons it owns, relating to the matrix buttons
+
+  ;=======================learning process variables===============================================
   vision;the patches in agents' vision
   visionindex;indexize the patches in agents' vision
-  own_color; color set to the agent
-  before_world; the states of observed world (within vision) of an agent before the action.0 represents black, 1 represents green.
+  before_world; the states of observed world (within vision) of an agent before the action. 0 represents black, 1 represents green. I think I will still use the world here, because it is related to the belief, and belief is about the whole world, although for one hour, it represents a vision.
   after_world; the states of observed world (within vision) of an agent after the action.0 represents black, 1 represents green.
-  action_t;lists containing the learnt true actions
-  action_f;lists containing the learnt false actions
-  action;matrix of lists containing the learnt actions for each currrent executed button,i.e. {action_t , action_f}
-  action_button;list of action (matrix)s, each of which is related to one button, the same sequence as in buttons_all.
+
+  ;======================beliefs===================================================================
+  action; Beliefs about the world of the agents. list of action (matrix)s, each of which is related to one button, the same sequence as in buttons.
+
   ]
 to setup
   clear-all
-  set noise 3; the randomly set points in each button that belongs to solution.
+  set noise 12; the randomly set points in each button that belongs to solution.
   set noise_dis 8; the randomly set points in each button that not belongs to solution.
-  set color_list n-of num_agents [yellow magenta blue red pink brown grey]
+  set color_list n-of num_agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
 
   reset-ticks
-  openFile
+  openFile; set up the goal pattern.
   setup-patches
   setup-button
   setup-agents
   assign-buttons
+  show-vision;show the agents' vision by * mark.
+end
+
+;================================main function for learning====================================================
+to learn
+   ; learning process for one day
+  foreach n-values ( button_each * num_agents) [?]; press all the buttons in original sequence and learn the actions.After planning part is ready, "button_each * num_agents"should be replaced by (length buttons_current)
+
+    [
+    update-vision_before_action
+    perform-action item ? buttons ; press the button sequence. Should be buttons_current (results of plannning), but now I use buttons instead.
+    update-vision_after_action
+    update-belief-observation ?   ; after planning part is ready, '?' should be replaced by the index of current implemented button. The index should be referred to the position in  variable "buttons".
+    ask turtles[fd 1]             ;after planning part is ready, this should be replaced by the intended direcrion and forward.
+    ]
+  communicate                     ; communicate at night, to combine action of each agents, and set every one's action(i.e. belief ) the same.
+  update-belief-communication     ;set each agent's belief same to shared belief base.
+
+  show action_communication
+  show "action_communication"
+
 
 end
+
+
 to show-goal-pattern
   clear-all
   openFile
 end
+
 to setup-agents
-  create-turtles num_agents [ set label ( who + 1)
+  create-turtles num_agents [
+    set label who
     setxy random-xcor random-ycor
-    set action [[][]]
-    set action_button[];turtle's own
-    set action_all_button[];global&combination of all the information of the agents
-    set before_world []
-;    show length(action)
+
+    ;initialize the belief-action, i.e. variable action.And initialize the belief-communication
+    set action []
+    set  action_communication []
+    foreach n-values ( button_each * num_agents) [?]
+      [ set action lput (list[][])action ;turtle's own; beliefs about the buttons, grows every day.
+        set action_communication lput (list[][]) action_communication;global&combination of all the information of the agents right after they communicate at night, which will also be the belief base for every agent at the start of the day.
+        ]
     ]
-    foreach (n-values num_agents [?]) [ ask turtle ?
-     [ set color item ? color_list] ]
+    foreach (n-values num_agents [?]) [ ask turtle ? [ set color item ? color_list] ];set different colors to agents.
 end
-to update-vision
-  ; variables
-  ; before_world:list consisting of the states of observed world (within vision) of an agent before the action
-  ; visionindex: list consiting of the index of observed patches.
-  ;b_w
+
+
+
+
+to show-vision
+  ;visulize of the vision,setting plabels in the vision
+   ask turtles [
+    let oc own_color
+       ask patches in-cone-nowrap vision_radius 360
+          [set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
+           set plabel-color oc
+           set plabel "*"    ]
+      ]
+end
+
+to update-vision_before_action
+  ;update the observed states of the current vision,after one move during hours.
+
    ask patches [set plabel ""]
    foreach (n-values num_agents [?]) [
      ask turtle ? [
-   set own_color color
-   set vision (patches in-cone-nowrap vision_radius 360)
-   set vision sort vision ; vision expressed in patches
+     set before_world []
 
-   set visionindex []
+     set vision (patches in-cone-nowrap vision_radius 360)
+     set vision sort vision ; vision expressed in patches
+     set visionindex []; the patches (indexed) within vision
+     foreach vision[
 
-   foreach vision[
-   ask ? [set v_index  ( pycor * width + pxcor )
-     ifelse (pcolor = black)
-     [set b_w 0]
-     [set b_w 1]
-     ]
-   set visionindex lput v_index visionindex ;vision expressed in index
-   set before_world lput b_w before_world
-   ]
-   show before_world
-   show " before_world"
-   show visionindex
-   show "visionindex"
-    ]]
+        let patches_index 0 ;variable used when transforming the vision patches to index.
+        let  state_index 0;variable used when transforming the observed patches states into index
+        ask ? [set patches_index  ( pycor * width + pxcor )
+          ifelse (pcolor = black)
+          [set  state_index 0];if the state is black, set index to 0.
+          [set  state_index 1];if the state is green, set index to 1.
+           ]
+       set visionindex lput patches_index visionindex ;vision expressed in index
+       set before_world lput  state_index before_world  ; before_world:list consisting of the states of observed world (within vision) of an agent before the action
 
-
-   ask turtles [
-   ;visulize of the vision
-  let oc own_color
-  ask patches in-cone-nowrap vision_radius 360
-     [set pcolor pcolor + 1
-    set plabel-color oc
-     set plabel "*"    ]
     ]
 
+     ]]
+   show-vision;visulize of the vision
 end
-to update-belief
-
-  ; after_world:list consisting of the states of observed world (within vision) of an agent after the action
-  ; action:matrix of lists containing the learnt actions,i.e. {action_t , action_f}
-  ;ac:
 
 
+to update-vision_after_action
+  ;update the observed states of the current vision,after one button is pressed.
 
      foreach (n-values num_agents [?]) [
-
      ask turtle ? [
-       set after_world []
-       foreach vision[
-       ask ? [                                ; update the observation after the action
-       ifelse (pcolor = black)
-       [set b_w 0]
-       [set b_w 1]      ]
-       set after_world lput b_w after_world
+     set after_world []
+     foreach vision[
+     let patches_index 0 ;variable used when transforming the vision patches to index.
+     let state_index 0;variable used when transforming the observed patches' states into index
+     ask ? [set patches_index  ( pycor * width + pxcor )
+     ifelse (pcolor = black)
+     [set state_index 0]
+     [set state_index 1]
+     ]
+   set after_world lput state_index after_world; after_world:list consisting of the states of observed world (within vision) of an agent after the action
+    ]
      ]
 
-       foreach n-values (length (vision))[?][; encode the event, i.e. compare the before and after world
-       if((item ? after_world = 0 )and (item ? before_world = 0 ))[set ac_f (item ? visionindex) * 3 + 0]
-       if((item ? after_world = 0 )and (item ? before_world = 1 ))[set ac_t (item ? visionindex) * 3 + 0]
-       if((item ? after_world = 1 )and (item ? before_world = 0 ))[set ac_t (item ? visionindex) * 3 + 1]
-       if((item ? after_world = 1 )and (item ? before_world = 1 ))[set ac_f (item ? visionindex) * 3 + 1]
+   ]
+end
 
+to update-belief-observation [num];update the action matrix, which is also theh agent's belief_ base for actions.num is the variable for the current button's index.
 
-        ifelse (member? ac_t (item 0 action ))[][set action (list (lput ac_t (item 0 action )) item 1 action)]
+    foreach (n-values num_agents [?]) [
+     ask turtle ? [
+       let ac_t -1 ; action learnt in a specific event,true variables
+       let ac_f -1; action learnt in a specific event,false variables
+       foreach n-values (length (visionindex))[?][; encode the event, i.e. compare the before and after world
+       if((item ? before_world = 0 )and (item ?  after_world = 0 ))[set ac_f (item ? visionindex) * 3 + 0]
+       if((item ? before_world = 1 )and (item ?  after_world = 0 ))[set ac_t (item ? visionindex) * 3 + 1]
+       if((item ? before_world = 0 )and (item ?  after_world = 1 ))[set ac_t (item ? visionindex) * 3 + 0]
+       if((item ? before_world = 1 )and (item ?  after_world = 1 ))[set ac_f (item ? visionindex) * 3 + 1]
 
-        ifelse (member? ac_f (item 1 action ))[][set action (list (item 0 action) (lput ac_f (item 1 action )))]
-
+        ;add new information to action, which is also belief base
+        if ( ac_t >  0 );if there is something learnt about true knowledge
+        [ifelse (member? ac_t item 0 (item num action ))[][set action replace-item num action (list (lput ac_t (item 0 (item num action )) ) item 1 (item num action))]]
+        if ( ac_f >  0 );if there is something learnt about false knowledge
+        [ifelse (member? ac_f item 1 (item num action ))[][set action replace-item num action (list item 0 (item num action) (lput ac_f (item 1 (item num action )) ))]]
          ]
 
-       show action
-       show "action"
+        foreach n-values ( width * height )[?]; if there are already 2 values for a specific grid in known-false, then we can deduce the corresponding known-ture.
+        [if ( member? (? * 3 ) (item 1( item num action )) ) and ( member? ( ? * 3 + 1 ) (item 1 (item num action) ) and (not ( member? ( ? * 3 + 2 ) (item 0 (item num action) ))))
+        [ set action replace-item num action (list (lput ( ? * 3 + 2) item 0  (item num action )) item 1  (item num action ) )]]
 
-     ] ]
-  ask turtles[
-  set action_button lput action action_button;list of action (matrix), each of which is related to one button, the same sequence as in buttons_all.
-  show action_button
-  show "action_button" ]
+       ]
+
+     ]
 
 end
 
+
+
+
 to communicate
-   ; to combine all the action_button of every agent, getting a learning result:action_all(also list of matrix)
+   ; to combine all the action_button of every agent, getting a learning result:action_communication.
+
 
    let i 0
    foreach n-values ( button_each * num_agents) [?][
-   ask turtle 0[set action_all item ? action_button];initialize action_all to the belief base of the first turtle, and then add others' different belief to that.
-   show action_all
+   ;ask turtle 0[set action_all item ? action];initialize action_all to the belief base of the first turtle, and then add others' different belief to that.
+   ;show action_all
    foreach n-values num_agents[?]
    [ask turtle ?[
-        foreach( item 0 (item i action_button ))[
-        ifelse (member? ?  (item 0 action_all ))[][set action_all (list (lput ? (item 0 (item i action_button )) )  (item 1 action_all))]]
+        foreach( item 0 (item i action ))[;if the observed true knowledge index of the states is not in the true knowledge of shared belief base, add it.
+        ifelse (member? ?  (item 0 ( item i action_communication) ))[][set action_communication replace-item i action_communication (list (lput ? (item 0 (item i action_communication )) )  (item 1 (item i action_communication )))]]
 
-
-        show action_all
-        show i
-        show "[[[[[[[[[[[[[[[[[[[[[[[[[[[["
-
-        foreach ( item 1 (item i action_button ))[
-        ifelse (member? ?  (item 1 action_all ))[][set action_all (list (item 0 action_all) (lput ? (item 1 (item i action_button ) )))]]
-
-        show action_all
-        show i
-        show "]]]]]]]]]]]]]]]]]]]]]]]]]"
-
+        foreach ( item 1 (item i action ))[;if the observed false knowledge index of the states is not in the false knowledge of shared belief base, add it.
+        ifelse (member? ?  (item 1 ( item i action_communication)  ))[][set action_communication replace-item i action_communication (list (item 0 (item i action_communication )) (lput ? (item 1 ((item i action_communication ) ) )))]]
       ]]
 
-   set action_all_button lput  action_all action_all_button
    set i (i + 1)
     ]
 end
 
 
-
-
-to learn
-   ; learn process for one day
-  foreach n-values ( button_each * num_agents) [?]; press all the buttons in original sequence and learn the actions
-
-  [update-vision
-  perform-action item ? buttons_all ; press the first button
-  update-belief
-  ask turtles[fd 1]
-
-
- ]
-  communicate; communicate at night
-
-
-
-
- show action_all_button
- show "action_all_button"
-  ;to check if some actions can be inferred by the false propositions list in the action matrix.
-  ;foreach
-
-
-
+to update-belief-communication
+  ;set each agent's belief base, i.e.action, the same as shared belief, i.e. action_communication.
+  ask turtles[
+    set action action_communication
+    ]
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -214,11 +215,9 @@ end
 
 to go
 ;perform-action item 1 buttons
-
 end
 
-;==============Questions?
-;the initial state is black? or other color?
+
 
 ;==============variable related to the setup of buttons=============================================================================
 ;goal: a list with two lists, the first list indicates the "on" positions, the second indicates "off" positions.
@@ -229,7 +228,7 @@ end
 ;chosen: a list consisting of the elements in the goal_combination that is chosen to a solution button.
 ;buttons: the matrix consisting of lists, each of which is one button that leads to the pattern.
 ;buttons_dis: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
-;buttons_all: the matrix consisting of lists, each of which is one button, with the buttons leading to the solution coming first.
+;buttons: the matrix consisting of lists, each of which is one button, with the buttons leading to the solution coming first.
 ;noise_dis: number of random elements in each disturbing button.
 ;noise_dis_vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
 ;==============the design of the buttons========================================================================
@@ -239,7 +238,7 @@ end
 ;Each solutions buttons in the matrix "buttons" except the last one , gets equal amount part of similarity to the goal pattern, but different elements of the goal pattern.
 ;The last button in the solution matrix is set to tidy up all the indifference to the goal pattern, by performing/pressing the pervious buttons in sequene and compared the outcome with the goal pattern.
 ;All of the buttons in the matrix is nothing more than randomly set buttons.
-;All the buttons form the matrix called "buttons_all", in which the solution buttons come before the remaining buttons. And the sequence in this matrxi determines the serial number for the button.
+;All the buttons form the matrix called "buttons", in which the solution buttons come before the remaining buttons. And the sequence in this matrxi determines the serial number for the button.
 
 
 
@@ -257,14 +256,7 @@ end
 
 
 to setup-button
-  set buttons []
-;
-;  foreach n-values (button_each * num_agents) [?][
-;    let positive []
-;    let negative []
-;    let btn (list  positive negative)
-;    set buttons fput btn buttons
-;  ]
+  let buttons_solution []
 
   ;initialise
   let goal_combination first goal
@@ -278,7 +270,6 @@ to setup-button
   foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
 
   [
-
    let remian_g_c goal_combination
    let chosen n-of choose_num remian_g_c
    set remian_g_c (remove chosen remian_g_c )
@@ -308,40 +299,34 @@ to setup-button
          ]
        ]
      ]
-   set buttons fput (list pos neg) buttons
+   set buttons_solution fput (list pos neg) buttons_solution
    ]
 
 
 
 
-  foreach buttons [ perform-action  ? ]
+  foreach buttons_solution [ perform-action  ? ]
  ; a tidy up button
   let last_pos []
   let last_neg []
-  ask patches [
+   ask patches [
     let index (width * pycor + pxcor)
     if ((pcolor = black) and (member? index (first goal)))[set last_pos (lput index (last_pos))] ; should be green and is green now
-
     if ((pcolor = green) and (member? index (last goal)))[set last_neg (lput index (last_neg))]; should be black but is green now
     ]
 
-
    let last_btn (list last_pos last_neg)
-   set buttons lput (last_btn) buttons
-  ;  show last_btn
+   set buttons_solution lput (last_btn) buttons_solution
+
 
    perform-action last_btn
 
-  ;max-pxcor
-  ;create-buttons 3
- ;show buttons
-
   ;2. buttons not leading to patterns,i.e. disturbing the agents.
-   set buttons_dis []
+   let buttons_dis []
 
     foreach n-values  ( button_each * num_agents - solution_length ) [?][
     let num_random   random ( floor ( width * height / 2 ) );the number of elements in each button_dis
-   let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
+    let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
     let pos_d  []
     let neg_d  []
     foreach noise_dis_vals [
@@ -351,33 +336,29 @@ to setup-button
 
    set buttons_dis fput (list pos_d neg_d ) buttons_dis
 
-   ]
+    ]
 
- set buttons_all sentence buttons buttons_dis
+     set buttons sentence buttons_solution buttons_dis
 
 end
 
 
 
 to perform-action [act]
- ; show act
+ ; show act, which is a button
 
   let pos first act
   let neg last act
   foreach pos [
     let y floor( ? / width )
     let x ( ? - y * width )
-    ;show x
-    ;show y
     ask patch x y [set pcolor green]
-
     ]
 
     foreach neg [
     let y floor( ? / width )
     let x ( ? - y * width )
     ask patch x y [set pcolor black]
-
     ]
 
 tick
@@ -386,15 +367,12 @@ end
 
 
 to assign-buttons; randomly assign the buttons to the turtles
-  let remain_bt buttons_all
-  ;show remain_bt
-  ask turtles[
-   set bt []
-   set n_bt []
+   let remain_bt buttons; variables remained when assigning buttons to agents one by one
+   ask turtles[
+   set buttons_assigned []
    foreach n-values button_each [?][
    let n_button ( random  (length remain_bt ))
-   set bt  lput (item n_button remain_bt) bt
-   set n_bt lput ((position  (item n_button remain_bt) buttons_all )  + 1 ) n_bt
+   set buttons_assigned lput ((position  (item n_button remain_bt) buttons )  + 1 ) buttons_assigned
    set remain_bt (remove (item n_button remain_bt) remain_bt )
 
    ]
@@ -551,10 +529,10 @@ NIL
 1
 
 BUTTON
-563
-141
-723
-203
+337
+208
+497
+270
 NIL
 setup
 NIL
@@ -576,7 +554,7 @@ num_agents
 num_agents
 2
 7
-2
+3
 1
 1
 NIL
@@ -608,28 +586,6 @@ day
 1
 11
 
-MONITOR
-625
-535
-780
-580
-Highest Score
-high_score
-17
-1
-11
-
-MONITOR
-527
-579
-786
-624
-Status
-status
-17
-1
-11
-
 SLIDER
 282
 171
@@ -646,10 +602,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-331
-207
-775
-268
+742
+107
+1188
+168
 NIL
 goal
 17
@@ -657,10 +613,10 @@ goal
 15
 
 BUTTON
-4
-265
-109
-298
+14
+282
+119
+315
 button 1
 perform-action item 0 buttons
 NIL
@@ -674,10 +630,10 @@ NIL
 1
 
 BUTTON
-4
-300
-109
-333
+130
+281
+235
+314
 button 2
 perform-action item 1 buttons
 NIL
@@ -691,10 +647,10 @@ NIL
 1
 
 BUTTON
-4
-335
-109
-368
+250
+280
+355
+313
 button 3
 perform-action item 2 buttons
 NIL
@@ -708,10 +664,10 @@ NIL
 1
 
 BUTTON
-4
 370
-109
-403
+282
+475
+315
 button 4
 perform-action item 3 buttons
 NIL
@@ -725,23 +681,12 @@ NIL
 1
 
 MONITOR
-112
-265
-331
-326
-button of turtle 1
-[n_bt] of turtle 0
-17
-1
-15
-
-MONITOR
-332
-266
-779
-327
-button content of turtle 1
-[bt] of turtle 0
+13
+378
+232
+439
+button of Agent 0
+[buttons_assigned] of turtle 0
 17
 1
 15
@@ -758,56 +703,23 @@ Smile.txt
 String
 
 MONITOR
-110
-326
-330
-387
-button of turtle 2
-[n_bt] of turtle 1
+256
+378
+476
+439
+button of Agent 1
+[buttons_assigned] of turtle 1
 17
 1
 15
 
 MONITOR
-111
-387
-330
-448
-button of turtle 3
-[n_bt] of turtle 2
-17
-1
-15
-
-MONITOR
-333
-326
-779
-387
-button content of turtle 2
-[bt] of turtle 1
-17
-1
-15
-
-MONITOR
-331
-389
-777
-450
-button content of turtle 3
-[bt] of turtle 2
-17
-1
-15
-
-MONITOR
-113
-449
-329
 510
-buttons of turtle 2
-[n_bt] of turtle 3
+374
+729
+435
+button of Agent 2
+[buttons_assigned] of turtle 2
 17
 1
 15
@@ -861,24 +773,43 @@ vision_radius
 NIL
 HORIZONTAL
 
-MONITOR
-787
-204
-1204
-265
-NIL
-[action] of turtle 0
+TEXTBOX
 17
-1
+347
+167
+365
+Agent 0
 15
+0.0
+1
+
+TEXTBOX
+274
+346
+424
+364
+Agent 1\n
+15
+0.0
+1
+
+TEXTBOX
+523
+343
+673
+361
+Agent 2
+15
+0.0
+1
 
 MONITOR
-788
+526
 273
-1207
+668
 334
-NIL
-[action] of turtle 1
+Current Action
+button-of-the-hour
 17
 1
 15
