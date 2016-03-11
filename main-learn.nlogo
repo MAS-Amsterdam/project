@@ -3,7 +3,7 @@ globals [csv fileList day status high_score width height
   goal ;the goal pattern
 
   ;=========================buttons related variables==============================================
-  noise ; the randomly set points in each button that belongs to solution.
+  ; noise ; the randomly set points in each button that belongs to solution.
   noise_dis; the randomly set points in each button that not belongs to solution.
   buttons; the initialized buttons. And this sequence decides the index of the button during the whole simulation.
   button-of-the-hour; ( Not used till now) the button choosen to be pressed in current hour
@@ -18,7 +18,8 @@ turtles-own[own_color; color set to the agent
   ;=======================learning process variables===============================================
   vision;the patches in agents' vision
   visionindex;indexize the patches in agents' vision
-  before_world; the states of observed world (within vision) of an agent before the action. 0 represents black, 1 represents green. I think I will still use the world here, because it is related to the belief, and belief is about the whole world, although for one hour, it represents a vision.
+  before_world; the states of observed world (within vision) of an agent before the action. 0 represents black, 1 represents green.
+  ;I think I will still use the world here, because it is related to the belief, and belief is about the whole world, although for one hour, it represents a vision.
   after_world; the states of observed world (within vision) of an agent after the action.0 represents black, 1 represents green.
 
   ;======================beliefs===================================================================
@@ -453,9 +454,9 @@ to-report split [ string delim ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-1309
+793
 23
-1819
+1303
 554
 -1
 -1
@@ -480,10 +481,10 @@ ticks
 30.0
 
 SLIDER
-5
-135
-282
-168
+306
+139
+583
+172
 button_each
 button_each
 1
@@ -495,10 +496,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-6
-101
-158
-134
+199
+339
+351
+372
 NIL
 go
 NIL
@@ -512,10 +513,10 @@ NIL
 1
 
 BUTTON
-160
-102
-279
-135
+353
+340
+472
+373
 NIL
 go
 T
@@ -529,10 +530,10 @@ NIL
 1
 
 BUTTON
-337
-208
-497
-270
+22
+323
+182
+385
 NIL
 setup
 NIL
@@ -546,10 +547,10 @@ NIL
 1
 
 SLIDER
-282
-136
-559
-169
+21
+139
+298
+172
 num_agents
 num_agents
 2
@@ -561,10 +562,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-3
-171
-281
-204
+22
+181
+300
+214
 vision_radius
 vision_radius
 0
@@ -576,10 +577,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-7
-47
-771
-92
+498
+392
+667
+437
 Days to complete the task.
 day
 17
@@ -587,10 +588,10 @@ day
 11
 
 SLIDER
-282
-171
-563
-204
+308
+182
+589
+215
 num_hours
 num_hours
 button_each * num_agents / 2
@@ -602,10 +603,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-742
-107
-1188
-168
+359
+31
+616
+92
 NIL
 goal
 17
@@ -613,10 +614,10 @@ goal
 15
 
 BUTTON
-14
-282
-119
-315
+23
+395
+128
+428
 button 1
 perform-action item 0 buttons
 NIL
@@ -630,10 +631,10 @@ NIL
 1
 
 BUTTON
-130
-281
-235
-314
+139
+394
+244
+427
 button 2
 perform-action item 1 buttons
 NIL
@@ -647,10 +648,10 @@ NIL
 1
 
 BUTTON
-250
-280
-355
-313
+259
+393
+364
+426
 button 3
 perform-action item 2 buttons
 NIL
@@ -664,10 +665,10 @@ NIL
 1
 
 BUTTON
-370
-282
-475
-315
+379
+395
+484
+428
 button 4
 perform-action item 3 buttons
 NIL
@@ -681,10 +682,10 @@ NIL
 1
 
 MONITOR
-13
-378
-232
-439
+15
+512
+186
+573
 button of Agent 0
 [buttons_assigned] of turtle 0
 17
@@ -692,10 +693,10 @@ button of Agent 0
 15
 
 INPUTBOX
-3
-205
-183
-265
+9
+31
+189
+91
 pattern_name
 Smile.txt
 1
@@ -703,10 +704,10 @@ Smile.txt
 String
 
 MONITOR
-256
-378
-476
-439
+201
+512
+371
+573
 button of Agent 1
 [buttons_assigned] of turtle 1
 17
@@ -714,10 +715,10 @@ button of Agent 1
 15
 
 MONITOR
-510
-374
-729
-435
+386
+512
+562
+573
 button of Agent 2
 [buttons_assigned] of turtle 2
 17
@@ -725,10 +726,10 @@ button of Agent 2
 15
 
 BUTTON
-184
-210
-331
-266
+190
+36
+337
+92
 NIL
 show-goal-pattern
 NIL
@@ -742,10 +743,10 @@ NIL
 1
 
 BUTTON
-591
-104
-669
-137
+22
+652
+100
+685
 NIL
 learn
 NIL
@@ -758,61 +759,61 @@ NIL
 NIL
 1
 
-SLIDER
-300
-105
-477
-138
-vision_radius
-vision_radius
-0
-4
-1
-1
-1
-NIL
-HORIZONTAL
-
 TEXTBOX
-17
-347
-167
-365
+19
+481
+169
+499
 Agent 0
 15
 0.0
 1
 
 TEXTBOX
-274
-346
-424
-364
+219
+480
+369
+498
 Agent 1\n
 15
 0.0
 1
 
 TEXTBOX
-523
-343
-673
-361
+399
+481
+549
+499
 Agent 2
 15
 0.0
 1
 
 MONITOR
-526
-273
-668
-334
+500
+322
+642
+383
 Current Action
 button-of-the-hour
 17
 1
 15
+
+SLIDER
+38
+235
+210
+268
+noise
+noise
+0
+13
+13
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
