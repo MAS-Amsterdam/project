@@ -228,14 +228,14 @@ end
 ;choose_num: the extent to which a button's result is similar to the goal.An absolte value.
 ;chosen: a list consisting of the elements in the goal_combination that is chosen to a solution button.
 ;buttons: the matrix consisting of lists, each of which is one button that leads to the pattern.
-;buttons_dis: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
+;disturbing_buttons: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
 ;buttons: the matrix consisting of lists, each of which is one button, with the buttons leading to the solution coming first.
 ;noise_dis: number of random elements in each disturbing button.
 ;noise_dis_vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
 ;==============the design of the buttons========================================================================
 ;Every agent has the same number of buttons, so the total number of buttons in the model is decided by the multiplication of (button_each * num_agents).
 ;We set first half of the total buttons to be the solution, i.e. a list of buttons leading to the goal. ( if the total number of the buttons is odd, we set first ( half + 0.5 ) buttons to be the solution.
-;All the solutions buttons form the matrix called "buttons", the remaining buttons form the matrix called "buttons_dis".
+;All the solutions buttons form the matrix called "buttons", the remaining buttons form the matrix called "disturbing_buttons".
 ;Each solutions buttons in the matrix "buttons" except the last one , gets equal amount part of similarity to the goal pattern, but different elements of the goal pattern.
 ;The last button in the solution matrix is set to tidy up all the indifference to the goal pattern, by performing/pressing the pervious buttons in sequene and compared the outcome with the goal pattern.
 ;All of the buttons in the matrix is nothing more than randomly set buttons.
@@ -260,12 +260,13 @@ to setup-button
   ; the total number of buttons =  num_agent * button_each
   ; we choose the first half and one more of the buttons as the plan
 
-  let buttons_solution [] ; the solution plan to be achieved
+  let solution_buttons [] ; the solution plan to be achieved
 
   ;change the goal representation so patches to be set to black are represented as a negative number
   let goal_combination first goal
   foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
-  let solution_length ( round ( button_each * num_agents / 2 ) + 1 ) ; the total number of steps for this plan
+  let total_buttons button_each * num_agents
+  let solution_length ( round ( total_buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
 
   ;----------------------------------------------------------
   ; Part one: buttons leading to solution
@@ -302,13 +303,12 @@ to setup-button
          ]
        ]
      ]
-   set buttons_solution fput (list pos neg) buttons_solution
+   set solution_buttons fput (list pos neg) solution_buttons
    ]
 
 
 
-  let noise_dis  (choose_num + noise) ; the number of propositions in the noise buttons
-  foreach buttons_solution [ perform-action  ? ]
+  foreach solution_buttons [ perform-action  ? ]
  ; a tidy up button
   let last_pos []
   let last_neg []
@@ -319,14 +319,14 @@ to setup-button
     ]
 
    let last_btn (list last_pos last_neg)
-   set buttons_solution lput (last_btn) buttons_solution
+   set solution_buttons lput (last_btn) solution_buttons
 
 
    perform-action last_btn
 
   ;2. buttons not leading to patterns,i.e. disturbing the agents.
-   let buttons_dis []
-
+   let disturbing_buttons []
+   let noise_dis  (choose_num + noise) ; the number of propositions in the disturbing buttons
     foreach n-values  ( button_each * num_agents - solution_length ) [?][
     let num_random   random ( floor ( width * height / 2 ) );the number of elements in each button_dis
     let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
@@ -337,11 +337,11 @@ to setup-button
     [set neg_d fput ? neg_d];randomly set the sign (on/off) to the elements
     ]
 
-   set buttons_dis fput (list pos_d neg_d ) buttons_dis
+   set disturbing_buttons fput (list pos_d neg_d ) disturbing_buttons
 
     ]
 
-     set buttons sentence buttons_solution buttons_dis
+     set buttons sentence solution_buttons disturbing_buttons ; append the disturbing buttons to the solution buttons
 
 end
 
@@ -557,7 +557,7 @@ num_agents
 num_agents
 2
 7
-3
+4
 1
 1
 NIL
@@ -596,9 +596,9 @@ SLIDER
 215
 num_hours
 num_hours
-button_each * num_agents / 2
-button_each * num_agents
-7.5
+ceiling button_each * num_agents / 2
+ceiling button_each * num_agents
+10
 1
 1
 NIL
@@ -608,12 +608,12 @@ MONITOR
 479
 35
 685
-96
+84
 NIL
 goal
 17
 1
-15
+12
 
 BUTTON
 23
