@@ -1,7 +1,14 @@
-globals [csv fileList day status high_score width height
+globals [
+  csv
+  fileList ; ???? TODO: what is this?
+  continue ; if the game is goal is achieved, then continue if false
+  width
+  height
   color_list; color for different agents
   goal ;the goal pattern
 
+  day ; the day
+  hour; the hour
   ;=========================buttons related variables==============================================
   ; noise ; the randomly set points in each button that belongs to solution.
   ; noise_dis; the randomly set points in each button that not belongs to solution.
@@ -21,7 +28,8 @@ turtles-own[own_color; color set to the agent
   before_world; the states of observed world (within vision) of an agent before the action. 0 represents black, 1 represents green.
   ;I think I will still use the world here, because it is related to the belief, and belief is about the whole world, although for one hour, it represents a vision.
   after_world; the states of observed world (within vision) of an agent after the action.0 represents black, 1 represents green.
-
+  know_true ; the set of propositions the agent believe to be true
+  know_false ; the set of propositions the agent believe to be false
   ;======================beliefs===================================================================
   action; Beliefs about the world of the agents. A list of matices. The matrix takes the form of {{know-true}{know-false}}, which is related to one button. The sequence of the matrices in the list is the same as in "buttons".
   ; Robert: why a list of actions / matries?
@@ -123,6 +131,10 @@ to load-and-display-goal
     ask patch x y [set pcolor green]
     ]
 end
+
+;==============the initial states=============================================================================
+;it is assumed that the initial state is black, i.e. all lights off.
+
 
 to setup-patches
   ask patches[set pcolor black ]
@@ -238,37 +250,6 @@ end
 
 
 
-; =================================================================
-; ========================== The Go part ==========================
-; =================================================================
-
-to go
-;perform-action item 1 buttons
-end
-
-
-;================================main function for learning====================================================
-to learn
-   ; learning process for one day
-  foreach n-values ( button_each * num_agents) [?]; press all the buttons in original sequence and learn the actions.After planning part is ready, "button_each * num_agents"should be replaced by (length buttons_current)
-
-    [
-    update-vision_before_action
-    perform-action item ? buttons ; press the button sequence. Should be buttons_current (results of plannning), but now I use buttons instead.
-    update-vision_after_action
-    update-belief-observation ?   ; after planning part is ready, '?' should be replaced by the index of current implemented button. The index should be referred to the position in  variable "buttons".
-    ask turtles[fd 1]             ;after planning part is ready, this should be replaced by the intended direcrion and forward.
-    ]
-  communicate                     ; communicate at night, to combine action of each agents, and set every one's action(i.e. belief ) the same.
-  update-belief-communication     ;set each agent's belief same to shared belief base.
-
-  show action_communication
-  show "action_communication"
-
-
-end
-
-
 
 to show-vision
   ;visulize of the vision,setting plabels in the vision
@@ -282,34 +263,81 @@ to show-vision
       ]
 end
 
-to update-vision_before_action
-  ;update the observed states of the current vision,after one move during hours.
 
-   ask patches [set plabel ""]
-   foreach (n-values num_agents [?]) [
-     ask turtle ? [
-     set before_world []
 
-     set vision (patches in-cone-nowrap vision_radius 360)
-     set vision sort vision ; vision expressed in patches
-     set visionindex []; the patches (indexed) within vision
-     foreach vision[
+; =================================================================
+; ========================== The Go part ==========================
+; =================================================================
 
-        let patches_index 0 ;variable used when transforming the vision patches to index.
-        let  state_index 0;variable used when transforming the observed patches states into index
-        ask ? [set patches_index  ( pycor * width + pxcor )
-          ifelse (pcolor = black)
-          [set  state_index 0];if the state is black, set index to 0.
-          [set  state_index 1];if the state is green, set index to 1.
-           ]
-       set visionindex lput patches_index visionindex ;vision expressed in index
-       set before_world lput  state_index before_world  ; before_world:list consisting of the states of observed world (within vision) of an agent before the action
+to go
+  ; for day 0, hour 0 the button of the hour is randomly choosen.
+
+
+end
+
+
+;================================main function for learning====================================================
+;to learn
+;   ; learning process for one day
+;  foreach n-values ( button_each * num_agents) [?]; press all the buttons in original sequence and learn the actions.After planning part is ready, "button_each * num_agents"should be replaced by (length buttons_current)
+;
+;    [
+;    update-vision_before_action
+;    perform-action item ? buttons ; press the button sequence. Should be buttons_current (results of plannning), but now I use buttons instead.
+;    update-vision_after_action
+;    update-belief-observation ?   ; after planning part is ready, '?' should be replaced by the index of current implemented button. The index should be referred to the position in  variable "buttons".
+;    ask turtles[fd 1]             ;after planning part is ready, this should be replaced by the intended direcrion and forward.
+;    ]
+;  communicate                     ; communicate at night, to combine action of each agents, and set every one's action(i.e. belief ) the same.
+;  update-belief-communication     ;set each agent's belief same to shared belief base.
+;
+;  show action_communication
+;  show "action_communication"
+;
+;
+;end
+
+to learn
+  ask turtles [
+    show "I am here"
+    update_vision
 
     ]
-
-     ]]
-   show-vision;visulize of the vision
 end
+
+
+to update_vision ; change the vision and vision index
+
+end
+
+;to update-vision_before_action
+;  ;update the observed states of the current vision,after one move during hours.
+;
+;   ask patches [set plabel ""]
+;   foreach (n-values num_agents [?]) [
+;     ask turtle ? [
+;     set before_world []
+;
+;     set vision (patches in-cone-nowrap vision_radius 360)
+;     set vision sort vision ; vision expressed in patches
+;     set visionindex []; the patches (indexed) within vision
+;     foreach vision[
+;
+;        let patches_index 0 ;variable used when transforming the vision patches to index.
+;        let  state_index 0;variable used when transforming the observed patches states into index
+;        ask ? [set patches_index  ( pycor * width + pxcor )
+;          ifelse (pcolor = black)
+;          [set  state_index 0];if the state is black, set index to 0.
+;          [set  state_index 1];if the state is green, set index to 1.
+;           ]
+;       set visionindex lput patches_index visionindex ;vision expressed in index
+;       set before_world lput  state_index before_world  ; before_world:list consisting of the states of observed world (within vision) of an agent before the action
+;
+;    ]
+;
+;     ]]
+;   show-vision;visulize of the vision
+;end
 
 
 to update-vision_after_action
@@ -365,34 +393,34 @@ end
 
 
 
-to communicate
-   ; to combine all the action_button of every agent, getting a learning result:action_communication.
+;to communicate
+;   ; to combine all the action_button of every agent, getting a learning result:action_communication.
+;
+;
+;   let i 0
+;   foreach n-values ( button_each * num_agents) [?][
+;   ;ask turtle 0[set action_all item ? action];initialize action_all to the belief base of the first turtle, and then add others' different belief to that.
+;   ;show action_all
+;   foreach n-values num_agents[?]
+;   [ask turtle ?[
+;        foreach( item 0 (item i action ))[;if the observed true knowledge index of the states is not in the true knowledge of shared belief base, add it.
+;        ifelse (member? ?  (item 0 ( item i action_communication) ))[][set action_communication replace-item i action_communication (list (lput ? (item 0 (item i action_communication )) )  (item 1 (item i action_communication )))]]
+;
+;        foreach ( item 1 (item i action ))[;if the observed false knowledge index of the states is not in the false knowledge of shared belief base, add it.
+;        ifelse (member? ?  (item 1 ( item i action_communication)  ))[][set action_communication replace-item i action_communication (list (item 0 (item i action_communication )) (lput ? (item 1 ((item i action_communication ) ) )))]]
+;      ]]
+;
+;   set i (i + 1)
+;    ]
+;end
+;
 
-
-   let i 0
-   foreach n-values ( button_each * num_agents) [?][
-   ;ask turtle 0[set action_all item ? action];initialize action_all to the belief base of the first turtle, and then add others' different belief to that.
-   ;show action_all
-   foreach n-values num_agents[?]
-   [ask turtle ?[
-        foreach( item 0 (item i action ))[;if the observed true knowledge index of the states is not in the true knowledge of shared belief base, add it.
-        ifelse (member? ?  (item 0 ( item i action_communication) ))[][set action_communication replace-item i action_communication (list (lput ? (item 0 (item i action_communication )) )  (item 1 (item i action_communication )))]]
-
-        foreach ( item 1 (item i action ))[;if the observed false knowledge index of the states is not in the false knowledge of shared belief base, add it.
-        ifelse (member? ?  (item 1 ( item i action_communication)  ))[][set action_communication replace-item i action_communication (list (item 0 (item i action_communication )) (lput ? (item 1 ((item i action_communication ) ) )))]]
-      ]]
-
-   set i (i + 1)
-    ]
-end
-
-
-to update-belief-communication
-  ;set each agent's belief base, i.e.action, the same as shared belief, i.e. action_communication.
-  ask turtles[
-    set action action_communication
-    ]
-end
+;to update-belief-communication
+;  ;set each agent's belief base, i.e.action, the same as shared belief, i.e. action_communication.
+;  ask turtles[
+;    set action action_communication
+;    ]
+;end
 
 
 
@@ -423,8 +451,20 @@ end
 ;==============the assignment of buttons to turtles============================================================
 ;Randomly assigned. The serial number for the button is the sequence of the buttons in the matrix "button_all", it is always that the first half or first (half + 0.5) buttons is the solution buttons.
 ;
-;==============the initial states=============================================================================
-;it is assumed that the initial state is black, i.e. all lights off.
+
+
+to assign-buttons; randomly assign the buttons to the turtles
+   let remain_bt buttons; variables remained when assigning buttons to agents one by one
+   ask turtles[
+   set buttons_assigned []
+    foreach n-values button_each [?][
+    let n_button ( random  (length remain_bt ))
+    set buttons_assigned lput ((position  (item n_button remain_bt) buttons )  + 1 ) buttons_assigned
+    set remain_bt (remove (item n_button remain_bt) remain_bt )
+
+   ]
+  ]
+end
 
 
 
@@ -449,19 +489,6 @@ tick
 end
 
 
-
-to assign-buttons; randomly assign the buttons to the turtles
-   let remain_bt buttons; variables remained when assigning buttons to agents one by one
-   ask turtles[
-   set buttons_assigned []
-   foreach n-values button_each [?][
-   let n_button ( random  (length remain_bt ))
-   set buttons_assigned lput ((position  (item n_button remain_bt) buttons )  + 1 ) buttons_assigned
-   set remain_bt (remove (item n_button remain_bt) remain_bt )
-
-   ]
-  ]
-end
 @#$#@#$#@
 GRAPHICS-WINDOW
 725
@@ -565,7 +592,7 @@ num_agents
 num_agents
 2
 7
-2
+3
 1
 1
 NIL
