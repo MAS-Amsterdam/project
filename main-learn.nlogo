@@ -15,7 +15,7 @@ globals [
   ; noise ; the randomly set points in each button that belongs to solution.
   ; noise_dis; the randomly set points in each button that not belongs to solution.
   buttons; a list of buttons, each button is a pair setting some patches to green and some to black
-  button-of-the-hour; the button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
+  button-of-the-hour; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
   ]
 turtles-own[own_color; color set to the agent
   buttons_assigned; the order of buttons it owns, relating to the matrix buttons
@@ -279,7 +279,8 @@ end
 to go
   ask patches [set pcolor black]
   ; for day 0, hour 0 the button of the hour is randomly choosen.
-  ifelse (hour <= num_hours) ; in day time (not at night)
+  ifelse (hour <= num_hours)
+  ; ====================== in day time =================================
   [
     show "in day time"
     ; first of all choose the action to perform for this hour.
@@ -288,10 +289,21 @@ to go
     [
       let max_value (max bidding)
       ; then obtain the indexes with this value
-      set button-of-the-hour one-of (filter [? = max_value] n-values (button_each * num_agents)[?])
-      ]; choose the button with the highest bidding value
+      set button-of-the-hour (one-of (filter [? = max_value] n-values (button_each * num_agents)[?]))
+      ; choose the button with the highest bidding value
     ]
-  [
+  ; the agent first record the observation
+  ask turtles [
+    show "I am updating vision now"
+    ]
+  ; then perform the action
+  perform-action item button-of-the-hour buttons
+  if (check-goal = true) [stop]
+  ; then the agent perform learning
+
+  ; the agent start the bidding of the next action (with values stored in the "bidding")
+  ]
+  [ ; ====================== at night =================================
     show "at night"
     ]
 
@@ -299,7 +311,30 @@ to go
 
 end
 
+to-report check-goal ; check if the current situation is the same as the goal
+  let sign true
+  foreach (first goal)[
+    let x getx ?
+    let y gety ?
+    if (([pcolor] of (patch x y)) = black)[set sign false]
+    ]
+  foreach (last goal)[
+    let x getx ?
+    let y gety ?
+    if (([pcolor] of (patch x y)) = green)[set sign false]
+    ]
+  if sign = true [report true]
+  report false
+end
 
+; two helping function to get the xcor and ycor of the patch according to its index
+to-report getx [n]
+   report (n mod width)
+end
+
+to-report gety [n]
+  report (floor (n / width))
+end
 ;================================main function for learning====================================================
 ;to learn
 ;   ; learning process for one day
@@ -514,6 +549,7 @@ end
 
 
 ; TODO: button generation can be done using "shuffle"
+; TODO: random buttons are simply too random and looks ugly
 @#$#@#$#@
 GRAPHICS-WINDOW
 725
