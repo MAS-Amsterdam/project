@@ -15,7 +15,7 @@ globals [
   ; noise ; the randomly set points in each button that belongs to solution.
   ; noise_dis; the randomly set points in each button that not belongs to solution.
   buttons; a list of buttons, each button is a pair setting some patches to green and some to black
-  button-of-the-hour; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
+  button_chosen; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
   ]
 turtles-own[own_color; color set to the agent
   buttons_assigned; the order of buttons it owns, relating to the matrix buttons
@@ -296,15 +296,15 @@ to go
     show "in day time"
     ; first of all choose the action to perform for this hour.
     ifelse (day = 0 and hour = 0)
-    [set button-of-the-hour one-of (n-values length buttons [?])] ;  select a random action and record its index]
+    [set button_chosen one-of (n-values length buttons [?])] ;  select a random action and record its index]
     [
       let max_value (max bidding)
       ; then obtain the indexes with this value
-      set button-of-the-hour (one-of (filter [? = max_value] n-values (button_each * num_agents)[?]))
+      set button_chosen (one-of (filter [? = max_value] n-values (button_each * num_agents)[?]))
       ; choose the button with the highest bidding value
     ]
   ; then perform the action
-  perform-action item button-of-the-hour buttons
+  perform-action item button_chosen buttons
   if (check-goal = true) [
     show "Game Over"
     show "The total days taken is: "
@@ -377,6 +377,32 @@ to observe-and-learn ; ask each agent to change the vision and vision index
       ]
 
     ; compare vision_indexes and observation to learn
+
+    ; Step 1: obtain those not changed
+    let know_false last (item button_chosen action_knowledge)
+    let know_true first (item button_chosen action_knowledge)
+
+    let not_changed (modes (sentence observation vision_indexes))
+
+    let new_know_false []
+    foreach not_changed [
+      ifelse (? > 0)
+      [set new_know_false fput (? * 3 + 1) new_know_false]
+      [set new_know_false fput (? * 3 + 0) new_know_false]]; compute the new knowledge obtained from vision and observation
+    set know_false remove-duplicates (sentence know_false new_know_false) ; extract information and add to belief of this action remove-duplicates
+    ; Step 2: obtain those changed
+
+    let changed (modes (sentence (map [? * -1] observation) vision_indexes)); those that have changed
+    let new_know_true []
+    foreach changed [
+      ifelse (? > 0)
+      [set new_know_true fput (? * 3 + 0) new_know_true]
+      [set new_know_true fput (? * 3 + 1) new_know_true]]; compute the new knowledge obtained from vision and observation
+
+    set know_true remove-duplicates (sentence know_true new_know_true)
+
+    ; replace the knowledge of the action
+    replace-item button_chosen action_knowledge (list know_true know_false)
 
     ; and finally, set vision_indexes as the new observation
     set observation vision_indexes
