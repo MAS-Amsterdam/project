@@ -9,15 +9,13 @@ globals [
 
   day ; the day
   hour; the hour
+
+  bidding ; for each action, we record a value
   ;=========================buttons related variables==============================================
   ; noise ; the randomly set points in each button that belongs to solution.
   ; noise_dis; the randomly set points in each button that not belongs to solution.
-  buttons; the initialized buttons. And this sequence decides the index of the button during the whole simulation.
-  button-of-the-hour; ( Not used till now) the button choosen to be pressed in current hour
-
-  ;========================communication related variables=========================================
-  action_communication; combine all the agents learning outcome at night. And set it to all the agents at the start of the day.
-  buttons_current;( Not used till now) the button sequences to be implemented by current round(i.e. today). The results of learning.
+  buttons; a list of buttons, each button is a pair setting some patches to green and some to black
+  button-of-the-hour; the button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
   ]
 turtles-own[own_color; color set to the agent
   buttons_assigned; the order of buttons it owns, relating to the matrix buttons
@@ -28,14 +26,17 @@ turtles-own[own_color; color set to the agent
   before_world; the states of observed world (within vision) of an agent before the action. 0 represents black, 1 represents green.
   ;I think I will still use the world here, because it is related to the belief, and belief is about the whole world, although for one hour, it represents a vision.
   after_world; the states of observed world (within vision) of an agent after the action.0 represents black, 1 represents green.
-  know_true ; the set of propositions the agent believe to be true
-  know_false ; the set of propositions the agent believe to be false
+
   ;======================beliefs===================================================================
-  action; Beliefs about the world of the agents. A list of matices. The matrix takes the form of {{know-true}{know-false}}, which is related to one button. The sequence of the matrices in the list is the same as in "buttons".
-  ; Robert: why a list of actions / matries?
-  ; H: modified the explaination. See if it more clearly?
-  ;action_communication:this is also beliefs, but not agents own, it is a shared, so global variables.
-  ]
+  action_knowledge; Beliefs about the actions. each action is a pair: (know_true, know_false). know_true consists of the propositions the agent is sure about.
+  ; know false consists of the propositions the agent knows false about.
+]
+
+
+; =================================================================
+; ========================== The Setup part =======================
+; =================================================================
+
 to setup
   clear-all
   ;set noise 12; the randomly set points in each button that belongs to solution.
@@ -44,18 +45,29 @@ to setup
 
   reset-ticks
   open_file; set up the goal pattern.
-  setup-patches
+  setup-time
+
   setup-button
+  setup-bidding
   setup-agents
   assign-buttons
   show-vision;show the agents' vision by * mark.
+  setup-patches
 end
 
 
+to setup-time
+  set day 0
+  set hour 0
+end
 
-; =================================================================
-; ========================== The Setup part =======================
-; =================================================================
+to setup-bidding
+  set bidding []
+  foreach buttons[
+    set bidding (fput 0 bidding)
+    ]
+
+end
 
 ; to load the goal pattern
 
@@ -237,13 +249,8 @@ to setup-agents
     set label who
     setxy random-xcor random-ycor
 
-    ;initialize the belief-action, i.e. variable action.And initialize the belief-communication
-    set action []
-    set  action_communication []
-    foreach n-values ( button_each * num_agents) [?]
-      [ set action lput (list[][])action ;turtle's own; beliefs about the buttons, grows every day.
-        set action_communication lput (list[][]) action_communication;global&combination of all the information of the agents right after they communicate at night, which will also be the belief base for every agent at the start of the day.
-        ]
+    ;initialize the belief of actions,
+    set action_knowledge []
     ]
     foreach (n-values num_agents [?]) [ ask turtle ? [ set color item ? color_list] ];set different colors to agents.
 end
@@ -270,8 +277,25 @@ end
 ; =================================================================
 
 to go
+  ask patches [set pcolor black]
   ; for day 0, hour 0 the button of the hour is randomly choosen.
+  ifelse (hour <= num_hours) ; in day time (not at night)
+  [
+    show "in day time"
+    ; first of all choose the action to perform for this hour.
+    ifelse (day = 0 and hour = 0)
+    [set button-of-the-hour one-of (n-values length buttons [?])] ;  select a random action and record its index]
+    [
+      let max_value (max bidding)
+      ; then obtain the indexes with this value
+      set button-of-the-hour one-of (filter [? = max_value] n-values (button_each * num_agents)[?])
+      ]; choose the button with the highest bidding value
+    ]
+  [
+    show "at night"
+    ]
 
+  ; if the hour = num_hours then it's another day
 
 end
 
@@ -340,56 +364,56 @@ end
 ;end
 
 
-to update-vision_after_action
-  ;update the observed states of the current vision,after one button is pressed.
-
-     foreach (n-values num_agents [?]) [
-     ask turtle ? [
-     set after_world []
-     foreach vision[
-     let patches_index 0 ;variable used when transforming the vision patches to index.
-     let state_index 0;variable used when transforming the observed patches' states into index
-     ask ? [set patches_index  ( pycor * width + pxcor )
-     ifelse (pcolor = black)
-     [set state_index 0]
-     [set state_index 1]
-     ]
-   set after_world lput state_index after_world; after_world:list consisting of the states of observed world (within vision) of an agent after the action
-    ]
-     ]
-
-   ]
-end
-
-to update-belief-observation [num];update the action matrix, which is also theh agent's belief_ base for actions.num is the variable for the current button's index.
-
-    foreach (n-values num_agents [?]) [
-     ask turtle ? [
-       let ac_t -1 ; action learnt in a specific event,true variables
-       let ac_f -1; action learnt in a specific event,false variables
-       foreach n-values (length (visionindex))[?][; encode the event, i.e. compare the before and after world
-       if((item ? before_world = 0 )and (item ?  after_world = 0 ))[set ac_f (item ? visionindex) * 3 + 0]
-       if((item ? before_world = 1 )and (item ?  after_world = 0 ))[set ac_t (item ? visionindex) * 3 + 1]
-       if((item ? before_world = 0 )and (item ?  after_world = 1 ))[set ac_t (item ? visionindex) * 3 + 0]
-       if((item ? before_world = 1 )and (item ?  after_world = 1 ))[set ac_f (item ? visionindex) * 3 + 1]
-
-        ;add new information to action, which is also belief base
-        if ( ac_t >  0 );if there is something learnt about true knowledge
-        [ifelse (member? ac_t item 0 (item num action ))[][set action replace-item num action (list (lput ac_t (item 0 (item num action )) ) item 1 (item num action))]]
-        if ( ac_f >  0 );if there is something learnt about false knowledge
-        [ifelse (member? ac_f item 1 (item num action ))[][set action replace-item num action (list item 0 (item num action) (lput ac_f (item 1 (item num action )) ))]]
-         ]
-
-        foreach n-values ( width * height )[?]; if there are already 2 values for a specific grid in known-false, then we can deduce the corresponding known-ture.
-        [if ( member? (? * 3 ) (item 1( item num action )) ) and ( member? ( ? * 3 + 1 ) (item 1 (item num action) ) and (not ( member? ( ? * 3 + 2 ) (item 0 (item num action) ))))
-        [ set action replace-item num action (list (lput ( ? * 3 + 2) item 0  (item num action )) item 1  (item num action ) )]]
-
-       ]
-
-     ]
-
-end
-
+;to update-vision_after_action
+;  ;update the observed states of the current vision,after one button is pressed.
+;
+;     foreach (n-values num_agents [?]) [
+;     ask turtle ? [
+;     set after_world []
+;     foreach vision[
+;     let patches_index 0 ;variable used when transforming the vision patches to index.
+;     let state_index 0;variable used when transforming the observed patches' states into index
+;     ask ? [set patches_index  ( pycor * width + pxcor )
+;     ifelse (pcolor = black)
+;     [set state_index 0]
+;     [set state_index 1]
+;     ]
+;   set after_world lput state_index after_world; after_world:list consisting of the states of observed world (within vision) of an agent after the action
+;    ]
+;     ]
+;
+;   ]
+;end
+;
+;to update-belief-observation [num];update the action matrix, which is also theh agent's belief_ base for actions.num is the variable for the current button's index.
+;
+;    foreach (n-values num_agents [?]) [
+;     ask turtle ? [
+;       let ac_t -1 ; action learnt in a specific event,true variables
+;       let ac_f -1; action learnt in a specific event,false variables
+;       foreach n-values (length (visionindex))[?][; encode the event, i.e. compare the before and after world
+;       if((item ? before_world = 0 )and (item ?  after_world = 0 ))[set ac_f (item ? visionindex) * 3 + 0]
+;       if((item ? before_world = 1 )and (item ?  after_world = 0 ))[set ac_t (item ? visionindex) * 3 + 1]
+;       if((item ? before_world = 0 )and (item ?  after_world = 1 ))[set ac_t (item ? visionindex) * 3 + 0]
+;       if((item ? before_world = 1 )and (item ?  after_world = 1 ))[set ac_f (item ? visionindex) * 3 + 1]
+;
+;        ;add new information to action, which is also belief base
+;        if ( ac_t >  0 );if there is something learnt about true knowledge
+;        [ifelse (member? ac_t item 0 (item num action ))[][set action replace-item num action (list (lput ac_t (item 0 (item num action )) ) item 1 (item num action))]]
+;        if ( ac_f >  0 );if there is something learnt about false knowledge
+;        [ifelse (member? ac_f item 1 (item num action ))[][set action replace-item num action (list item 0 (item num action) (lput ac_f (item 1 (item num action )) ))]]
+;         ]
+;
+;        foreach n-values ( width * height )[?]; if there are already 2 values for a specific grid in known-false, then we can deduce the corresponding known-ture.
+;        [if ( member? (? * 3 ) (item 1( item num action )) ) and ( member? ( ? * 3 + 1 ) (item 1 (item num action) ) and (not ( member? ( ? * 3 + 2 ) (item 0 (item num action) ))))
+;        [ set action replace-item num action (list (lput ( ? * 3 + 2) item 0  (item num action )) item 1  (item num action ) )]]
+;
+;       ]
+;
+;     ]
+;
+;end
+;
 
 
 
@@ -489,6 +513,7 @@ tick
 end
 
 
+; TODO: button generation can be done using "shuffle"
 @#$#@#$#@
 GRAPHICS-WINDOW
 725
@@ -616,24 +641,24 @@ HORIZONTAL
 MONITOR
 497
 395
-666
+580
 440
-Days to complete the task.
+Day
 day
 17
 1
 11
 
 SLIDER
-308
-182
-589
-215
+314
+183
+595
+216
 num_hours
 num_hours
-ceiling button_each * num_agents / 2
+(ceiling button_each * num_agents / 2) + 1
 ceiling button_each * num_agents
-10
+4
 1
 1
 NIL
@@ -876,6 +901,17 @@ MONITOR
 181
 Total buttons
 num_agents * button_each
+17
+1
+11
+
+MONITOR
+587
+395
+675
+440
+hour
+hour
 17
 1
 11
