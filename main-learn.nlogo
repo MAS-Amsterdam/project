@@ -19,14 +19,7 @@ globals [
   ]
 turtles-own[own_color; color set to the agent
   buttons_assigned; the order of buttons it owns, relating to the matrix buttons
-
-  ;=======================learning process variables===============================================
-  vision;the patches in agents' vision
-  visionindex;indexize the patches in agents' vision
-  before_world; the states of observed world (within vision) of an agent before the action. 0 represents black, 1 represents green.
-  ;I think I will still use the world here, because it is related to the belief, and belief is about the whole world, although for one hour, it represents a vision.
-  after_world; the states of observed world (within vision) of an agent after the action.0 represents black, 1 represents green.
-
+  observation ; the agent's observation
   ;======================beliefs===================================================================
   action_knowledge; Beliefs about the actions. each action is a pair: (know_true, know_false). know_true consists of the propositions the agent is sure about.
   ; know false consists of the propositions the agent knows false about.
@@ -41,7 +34,7 @@ to setup
   clear-all
   ;set noise 12; the randomly set points in each button that belongs to solution.
   ; set noise_dis 8; the randomly set points in each button that not belongs to solution.
-  set color_list n-of num_agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
+  set color_list n-of num_agents [yellow magenta blue red pink brown grey red pink blue];just for the sake of telling each agent apart
 
   reset-ticks
   open_file; set up the goal pattern.
@@ -49,10 +42,11 @@ to setup
 
   setup-button
   setup-bidding
+  setup-patches
   setup-agents
   assign-buttons
   show-vision;show the agents' vision by * mark.
-  setup-patches
+
 end
 
 
@@ -245,13 +239,27 @@ end
 
 
 to setup-agents
+  let all_black [];get the index of all the patches
+  ask patches [set all_black (fput (get-patch-index self) all_black)]
+
   create-turtles num_agents [
     set label who
     setxy random-xcor random-ycor
+    ; set the observation to black everywhere
 
-    ;initialize the belief of actions,
+    ;initialize the knowledge of actions,
     set action_knowledge []
+    let k_tmp (list [] [])
+    foreach n-values (length buttons)[?] [
+      set action_knowledge (fput k_tmp action_knowledge)
+      ]
+    ; the agent's initial observation is simply all black
+
+    set observation all_black
+
     ]
+
+
     foreach (n-values num_agents [?]) [ ask turtle ? [ set color item ? color_list] ];set different colors to agents.
 end
 
@@ -270,7 +278,10 @@ to show-vision
       ]
 end
 
-
+to-report get-patch-index [p]
+  ifelse ([pcolor] of p = green) [report ([pycor] of p * width + [pxcor] of p)]
+  [report ([pycor] of p * width + [pxcor] of p) * -1]
+end
 
 ; =================================================================
 ; ========================== The Go part ==========================
@@ -292,15 +303,15 @@ to go
       set button-of-the-hour (one-of (filter [? = max_value] n-values (button_each * num_agents)[?]))
       ; choose the button with the highest bidding value
     ]
-  ; the agent first record the observation
-  ask turtles [
-    show "I am updating vision now"
-    ]
   ; then perform the action
   perform-action item button-of-the-hour buttons
-  if (check-goal = true) [stop]
-  ; then the agent perform learning
-
+  if (check-goal = true) [
+    show "Game Over"
+    show "The total days taken is: "
+    show day
+    stop]
+  ; then the agent observe and perform learning
+  observe-and-learn
   ; the agent start the bidding of the next action (with values stored in the "bidding")
   ]
   [ ; ====================== at night =================================
@@ -356,16 +367,20 @@ end
 ;
 ;end
 
-to learn
+
+to observe-and-learn ; ask each agent to change the vision and vision index
   ask turtles [
-    show "I am here"
-    update_vision
+    let vision (patches in-cone-nowrap vision_radius 360) ; the agent's vision
+    let vision_indexes []
+    ask vision [
+      set vision_indexes fput (get-patch-index self)  vision_indexes
+      ]
 
+    ; compare vision_indexes and observation to learn
+
+    ; and finally, set vision_indexes as the new observation
+    set observation vision_indexes
     ]
-end
-
-
-to update_vision ; change the vision and vision index
 
 end
 
@@ -550,6 +565,8 @@ end
 
 ; TODO: button generation can be done using "shuffle"
 ; TODO: random buttons are simply too random and looks ugly
+; TODO: ask the agent to press the button, not the observer
+; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
 725
