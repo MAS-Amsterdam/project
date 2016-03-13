@@ -394,7 +394,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
 
     let tmp (sentence (map [? * -1] observation) vision_indexes)
     let changed []
-    if (not modes tmp = tmp) [let changed modes tmp]
+    if (not (modes tmp = tmp)) [set changed modes tmp] ; be careful about this line. if there is no repeated element then it would simply return the original list back!!!
 
 
     show "*********"
