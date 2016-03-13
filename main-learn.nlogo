@@ -322,6 +322,7 @@ to go
     ask patches [set pcolor black]
     set hour 0
     set day (day + 1)
+;    communicate
     ]
 
   ; if the hour = num_hours then it's another day
@@ -456,7 +457,7 @@ end
 ;   set i (i + 1)
 ;    ]
 ;end
-;
+
 
 ;to update-belief-communication
 ;  ;set each agent's belief base, i.e.action, the same as shared belief, i.e. action_communication.
@@ -541,6 +542,11 @@ to bid ; calculate the bidding value for each agent for each action
       let world_now represent_visable_world ;a representation of the world from the agent knows
       let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
       let bidding_value calculate_bidding world_after
+      show world_now
+      show world_after
+      show (item ? bidding)
+      show bidding_value
+      show "----------"
       if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
     ]
   ]
@@ -563,6 +569,8 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
 end
 
 to-report expected_local_world [world act]; to perform an action according to the agent's knowledge
+  show "the knowledge of the action is as follows"
+  show act
   ; extract the certain effect of this action
   ; first the know_true part
 
@@ -579,8 +587,8 @@ to-report expected_local_world [world act]; to perform an action according to th
     [
       if ((? > 0) and (member? (3 * ?) know_true))[set expected (fput ? expected)]
       if ((? > 0) and (member? (3 * ? + 1) know_true))[set expected (fput (-1 * ?) expected)]
-      if ((? < 0) and (member? (3 * ? + 1) know_true))[set expected (fput ? expected)]
-      if ((? < 0) and (member? (3 * ?) know_true))[set expected (fput (-1 * ?) expected)]
+      if ((? < 0) and (member? (-3 * ? + 1) know_true))[set expected (fput ? expected)]
+      if ((? < 0) and (member? (-3 * ?) know_true))[set expected (fput (-1 * ?) expected)]
 
       ]
     ; the rest is not sure for the agent.
@@ -591,7 +599,7 @@ to-report expected_local_world [world act]; to perform an action according to th
   report expected
 end
 
-to-report calculate_bidding [world_after] ;  comapre it with the goal and calculate a value for bidding
+to-report calculate_bidding [world_after] ;  compare it with the goal and calculate a value for bidding
   let goal_on first goal
   let goal_off last goal
   let bidding_value 0
@@ -727,7 +735,7 @@ vision_radius
 vision_radius
 0
 4
-3
+4
 1
 1
 NIL
