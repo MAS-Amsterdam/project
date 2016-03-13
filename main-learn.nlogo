@@ -388,21 +388,34 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     foreach not_changed [
       ifelse (? > 0)
       [set new_know_false fput (? * 3 + 1) new_know_false]
-      [set new_know_false fput (? * 3 + 0) new_know_false]]; compute the new knowledge obtained from vision and observation
+      [set new_know_false fput (? * -3 + 0) new_know_false]]; compute the new knowledge obtained from vision and observation
     set know_false remove-duplicates (sentence know_false new_know_false) ; extract information and add to belief of this action remove-duplicates
     ; Step 2: obtain those changed
 
-    let changed (modes (sentence (map [? * -1] observation) vision_indexes)); those that have changed
+    let tmp (sentence (map [? * -1] observation) vision_indexes)
+    let changed []
+    if (not modes tmp = tmp) [let changed modes tmp]
+
+
+    show "*********"
+    show observation
+    show vision_indexes
+    show changed
+    show "--------------"
     let new_know_true []
     foreach changed [
       ifelse (? > 0)
       [set new_know_true fput (? * 3 + 0) new_know_true]
-      [set new_know_true fput (? * 3 + 1) new_know_true]]; compute the new knowledge obtained from vision and observation
+      [set new_know_true fput (? * -3 + 1) new_know_true]]; compute the new knowledge obtained from vision and observation
 
-    set know_true remove-duplicates (sentence know_true new_know_true)
+    set know_true (remove-duplicates (sentence know_true new_know_true))
+
+    show new_know_true
+    show know_true
+    ; TODO:
 
     ; replace the knowledge of the action
-    replace-item button_chosen action_knowledge (list know_true know_false)
+    set action_knowledge replace-item button_chosen action_knowledge (list know_true know_false)
 
     ; and finally, set vision_indexes as the new observation
     set observation vision_indexes
@@ -936,7 +949,7 @@ MONITOR
 642
 383
 Current Action
-button-of-the-hour
+button_chosen
 17
 1
 15
