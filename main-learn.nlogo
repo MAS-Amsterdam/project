@@ -300,7 +300,7 @@ to go
     [
       let max_value (max bidding)
       ; then obtain the indexes with this value
-      set button_chosen (one-of (filter [? = max_value] n-values (button_each * num_agents)[?]))
+      set button_chosen (one-of (filter [? = max_value] n-values (length buttons)[?])); choose one of those with the best bidding value
       ; choose the button with the highest bidding value
     ]
   ; then perform the action
@@ -313,6 +313,8 @@ to go
   ; then the agent observe and perform learning
   observe-and-learn
   ; the agent start the bidding of the next action (with values stored in the "bidding")
+  ; next hour
+  set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
     show "at night"
@@ -396,12 +398,6 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     let changed []
     if (not (modes tmp = tmp)) [set changed modes tmp] ; be careful about this line. if there is no repeated element then it would simply return the original list back!!!
 
-
-    show "*********"
-    show observation
-    show vision_indexes
-    show changed
-    show "--------------"
     let new_know_true []
     foreach changed [
       ifelse (? > 0)
@@ -410,9 +406,20 @@ to observe-and-learn ; ask each agent to change the vision and vision index
 
     set know_true (remove-duplicates (sentence know_true new_know_true))
 
-    show new_know_true
-    show know_true
-    ; TODO:
+
+    ; Before we changed the knowledge about the action, we need to make sure that there
+
+    ; if we know that the action does not have any effect in both cases when a certain patch is on or off. Then we have say it has no effect
+    foreach (n-values (width * height) [?])[
+      ; if ? * 3 and ? * 3 +1 are both members of know_false then we add ? * 3 + 2 to know true. That is, we know the effect of this action on this patch.
+      if((member? (? * 3) know_false) and (member? (? * 3 + 1) know_false))[
+        set know_true (fput (? * 3 + 2) know_true)
+        set know_false (remove (? * 3 + 1) know_false)
+        set know_false (remove (? * 3 ) know_false)
+        show know_true
+        ]
+      ]
+
 
     ; replace the knowledge of the action
     set action_knowledge replace-item button_chosen action_knowledge (list know_true know_false)
