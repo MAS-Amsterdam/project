@@ -300,7 +300,7 @@ to go
     [
       let max_value (max bidding)
       ; then obtain the indexes with this value
-      set button_chosen (one-of (filter [? = max_value] n-values (length buttons)[?])); choose one of those with the best bidding value
+      set button_chosen (one-of (filter [(item ? bidding)= max_value] n-values (length buttons)[?])); choose one of those with the best bidding value
       ; choose the button with the highest bidding value
     ]
   ; then perform the action
@@ -313,6 +313,7 @@ to go
   ; then the agent observe and perform learning
   observe-and-learn
   ; the agent start the bidding of the next action (with values stored in the "bidding")
+  bid
   ; next hour
   set hour (hour + 1)
   ]
@@ -430,87 +431,6 @@ to observe-and-learn ; ask each agent to change the vision and vision index
 
 end
 
-;to update-vision_before_action
-;  ;update the observed states of the current vision,after one move during hours.
-;
-;   ask patches [set plabel ""]
-;   foreach (n-values num_agents [?]) [
-;     ask turtle ? [
-;     set before_world []
-;
-;     set vision (patches in-cone-nowrap vision_radius 360)
-;     set vision sort vision ; vision expressed in patches
-;     set visionindex []; the patches (indexed) within vision
-;     foreach vision[
-;
-;        let patches_index 0 ;variable used when transforming the vision patches to index.
-;        let  state_index 0;variable used when transforming the observed patches states into index
-;        ask ? [set patches_index  ( pycor * width + pxcor )
-;          ifelse (pcolor = black)
-;          [set  state_index 0];if the state is black, set index to 0.
-;          [set  state_index 1];if the state is green, set index to 1.
-;           ]
-;       set visionindex lput patches_index visionindex ;vision expressed in index
-;       set before_world lput  state_index before_world  ; before_world:list consisting of the states of observed world (within vision) of an agent before the action
-;
-;    ]
-;
-;     ]]
-;   show-vision;visulize of the vision
-;end
-
-
-;to update-vision_after_action
-;  ;update the observed states of the current vision,after one button is pressed.
-;
-;     foreach (n-values num_agents [?]) [
-;     ask turtle ? [
-;     set after_world []
-;     foreach vision[
-;     let patches_index 0 ;variable used when transforming the vision patches to index.
-;     let state_index 0;variable used when transforming the observed patches' states into index
-;     ask ? [set patches_index  ( pycor * width + pxcor )
-;     ifelse (pcolor = black)
-;     [set state_index 0]
-;     [set state_index 1]
-;     ]
-;   set after_world lput state_index after_world; after_world:list consisting of the states of observed world (within vision) of an agent after the action
-;    ]
-;     ]
-;
-;   ]
-;end
-;
-;to update-belief-observation [num];update the action matrix, which is also theh agent's belief_ base for actions.num is the variable for the current button's index.
-;
-;    foreach (n-values num_agents [?]) [
-;     ask turtle ? [
-;       let ac_t -1 ; action learnt in a specific event,true variables
-;       let ac_f -1; action learnt in a specific event,false variables
-;       foreach n-values (length (visionindex))[?][; encode the event, i.e. compare the before and after world
-;       if((item ? before_world = 0 )and (item ?  after_world = 0 ))[set ac_f (item ? visionindex) * 3 + 0]
-;       if((item ? before_world = 1 )and (item ?  after_world = 0 ))[set ac_t (item ? visionindex) * 3 + 1]
-;       if((item ? before_world = 0 )and (item ?  after_world = 1 ))[set ac_t (item ? visionindex) * 3 + 0]
-;       if((item ? before_world = 1 )and (item ?  after_world = 1 ))[set ac_f (item ? visionindex) * 3 + 1]
-;
-;        ;add new information to action, which is also belief base
-;        if ( ac_t >  0 );if there is something learnt about true knowledge
-;        [ifelse (member? ac_t item 0 (item num action ))[][set action replace-item num action (list (lput ac_t (item 0 (item num action )) ) item 1 (item num action))]]
-;        if ( ac_f >  0 );if there is something learnt about false knowledge
-;        [ifelse (member? ac_f item 1 (item num action ))[][set action replace-item num action (list item 0 (item num action) (lput ac_f (item 1 (item num action )) ))]]
-;         ]
-;
-;        foreach n-values ( width * height )[?]; if there are already 2 values for a specific grid in known-false, then we can deduce the corresponding known-ture.
-;        [if ( member? (? * 3 ) (item 1( item num action )) ) and ( member? ( ? * 3 + 1 ) (item 1 (item num action) ) and (not ( member? ( ? * 3 + 2 ) (item 0 (item num action) ))))
-;        [ set action replace-item num action (list (lput ( ? * 3 + 2) item 0  (item num action )) item 1  (item num action ) )]]
-;
-;       ]
-;
-;     ]
-;
-;end
-;
-
 
 
 ;to communicate
@@ -608,6 +528,79 @@ to perform-action [act]
 tick
 end
 
+;==================================bidding and planning===========================================
+
+to bid ; calculate the bidding value for each agent for each action
+
+  ask turtles [
+    ; for each action
+    foreach (n-values length buttons [?]) [
+      let world_now represent_visable_world ;a representation of the world from the agent knows
+      let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
+      let bidding_value calculate_bidding world_after
+      if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
+    ]
+  ]
+
+end
+
+to-report represent_visable_world ; to give the index of visable patches (for performing action in mind later)
+  let rep []
+  ; first obtain the list of visable patches
+  let vision (patches in-cone-nowrap vision_radius 360)
+
+  ask vision[
+    ifelse (pcolor = black)
+    [set rep (fput ((pycor * width + pxcor ) * -1) rep)]; if it is black
+    [set rep (fput (pycor * width + pxcor) rep)]; otherwise it is green, positive number
+  ]
+
+  ; obtain vision index
+  report rep
+end
+
+to-report expected_local_world [world act]; to perform an action according to the agent's knowledge
+  ; extract the certain effect of this action
+  ; first the know_true part
+
+  let expected []
+
+  let know_true first act;
+  let know_false last act;
+
+  foreach world [
+    ; ==== the certain part of the expected world
+    ; first, there is no effect,
+    ifelse ((member? (3 * ? + 2) know_true) or (member? (-3 * ? + 2) know_true))
+    [set expected (fput ? expected)] ; if the agent knows that the action has no effect on this patch then it keeps it in the expected world
+    [
+      if ((? > 0) and (member? (3 * ?) know_true))[set expected (fput ? expected)]
+      if ((? > 0) and (member? (3 * ? + 1) know_true))[set expected (fput (-1 * ?) expected)]
+      if ((? < 0) and (member? (3 * ? + 1) know_true))[set expected (fput ? expected)]
+      if ((? < 0) and (member? (3 * ?) know_true))[set expected (fput (-1 * ?) expected)]
+
+      ]
+    ; the rest is not sure for the agent.
+    ]
+
+  set expected world
+
+  report expected
+end
+
+to-report calculate_bidding [world_after] ;  comapre it with the goal and calculate a value for bidding
+  let goal_on first goal
+  let goal_off last goal
+  let bidding_value 0
+  foreach world_after[
+     if (member? ? goal_on) [set bidding_value (bidding_value + 1)]
+     if (member? ? goal_off) [set bidding_value (bidding_value - 1)]
+     if (member? (? * -1) goal_off) [set bidding_value (bidding_value + 1)]
+     if (member? (? * -1) goal_on) [set bidding_value (bidding_value - 1)]
+    ]
+
+  report bidding_value
+end
 
 ; TODO: button generation can be done using "shuffle"
 ; TODO: random buttons are simply too random and looks ugly
@@ -903,23 +896,6 @@ NIL
 NIL
 1
 
-BUTTON
-22
-652
-100
-685
-NIL
-learn
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 TEXTBOX
 19
 481
@@ -970,7 +946,7 @@ noise
 noise
 0
 13
-1
+6
 1
 1
 NIL
