@@ -319,6 +319,9 @@ to go
   ]
   [ ; ====================== at night =================================
     show "at night"
+    ask patches [set pcolor black]
+    set hour 0
+    set day (day + 1)
     ]
 
   ; if the hour = num_hours then it's another day
