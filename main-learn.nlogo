@@ -301,7 +301,7 @@ to go
     ifelse (day = 0 and hour = 0)
     [
       set button_chosen one-of (n-values length buttons [?])
-      set buttons_chosen_before []
+      set buttons_chosen_before list button_chosen
       ] ;  select a random action and record its index and there is no button chosen before
     [
       let max_value 0
@@ -343,7 +343,7 @@ to go
     ask patches [set pcolor black]
     set hour 0
     set day (day + 1)
-;    communicate
+    communicate
     ]
 
   ; if the hour = num_hours then it's another day
@@ -438,26 +438,25 @@ end
 
 
 
-;to communicate
-;   ; to combine all the action_button of every agent, getting a learning result:action_communication.
-;
-;
-;   let i 0
-;   foreach n-values ( button_each * num_agents) [?][
-;   ;ask turtle 0[set action_all item ? action];initialize action_all to the belief base of the first turtle, and then add others' different belief to that.
-;   ;show action_all
-;   foreach n-values num_agents[?]
-;   [ask turtle ?[
-;        foreach( item 0 (item i action ))[;if the observed true knowledge index of the states is not in the true knowledge of shared belief base, add it.
-;        ifelse (member? ?  (item 0 ( item i action_communication) ))[][set action_communication replace-item i action_communication (list (lput ? (item 0 (item i action_communication )) )  (item 1 (item i action_communication )))]]
-;
-;        foreach ( item 1 (item i action ))[;if the observed false knowledge index of the states is not in the false knowledge of shared belief base, add it.
-;        ifelse (member? ?  (item 1 ( item i action_communication)  ))[][set action_communication replace-item i action_communication (list (item 0 (item i action_communication )) (lput ? (item 1 ((item i action_communication ) ) )))]]
-;      ]]
-;
-;   set i (i + 1)
-;    ]
-;end
+to communicate
+   ; to combine all the action_button of every agent, getting a learning result:action_communication.
+   let integration []
+
+   foreach n-values (length buttons) [?][
+   ; for each agent, we take the all their knowledge
+   let know_true []
+   let know_false []
+   ask turtles [
+     set know_true (remove-duplicates sentence know_true first (item ? action_knowledge))
+     set know_false (remove-duplicates sentence know_false last (item ? action_knowledge))
+     ]
+   set integration (lput (list know_true know_false) integration)
+   ]
+
+   ask turtles [
+     set action_knowledge integration
+     ]
+end
 
 
 ;to update-belief-communication
@@ -655,7 +654,7 @@ button_each
 button_each
 1
 10
-2
+5
 1
 1
 NIL
@@ -735,8 +734,8 @@ SLIDER
 vision_radius
 vision_radius
 0
-4
-4
+10
+7
 1
 1
 NIL
@@ -762,7 +761,7 @@ num_hours
 num_hours
 (ceiling button_each * num_agents / 2) + 1
 ceiling button_each * num_agents
-6
+12.5
 1
 1
 NIL
