@@ -452,6 +452,8 @@ to communicate
      set know_true (remove-duplicates sentence know_true first (item ? action_knowledge))
      set know_false (remove-duplicates sentence know_false last (item ? action_knowledge))
      ]
+   ; TODO: extract information from know_false to know_true
+
    set integration (lput (list know_true know_false) integration)
    ]
 
@@ -537,22 +539,29 @@ end
 to bid ; calculate the bidding value for each agent for each action
   ;a new bidding round
   reset_bidding
+
+  ; simple planning algorithm
+  ; simple-bidding
+
+
+  ;A* planning algorithm
+
   ; initialise the planning part
   ; 1) construct an instance of the date structure
   ask turtles [
   let world_now represent_visable_world
   let current_node obtain_node hour (calculate_bidding world_now) buttons_chosen_before world_now
-  let stack (fput current_node [])
-  let result (a_star_planning stack)
+  let result (a_star_planning current_node)
 
   ]
 end
 
 ; the result is a pair of action and the bidding value
-to-report a_star_planning [stack]
+to-report a_star_planning [current_node]
   ; first, obtain the node with the best bidding value
-
-
+  let stack (fput current_node [])
+  set stack (a_star_planning_rec stack)
+  let best_final_node (find_best_node stack)
   report (list 0 0)
 end
 
@@ -562,6 +571,11 @@ to-report a_star_planning_rec [stack]
   report stack
 end
 
+
+to-report find_best_node [stack]
+  ; obtain the node with the best bidding value
+  report first stack
+end
 
 to-report obtain_node [h v p w]
   ; TODO: this method can be simplied using task
@@ -667,11 +681,11 @@ end
 GRAPHICS-WINDOW
 725
 44
-1235
-575
+1292
+631
 -1
 -1
-125.0
+15.625
 1
 10
 1
@@ -682,9 +696,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+31
 0
-3
+31
 1
 1
 1
@@ -909,7 +923,7 @@ INPUTBOX
 189
 91
 pattern_name
-test.txt
+Smile.txt
 1
 0
 String
