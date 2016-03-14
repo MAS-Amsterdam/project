@@ -721,10 +721,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-199
-339
-351
-372
+200
+300
+352
+333
 NIL
 go
 NIL
@@ -738,10 +738,10 @@ NIL
 1
 
 BUTTON
-353
-340
-472
-373
+354
+300
+473
+333
 NIL
 go
 T
@@ -755,10 +755,10 @@ NIL
 1
 
 BUTTON
-22
-323
-182
-385
+23
+284
+183
+346
 NIL
 setup
 NIL
@@ -802,10 +802,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-497
-395
-580
-440
+498
+355
+581
+400
 Day
 day
 17
@@ -839,10 +839,10 @@ goal
 12
 
 BUTTON
-23
-395
-128
-428
+24
+355
+129
+388
 button 1
 perform-action item 0 buttons
 NIL
@@ -856,10 +856,10 @@ NIL
 1
 
 BUTTON
-139
-394
-244
-427
+140
+355
+245
+388
 button 2
 perform-action item 1 buttons
 NIL
@@ -873,10 +873,10 @@ NIL
 1
 
 BUTTON
-259
-393
-364
-426
+260
+354
+365
+387
 button 3
 perform-action item 2 buttons
 NIL
@@ -890,10 +890,10 @@ NIL
 1
 
 BUTTON
-379
-395
-484
-428
+380
+355
+485
+388
 button 4
 perform-action item 3 buttons
 NIL
@@ -907,15 +907,15 @@ NIL
 1
 
 MONITOR
-15
-512
-186
-573
-button of Agent 0
+19
+475
+192
+520
+buttons of Agent 0
 [buttons_assigned] of turtle 0
 17
 1
-15
+11
 
 INPUTBOX
 9
@@ -929,26 +929,26 @@ Smile.txt
 String
 
 MONITOR
-201
-512
-371
-573
-button of Agent 1
+17
+533
+190
+578
+buttons of Agent 1
 [buttons_assigned] of turtle 1
 17
 1
-15
+11
 
 MONITOR
-386
-512
-562
-573
-button of Agent 2
+19
+589
+196
+634
+buttons of Agent 2
 [buttons_assigned] of turtle 2
 17
 1
-15
+11
 
 BUTTON
 190
@@ -967,41 +967,11 @@ NIL
 NIL
 1
 
-TEXTBOX
-19
-481
-169
-499
-Agent 0
-15
-0.0
-1
-
-TEXTBOX
-219
-480
-369
-498
-Agent 1\n
-15
-0.0
-1
-
-TEXTBOX
-399
-481
-549
-499
-Agent 2
-15
-0.0
-1
-
 MONITOR
 500
-322
+283
 642
-383
+344
 Current Action
 button_chosen
 17
@@ -1052,10 +1022,10 @@ num_agents * button_each
 11
 
 MONITOR
-587
-395
-675
-440
+588
+355
+676
+400
 hour
 hour
 17
@@ -1063,15 +1033,34 @@ hour
 11
 
 MONITOR
-28
-612
-634
-657
+27
+409
+633
+454
 plan so far
 buttons_chosen_before
 17
 1
 11
+
+PLOT
+214
+472
+701
+635
+Agents' knowledge about their actions (percentage)
+day
+NIL
+0.0
+100.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -2139308 true "" "count ([action_knowledge] of turtle 0)"
+"pen-1" 1.0 0 -8990512 true "" "count ([action_knowledge] of turtle 1)"
 
 @#$#@#$#@
 ## WHAT IS IT?
