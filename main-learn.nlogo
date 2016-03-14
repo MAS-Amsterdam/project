@@ -345,6 +345,7 @@ to go
     set hour 0
     set day (day + 1)
     communicate
+    ; TODO: decide the first button to be pressed and the location in the morning
     ]
 
   ; if the hour = num_hours then it's another day
@@ -460,14 +461,6 @@ to communicate
 end
 
 
-;to update-belief-communication
-;  ;set each agent's belief base, i.e.action, the same as shared belief, i.e. action_communication.
-;  ask turtles[
-;    set action action_communication
-;    ]
-;end
-
-
 
 
 ;==============variable related to the setup of buttons=============================================================================
@@ -534,26 +527,71 @@ tick
 end
 
 ;==================================bidding and planning===========================================
+; datatype for A* planning
+; a tuple of the followings:
+; the hour
+; the bidding value
+; the plan so far
+; the world
 
 to bid ; calculate the bidding value for each agent for each action
+  ;a new bidding round
+  reset_bidding
+  ; initialise the planning part
+  ; 1) construct an instance of the date structure
+  ask turtles [
+  let world_now represent_visable_world
+  let current_node obtain_node hour (calculate_bidding world_now) buttons_chosen_before world_now
+  let stack (fput current_node [])
+  let result (a_star_planning stack)
 
+  ]
+end
+
+; the result is a pair of action and the bidding value
+to-report a_star_planning [stack]
+  ; first, obtain the node with the best bidding value
+
+
+  report (list 0 0)
+end
+
+to-report a_star_planning_rec [stack]
+
+
+  report stack
+end
+
+
+to-report obtain_node [h v p w]
+  ; TODO: this method can be simplied using task
+  let node (fput w [])
+  set node (fput p node)
+  set node (fput v node)
+  set node (fput h node)
+  report node
+
+end
+
+
+to reset_bidding
+  set bidding []
+  foreach buttons [
+    set bidding (fput 0 bidding)
+    ]
+end
+
+;a simple bidding methods where each agent think only one step ahead
+to simple-bidding
   ask turtles [
     ; for each action
     foreach (n-values length buttons [?]) [
       let world_now represent_visable_world ;a representation of the world from the agent knows
       let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
       let bidding_value calculate_bidding world_after
-
-      if (not (world_now = world_after)) [
-        show "before and after"
-        show world_now
-        show world_after
-        ]
-      ; show "----------"
       if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
     ]
   ]
-
 end
 
 to-report represent_visable_world ; to give the index of visable patches (for performing action in mind later)
@@ -629,8 +667,8 @@ end
 GRAPHICS-WINDOW
 725
 44
-1425
-769
+1235
+575
 -1
 -1
 125.0
@@ -662,7 +700,7 @@ button_each
 button_each
 1
 10
-1
+2
 1
 1
 NIL
@@ -1014,7 +1052,7 @@ MONITOR
 28
 612
 634
-658
+657
 plan so far
 buttons_chosen_before
 17
