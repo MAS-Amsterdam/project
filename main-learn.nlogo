@@ -301,7 +301,7 @@ to go
     ifelse (day = 0 and hour = 0)
     [
       set button_chosen one-of (n-values length buttons [?])
-      set buttons_chosen_before list button_chosen
+      set buttons_chosen_before (fput button_chosen [])
       ] ;  select a random action and record its index and there is no button chosen before
     [
       let max_value 0
@@ -336,6 +336,7 @@ to go
   ; the agent start the bidding of the next action (with values stored in the "bidding")
   bid
   ; next hour
+  walk
   set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
@@ -431,7 +432,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     set action_knowledge replace-item button_chosen action_knowledge (list know_true know_false)
 
     ; and finally, set vision_indexes as the new observation
-    set observation vision_indexes
+    set observation vision_indexes; TODO: what if after walk, there is no information about new local pathes?
     ]
 
 end
@@ -609,8 +610,15 @@ to-report calculate_bidding [world_after] ;  compare it with the goal and calcul
      if (member? (? * -1) goal_off) [set bidding_value (bidding_value + 1)]
      if (member? (? * -1) goal_on) [set bidding_value (bidding_value - 1)]
     ]
+  ; TODO: add the learning values on
 
   report bidding_value
+end
+
+
+
+to walk
+  ask turtles [fd 1]
 end
 
 ; TODO: button generation can be done using "shuffle"
@@ -654,7 +662,7 @@ button_each
 button_each
 1
 10
-5
+3
 1
 1
 NIL
@@ -759,9 +767,9 @@ SLIDER
 216
 num_hours
 num_hours
-(ceiling button_each * num_agents / 2) + 1
+(ceiling (button_each * num_agents / 2)) + 1
 ceiling button_each * num_agents
-12.5
+6
 1
 1
 NIL
@@ -998,6 +1006,17 @@ MONITOR
 440
 hour
 hour
+17
+1
+11
+
+MONITOR
+28
+612
+634
+658
+plan so far
+buttons_chosen_before
 17
 1
 11
