@@ -562,7 +562,7 @@ to-report a_star_planning [current_node]
   let stack (fput current_node [])
   set stack (a_star_planning_rec stack)
   let best_final_node (find_best_node stack)
-  report (list 0 0)
+  report list 1 21 ; only report the (first) action and its bidding value
 end
 
 to-report a_star_planning_rec [stack]
@@ -602,7 +602,8 @@ to simple-bidding
     foreach (n-values length buttons [?]) [
       let world_now represent_visable_world ;a representation of the world from the agent knows
       let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
-      let bidding_value calculate_bidding world_after
+      let learning_value 0
+      let bidding_value calculate_bidding world_after + learning_value
       if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
     ]
   ]
@@ -623,6 +624,7 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
   report rep
 end
 
+; expand according to a given action
 to-report expected_local_world [world act]; to perform an action according to the agent's knowledge
   ;show "the knowledge of the action is as follows"
   ;show act
@@ -820,8 +822,8 @@ SLIDER
 num_hours
 num_hours
 (ceiling (button_each * num_agents / 2)) + 1
-ceiling button_each * num_agents
-5
+ceiling (button_each * num_agents)
+6
 1
 1
 NIL
