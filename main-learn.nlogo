@@ -16,6 +16,7 @@ globals [
   ; noise_dis; the randomly set points in each button that not belongs to solution.
   buttons; a list of buttons, each button is a pair setting some patches to green and some to black
   button_chosen; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
+  buttons_chosen_before; all the buttons chosen before
   ]
 turtles-own[own_color; color set to the agent
   buttons_assigned; the order of buttons it owns, relating to the matrix buttons
@@ -148,6 +149,8 @@ end
 
 
 to setup-button
+
+  set buttons_chosen_before []
   ; the total number of buttons =  num_agent * button_each
   ; we choose the first half and one more of the buttons as the plan
 
@@ -296,11 +299,29 @@ to go
     show "in day time"
     ; first of all choose the action to perform for this hour.
     ifelse (day = 0 and hour = 0)
-    [set button_chosen one-of (n-values length buttons [?])] ;  select a random action and record its index]
     [
-      let max_value (max bidding)
+      set button_chosen one-of (n-values length buttons [?])
+      set buttons_chosen_before []
+      ] ;  select a random action and record its index and there is no button chosen before
+    [
+      let max_value 0
+      ifelse ((length buttons) = (length buttons_chosen_before))
+      [; all buttons got chosen
+          set buttons_chosen_before []
+          set max_value max bidding
+       ][
+        let bidding_no_repeat bidding
+        foreach buttons_chosen_before[
+           set bidding_no_repeat (replace-item ? bidding_no_repeat -999); remove the one from last time
+          ]
+
+        set max_value (max bidding_no_repeat)
+        show "max"
+        show max_value
+      ]
       ; then obtain the indexes with this value
-      set button_chosen (one-of (filter [(item ? bidding)= max_value] n-values (length buttons)[?])); choose one of those with the best bidding value
+      set button_chosen (one-of (filter [((item ? bidding)= max_value) and not (member? ? buttons_chosen_before)] n-values (length buttons)[?])); choose one of those with the best bidding value
+      set buttons_chosen_before (fput button_chosen buttons_chosen_before)
       ; choose the button with the highest bidding value
     ]
   ; then perform the action
@@ -353,26 +374,6 @@ end
 to-report gety [n]
   report (floor (n / width))
 end
-;================================main function for learning====================================================
-;to learn
-;   ; learning process for one day
-;  foreach n-values ( button_each * num_agents) [?]; press all the buttons in original sequence and learn the actions.After planning part is ready, "button_each * num_agents"should be replaced by (length buttons_current)
-;
-;    [
-;    update-vision_before_action
-;    perform-action item ? buttons ; press the button sequence. Should be buttons_current (results of plannning), but now I use buttons instead.
-;    update-vision_after_action
-;    update-belief-observation ?   ; after planning part is ready, '?' should be replaced by the index of current implemented button. The index should be referred to the position in  variable "buttons".
-;    ask turtles[fd 1]             ;after planning part is ready, this should be replaced by the intended direcrion and forward.
-;    ]
-;  communicate                     ; communicate at night, to combine action of each agents, and set every one's action(i.e. belief ) the same.
-;  update-belief-communication     ;set each agent's belief same to shared belief base.
-;
-;  show action_communication
-;  show "action_communication"
-;
-;
-;end
 
 
 to observe-and-learn ; ask each agent to change the vision and vision index
@@ -542,11 +543,13 @@ to bid ; calculate the bidding value for each agent for each action
       let world_now represent_visable_world ;a representation of the world from the agent knows
       let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
       let bidding_value calculate_bidding world_after
-      show world_now
-      show world_after
-      show (item ? bidding)
-      show bidding_value
-      show "----------"
+
+      if (not (world_now = world_after)) [
+        show "before and after"
+        show world_now
+        show world_after
+        ]
+      ; show "----------"
       if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
     ]
   ]
@@ -569,8 +572,8 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
 end
 
 to-report expected_local_world [world act]; to perform an action according to the agent's knowledge
-  show "the knowledge of the action is as follows"
-  show act
+  ;show "the knowledge of the action is as follows"
+  ;show act
   ; extract the certain effect of this action
   ; first the know_true part
 
@@ -593,8 +596,6 @@ to-report expected_local_world [world act]; to perform an action according to th
       ]
     ; the rest is not sure for the agent.
     ]
-
-  set expected world
 
   report expected
 end
@@ -761,7 +762,7 @@ num_hours
 num_hours
 (ceiling button_each * num_agents / 2) + 1
 ceiling button_each * num_agents
-4
+6
 1
 1
 NIL
