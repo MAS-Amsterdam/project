@@ -821,7 +821,7 @@ num_hours
 num_hours
 (ceiling (button_each * num_agents / 2)) + 1
 ceiling button_each * num_agents
-6
+5
 1
 1
 NIL
@@ -1049,8 +1049,8 @@ PLOT
 701
 635
 Agents' knowledge about their actions (percentage)
-day
-NIL
+day * num_hours + hour
+count buttons
 0.0
 100.0
 0.0
