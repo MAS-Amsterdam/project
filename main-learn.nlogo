@@ -629,11 +629,11 @@ end
 GRAPHICS-WINDOW
 725
 44
-1235
-575
+1425
+769
 -1
 -1
-15.625
+125.0
 1
 10
 1
@@ -644,9 +644,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-31
+3
 0
-31
+3
 1
 1
 1
@@ -662,7 +662,7 @@ button_each
 button_each
 1
 10
-3
+1
 1
 1
 NIL
@@ -743,7 +743,7 @@ vision_radius
 vision_radius
 0
 10
-7
+4
 1
 1
 NIL
@@ -871,7 +871,7 @@ INPUTBOX
 189
 91
 pattern_name
-Smile.txt
+test.txt
 1
 0
 String
