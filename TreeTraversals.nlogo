@@ -21,7 +21,8 @@ globals [a]
 to start
   set a [[0] [[1] [[2] [3]] [4] [[5] [6]]]]
 
-  DFS a
+  ;DFS a
+  BFS a
 
 end
 
@@ -33,6 +34,26 @@ to DFS [lst]
     [
       DFS ?
     ]
+  ]
+end
+
+to BFS [lst]
+  let surplus []
+  foreach lst [
+    ifelse (length ?) = 1 [
+      show ?
+    ]
+    [
+      ifelse (length surplus) = 0 [
+        set surplus ?
+      ]
+      [
+        set surplus (lput ? surplus)
+      ]
+    ]
+  ]
+  if (length surplus) > 0 [
+    BFS surplus
   ]
 end
 @#$#@#$#@
