@@ -563,7 +563,7 @@ to-report a_star_planning [current_node]
   let stack (fput current_node [])
   set stack (a_star_planning_rec stack)
   let best_final_node (find_best_node stack)
-  report (list 0 0)
+  report list 1 21 ; only report the (first) action and its bidding value
 end
 
 to-report a_star_planning_rec [stack]
@@ -603,10 +603,58 @@ to simple-bidding
     foreach (n-values length buttons [?]) [
       let world_now represent_visable_world ;a representation of the world from the agent knows
       let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
-      let bidding_value calculate_bidding world_after
+      let learning_value (compute_learning_value world_now (item ? action_knowledge))
+      let bidding_value calculate_bidding world_after + learning_value
       if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
     ]
   ]
+end
+
+
+; calculate the bidding function without learning factor
+to-report calculate_bidding [world_after] ;  compare it with the goal and calculate a value for bidding
+  let goal_on first goal
+  let goal_off last goal
+  let bidding_value 0
+  foreach world_after[
+     if (member? ? goal_on) [set bidding_value (bidding_value + 1)]
+     if (member? ? goal_off) [set bidding_value (bidding_value - 1)]
+     if (member? (? * -1) goal_off) [set bidding_value (bidding_value + 1)]
+     if (member? (? * -1) goal_on) [set bidding_value (bidding_value - 1)]
+    ]
+  ; TODO: add the learning values on
+
+  report bidding_value
+end
+
+; calculate the bidding function with learning factor
+to-report calculate_bidding_with_learning_factor [world_now act] ; see the simple bidding case to get an idea how to use it
+   let world_after (expected_local_world world_now act); perform the action according to the knowledge of the action
+   let learning_value (compute_learning_value world_now act)
+   let bidding_value calculate_bidding world_after + learning_value
+
+   report bidding_value
+end
+
+to-report compute_learning_value [world_now act_knowledge]; the learning value of the local world regarding the knowledge of the action
+  ; the more the agent knows about this buttons's postcondition locally, the lower the value is
+  let value 0
+  set value (-1 * (value + (length (first act_knowledge)) * 2 + (length (last act_knowledge))));
+  foreach world_now [
+    if ((member? (? * 3) first act_knowledge) or (member? (? * -3) first act_knowledge)
+      or (member? ((? * 3) + 1) first act_knowledge) or (member? ((? * -3) + 1) first act_knowledge)
+      or (member? ((? * 3) + 2) first act_knowledge) or (member? ((? * -3) + 2) first act_knowledge)
+      ) ;  if the agent knows how the patch is going to be changed
+    [set value (value - 2)]
+
+    if ((member? (? * 3) last act_knowledge) or (member? (? * -3) last act_knowledge)
+      or (member? ((? * 3) + 1) last act_knowledge) or (member? ((? * -3) + 1) last act_knowledge)
+      or (member? ((? * 3) + 2) last act_knowledge) or (member? ((? * -3) + 2) last act_knowledge)
+      ) ;  if the agent knows how the patch is not going to be changed
+    [set value (value - 1)]
+    set value (value * learning_factor / 100)
+    ]
+  report value
 end
 
 to-report represent_visable_world ; to give the index of visable patches (for performing action in mind later)
@@ -624,6 +672,7 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
   report rep
 end
 
+; expand according to a given action
 to-report expected_local_world [world act]; to perform an action according to the agent's knowledge
   ;show "the knowledge of the action is as follows"
   ;show act
@@ -652,22 +701,6 @@ to-report expected_local_world [world act]; to perform an action according to th
 
   report expected
 end
-
-to-report calculate_bidding [world_after] ;  compare it with the goal and calculate a value for bidding
-  let goal_on first goal
-  let goal_off last goal
-  let bidding_value 0
-  foreach world_after[
-     if (member? ? goal_on) [set bidding_value (bidding_value + 1)]
-     if (member? ? goal_off) [set bidding_value (bidding_value - 1)]
-     if (member? (? * -1) goal_off) [set bidding_value (bidding_value + 1)]
-     if (member? (? * -1) goal_on) [set bidding_value (bidding_value - 1)]
-    ]
-  ; TODO: add the learning values on
-
-  report bidding_value
-end
-
 
 
 to walk
@@ -862,7 +895,7 @@ SLIDER
 num_hours
 num_hours
 (ceiling (button_each * num_agents / 2)) + 1
-ceiling button_each * num_agents
+ceiling (button_each * num_agents)
 6
 1
 1
@@ -1091,8 +1124,8 @@ PLOT
 701
 635
 Agents' knowledge about their actions (percentage)
-day
-NIL
+day * num_hours + hour
+count buttons
 0.0
 100.0
 0.0
@@ -1103,6 +1136,21 @@ true
 PENS
 "agent 0" 1.0 0 -7500403 true "" "ask turtle 0[\nlet n []\nforeach action_knowledge[\nset n lput (length (item 0 ? )) n \nplot ( mean n ) / width * height\n]]"
 "agent 1" 1.0 0 -2674135 true "" "ask turtle 1[\nlet n []\nforeach action_knowledge[\nset n lput (length (item 0 ? )) n \nplot ( mean n) / width * height\n]]"
+
+SLIDER
+317
+227
+500
+261
+learning_factor
+learning_factor
+0
+30
+12
+1
+1
+%
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
