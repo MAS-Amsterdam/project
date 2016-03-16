@@ -270,6 +270,7 @@ end
 
 to show-vision
   ;visulize of the vision,setting plabels in the vision
+   ask patches [set plabel ""]
    ask turtles [
     set own_color color
     let oc own_color
@@ -336,6 +337,7 @@ to go
   bid
   ; next hour
   walk;each agent can choose to stay or move one step in four directions to where his knownledge about the the buttons is least or among the least loactions.
+  show-vision
   set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
@@ -346,7 +348,7 @@ to go
     communicate
     ; TODO: decide the first button to be pressed and the location in the morning
     walk; randomly distribute the agents to patches on the world, and each agent can choose to stay or move one step in four directions to where his knownledge about the the buttons is least or among the least loactions.
-    ]
+    show-vision]
 
   ; if the hour = num_hours then it's another day
 
@@ -690,21 +692,29 @@ end
 
 to move-to-least-unkown; moves to the neighbor or current patch which has the most potential information to aquire.
   let neighbor sort neighbors
-  foreach (sentence neighbor patch-here)[
+  show neighbor
+  show "neighbor"
+  foreach (sentence neighbor patch-here)[;neighbor patches(at most 8 for non-boundary patches) and current patch
+    let x pxcor
+    let y pycor
+    let vision_index []
+    let world (patches in-cone-nowrap width 360)
+    ask world [if ((distancexy x y) <= vision_radius)[set vision_index lput  ( pxcor + pycor * width ) vision_index]];if the agent is at this patch, its vision.
 
-    ;neighbor patches(at most 8 for non-boundary patches) and current patch
-    let vision []
-    ask patches[if ((distancexy pxcor pycor) <= vision_radius)[set vision lput (patch pxcor pycor) vision]];if the agent is at this patch, its vision.
-    let vision_indexes []
-    ask vision [ set vision_indexes fput (get-patch-index self)  vision_indexes]
     let amount [];the amount of information it at most will get in the specific patch neighbor, for each button it owns
     foreach buttons_assigned[
-     let world_known map [floor( ? / 3 )] (item 0 ( item ? action_knowledge ))
-     let vision_known_index (modes (sentence world_known vision_indexes)) ; the visionindex that already in agent's knowledge.
-     set amount (lput (length vision_indexes - length vision_known_index) amount );the amount of information a agent at most could aquire for this button at this patch.
-      ]
+     let world_known map [floor( ? / 3 )] (item 0 ( item (? - 1) action_knowledge ))
+   let vision_known_index []
+    if (not (modes (sentence world_known vision_index) = (sentence world_known vision_index)))
+    [set vision_known_index ( modes (sentence world_known vision_index) )]; the visionindex that already in agent's knowledge.
 
-    set potential_infor mean amount;if the agent is at that patch, with its set vision, the amount of information it at most may get.
+     set amount (lput ((length vision_index) - (length vision_known_index)) amount )];the amount of information a agent at most could aquire for this button at this patch.
+
+
+   ask ? [set potential_infor mean amount
+      show potential_infor]
+      ;if the agent is at that patch, with its set vision, the amount of information it at most may get.
+
     ]
 
     uphill potential_infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
@@ -1086,10 +1096,10 @@ buttons_chosen_before
 11
 
 PLOT
-214
-472
-701
-635
+200
+459
+705
+644
 Agents' knowledge about their actions (percentage)
 day
 NIL
@@ -1098,11 +1108,11 @@ NIL
 0.0
 100.0
 true
-true
+false
 "" ""
 PENS
-"agent 0" 1.0 0 -7500403 true "" "ask turtle 0[\nlet n []\nforeach action_knowledge[\nset n lput (length (item 0 ? )) n \nplot ( mean n ) / width * height\n]]"
-"agent 1" 1.0 0 -2674135 true "" "ask turtle 1[\nlet n []\nforeach action_knowledge[\nset n lput (length (item 0 ? )) n \nplot ( mean n) / width * height\n]]"
+"default" 1.0 0 -16777216 true "" "count ([action_knowledge] of turtle 0)"
+"pen-1" 1.0 0 -7500403 true "" "count ([action_knowledge] of turtle 1)"
 
 @#$#@#$#@
 ## WHAT IS IT?
