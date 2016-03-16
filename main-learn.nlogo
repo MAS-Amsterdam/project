@@ -352,11 +352,11 @@ to go
     ; TODO: decide the first button to be pressed and the location in the morning
     bid
 
-    walk_simple; randomly distribute the agents to patches on the world, and each agent can choose to stay or move one step in four directions to where his knownledge about the the buttons is least or among the least loactions.
+    walk; randomly distribute the agents to patches on the world, and each agent can choose to stay or move one step in four directions to where his knownledge about the the buttons is least or among the least loactions.
     show-vision]
 
   ; if the hour = num_hours then it's another day
-  ;tick
+
 end
 
 to-report check-goal ; check if the current situation is the same as the goal
@@ -373,11 +373,6 @@ to-report check-goal ; check if the current situation is the same as the goal
     ]
   if sign = true [report true]
   report false
-end
-
-to walk_simple
-  ask turtles [ifelse (can-move? 1)[fd 1][right 90]]
-
 end
 
 ; two helping function to get the xcor and ycor of the patch according to its index
@@ -802,7 +797,7 @@ ask turtles[
 
 
 ]
-  ;tick
+  tick
   ;?turtles avoid collision
 
 end
@@ -860,7 +855,7 @@ GRAPHICS-WINDOW
 575
 -1
 -1
-125.0
+41.666666666666664
 1
 10
 1
@@ -871,9 +866,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+11
 0
-3
+11
 1
 1
 1
@@ -889,7 +884,7 @@ button_each
 button_each
 1
 10
-1
+2
 1
 1
 NIL
@@ -934,7 +929,7 @@ BUTTON
 284
 183
 346
-NIL
+Setup
 setup
 NIL
 1
@@ -955,7 +950,7 @@ num_agents
 num_agents
 2
 7
-3
+2
 1
 1
 NIL
@@ -996,7 +991,7 @@ num_hours
 num_hours
 (ceiling (button_each * num_agents / 2)) + 1
 ceiling (button_each * num_agents) - 1
-3
+4
 1
 1
 NIL
@@ -1007,7 +1002,7 @@ MONITOR
 35
 685
 84
-NIL
+Goal
 goal
 17
 1
@@ -1018,7 +1013,7 @@ BUTTON
 355
 129
 388
-button 1
+Button 1
 perform-action item 0 buttons
 NIL
 1
@@ -1035,7 +1030,7 @@ BUTTON
 355
 245
 388
-button 2
+Button 2
 perform-action item 1 buttons
 NIL
 1
@@ -1052,7 +1047,7 @@ BUTTON
 354
 365
 387
-button 3
+Button 3
 perform-action item 2 buttons
 NIL
 1
@@ -1069,7 +1064,7 @@ BUTTON
 355
 485
 388
-button 4
+Button 4
 perform-action item 3 buttons
 NIL
 1
@@ -1086,7 +1081,7 @@ MONITOR
 475
 192
 520
-buttons of Agent 0
+Buttons of Agent 0
 [buttons_assigned] of turtle 0
 17
 1
@@ -1098,7 +1093,7 @@ INPUTBOX
 189
 91
 pattern_name
-test.txt
+Smile2.txt
 1
 0
 String
@@ -1108,7 +1103,7 @@ MONITOR
 533
 190
 578
-buttons of Agent 1
+Buttons of Agent 1
 [buttons_assigned] of turtle 1
 17
 1
@@ -1119,7 +1114,7 @@ MONITOR
 589
 196
 634
-buttons of Agent 2
+Buttons of Agent 2
 [buttons_assigned] of turtle 2
 17
 1
@@ -1128,9 +1123,9 @@ buttons of Agent 2
 BUTTON
 190
 36
-339
+344
 92
-load and display
+Load and Display
 load-and-display-goal
 NIL
 1
@@ -1173,7 +1168,7 @@ BUTTON
 36
 468
 93
-clear display
+Clear Display
 ask patches [set pcolor black]
 NIL
 1
@@ -1201,7 +1196,7 @@ MONITOR
 355
 676
 400
-hour
+Hour
 hour
 17
 1
@@ -1212,7 +1207,7 @@ MONITOR
 409
 189
 454
-plan so far
+Plan so far
 buttons_chosen_before
 17
 1
@@ -1246,7 +1241,7 @@ learning_factor
 learning_factor
 0
 30
-0
+2
 1
 1
 %
@@ -1257,7 +1252,7 @@ MONITOR
 409
 325
 454
-bidding
+Bidding
 bidding
 17
 1
@@ -1274,7 +1269,52 @@ bidding
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+The interface has been designed to be intuitive. As such, the interface follows a flow of buttons, sliders and monitors that an user might need to navigate the program and watch the simulation. The interface, thusly, consists of the following elements:
+
+pattern_name: This input box takes in the name of the file that contains the description of the goal pattern. The file is a CSV file. The first line of the file always consists of 2 values, the height and the width of the world. Then the file follows with a comma separated logical matrix, with the a value of 1 denoting an 	“on” pixel and a value of zero for an “off” pixel. Any resolution goal description can be loaded as long as the file follows the prescribed format.
+
+Load and display: This button loads the file, and displays it in the viewer for the user to see the end goal design.
+
+Clear display: This button simply clears the displays.
+
+Goal: This monitor shows a list of list of the goal pixels. The pixels are represented as a vector in memory rather than an array, so each valid pixel has an index. The first sublist of the list is the collection of all the valid pixels, while the second sublist of the list is the collection of all the non valid pixels.
+
+num_agents: This slider controls how many agents are there in the world to solve the problem.
+
+button_each: This slider controls how many buttons each agent gets.
+
+vision_radius: This slider controls how far an agent can see and observe the environment.
+
+num_hours: This slider controls how many hours make up the day in the environment.
+
+noise: This slider controls how much disturbance is added to the search in order for it to branch into a tree, rather than becoming a linear path to the goal.
+
+learning_factor: This slider controls the agent’s learning rate.
+
+Total buttons: This monitor shows how many buttons in total are there for the goal pattern to be generated. This is determined by multiplying the number of buttons each agent gets with the number of agents.
+
+Setup: This button sets up the world by initialising the world to its primitive state, loading the goal pattern in memory, spawning the agents and initialising their goals, beliefs, desires, intentions and button configurations, etc.
+
+go: This is a once button, and so it advances the world by one tick.
+
+go(forever variant): This is a forever button variant, hence it continuously calls the go method and advances the ticks till the user stops it manually.
+
+Button 1 through Button 4: This are the example buttons that the agents get access too. Pressing them sequentially gradually turns on all the valid pixels and turns off all the invalid pixels. Pressing the first button will light up some pixels with some additional noise, while the next button will turn on some additional valid and invalid button, till button 3. Pressing button 4 will turn off all the invalid pixels and make sure only the valid pixels of the goal configuration remains.
+
+Current Action: This monitor shows the button that was chosen by the agents to be pressed.
+
+Day: This monitor tracks the day.
+
+Hour: This monitor tracks the hour.
+
+Plan so far: This monitor shows the most optimal plan found so far that is nearest to the goal node.
+
+Bidding: This monitor shows which button has won the bidding.
+
+Buttons of Agent 0 through 2: This monitor shows the list of buttons assigned to the agents. The size of the list is equivalent to slider value of button_each. Due to technical limitations, only the first 3 agents are monitored. If the number of agents is less than 3, then the monitor show “N/A”.
+
+Agents' knowledge about their actions (percentage): This plot shows the percentage of accumulated knowledge of the agents over time. This only considers the daytime, however, as that is when new knowledge is learned and accumulated. Only communication is done during the night time.
+
 
 ## THINGS TO NOTICE
 
