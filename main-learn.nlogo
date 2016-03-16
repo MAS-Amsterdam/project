@@ -27,7 +27,6 @@ turtles-own[own_color; color set to the agent
   best_node ; a variable to help out the depth first search
 ]
 
-
 ; =================================================================
 ; ========================== The Setup part =======================
 ; =================================================================
@@ -272,11 +271,12 @@ end
 
 to show-vision
   ;visulize of the vision,setting plabels in the vision
+   ask patches [set plabel ""]
    ask turtles [
     set own_color color
     let oc own_color
        ask patches in-cone-nowrap vision_radius 360
-          [set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
+          [;set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
            set plabel-color oc
            set plabel "*"    ]
       ]
@@ -339,7 +339,8 @@ to go
   ; the agent start the bidding of the next action (with values stored in the "bidding")
   bid
   ; next hour
-  walk
+  walk;each agent can choose to stay or move one step in four directions to where his knownledge about the the buttons is least or among the least loactions.
+  show-vision
   set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
@@ -350,7 +351,9 @@ to go
     communicate
     ; TODO: decide the first button to be pressed and the location in the morning
     bid
-    ]
+
+    walk; randomly distribute the agents to patches on the world, and each agent can choose to stay or move one step in four directions to where his knownledge about the the buttons is least or among the least loactions.
+    show-vision]
 
   ; if the hour = num_hours then it's another day
 
@@ -403,6 +406,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
       ifelse (? > 0)
       [set new_know_false fput (? * 3 + 1) new_know_false]
       [set new_know_false fput (? * -3 + 0) new_know_false]]; compute the new knowledge obtained from vision and observation
+
     set know_false remove-duplicates (sentence know_false new_know_false) ; extract information and add to belief of this action remove-duplicates
     ; Step 2: obtain those changed
 
@@ -424,7 +428,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     ; if we know that the action does not have any effect in both cases when a certain patch is on or off. Then we have say it has no effect
     foreach (n-values (width * height) [?])[
       ; if ? * 3 and ? * 3 +1 are both members of know_false then we add ? * 3 + 2 to know true. That is, we know the effect of this action on this patch.
-      if((member? (? * 3) know_false) and (member? (? * 3 + 1) know_false))[
+      if((member? (? * 3) know_false) and (member? (? * 3 + 1) know_false) and not (member? (? * 3 + 2) know_true))[
         set know_true (fput (? * 3 + 2) know_true)
         set know_false (remove (? * 3 + 1) know_false)
         set know_false (remove (? * 3 ) know_false)
@@ -529,7 +533,7 @@ to perform-action [act]
     ask patch x y [set pcolor black]
     ]
 
-tick
+
 end
 
 ;==================================bidding and planning===========================================
@@ -569,8 +573,10 @@ end
 to depth_first_planning [current_node]
   ; first, obtain the node with the best bidding value
   let stack (fput current_node [])
+
   set best_node []
   depth_first_planning_rec stack
+
 end
 
 to depth_first_planning_rec [stack]
@@ -645,6 +651,7 @@ to reset_bidding
 end
 
 ;a simple bidding methods where each agent think only one step ahead
+
 ;to simple-bidding
 ;  ask turtles [
 ;    ; for each action
@@ -720,7 +727,6 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
   report rep
 end
 
-; expand according to a given action
 to-report expected_local_world [world act]; to perform an action according to the agent's knowledge
   ;show "the knowledge of the action is as follows"
   ;show act
@@ -759,10 +765,83 @@ to-report expected_local_world [world act]; to perform an action according to th
   report expected
 end
 
+;to-report calculate_bidding [world_after] ;  compare it with the goal and calculate a value for bidding
+;  let goal_on first goal
+;  let goal_off last goal
+;  let bidding_value 0
+;  foreach world_after[
+;     if (member? ? goal_on) [set bidding_value (bidding_value + 1)]
+;     if (member? ? goal_off) [set bidding_value (bidding_value - 1)]
+;     if (member? (? * -1) goal_off) [set bidding_value (bidding_value + 1)]
+;     if (member? (? * -1) goal_on) [set bidding_value (bidding_value - 1)]
+;    ]
+;  ; TODO: add the learning values on
+;
+;  report bidding_value
+;end
+;
+
 
 to walk
-  ask turtles [ifelse (can-move? 1) [fd 1][right 90]]
+
+ask turtles[
+  ifelse (hour = 0 )
+  ;at night
+  [setxy random-xcor random-ycor
+        face patch-here
+        move-to patch-here;move to the center of the current patch, our agents will always move to the center of a patch.
+        move-to-least-unkown; moves to the neighbor or current patch which has the most potential information to aquire.
+      ]
+  ;in the daytime
+  [move-to-least-unkown]
+
+
+]
+  tick
+  ;?turtles avoid collision
+
 end
+
+to move-to-least-unkown; moves to the neighbor or current patch which has the most potential information to aquire.
+  let neighbor sort neighbors
+  show neighbor
+  show "neighbor"
+  foreach (sentence neighbor patch-here)[;neighbor patches(at most 8 for non-boundary patches) and current patch
+    let x pxcor
+    let y pycor
+    let vision_index []
+    let world (patches in-cone-nowrap width 360)
+    ask world [if ((distancexy x y) <= vision_radius)[set vision_index lput  ( pxcor + pycor * width ) vision_index]];if the agent is at this patch, its vision.
+
+    let amount [];the amount of information it at most will get in the specific patch neighbor, for each button it owns
+    foreach buttons_assigned[
+     let world_known map [floor( ? / 3 )] (item 0 ( item (? - 1) action_knowledge ))
+   let vision_known_index []
+    if (not (modes (sentence world_known vision_index) = (sentence world_known vision_index)))
+    [set vision_known_index ( modes (sentence world_known vision_index) )]; the visionindex that already in agent's knowledge.
+
+     set amount (lput ((length vision_index) - (length vision_known_index)) amount )];the amount of information a agent at most could aquire for this button at this patch.
+
+
+   ask ? [set potential_infor mean amount
+      show potential_infor]
+      ;if the agent is at that patch, with its set vision, the amount of information it at most may get.
+
+    ]
+
+    uphill potential_infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
+
+end
+
+patches-own[potential_infor;if the agent is at that patch, with its set vision, the amount of information it at most may get.
+  ]
+
+
+; TODO: button generation can be done using "shuffle"
+; TODO: random buttons are simply too random and looks ugly
+; TODO: ask the agent to press the button, not the observer
+; change all the "knowledge" to belief
+
 
 ; TODO: button generation can be done using "shuffle"
 ; TODO: random buttons are simply too random and looks ugly
@@ -772,8 +851,8 @@ end
 GRAPHICS-WINDOW
 725
 44
-1234
-574
+1235
+575
 -1
 -1
 125.0
