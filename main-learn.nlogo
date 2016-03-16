@@ -24,6 +24,7 @@ turtles-own[own_color; color set to the agent
   ;======================beliefs===================================================================
   action_knowledge; Beliefs about the actions. each action is a pair: (know_true, know_false). know_true consists of the propositions the agent is sure about.
   ; know false consists of the propositions the agent knows false about.
+  best_node ; a variable to help out the depth first search
 ]
 
 
@@ -304,9 +305,11 @@ to go
       set buttons_chosen_before (fput button_chosen [])
       ] ;  select a random action and record its index and there is no button chosen before
     [
-      let max_value 0
+
+      let max_value 0 ; max bidding value
       ifelse ((length buttons) = (length buttons_chosen_before))
       [; all buttons got chosen
+        ;in fact this game would then terminate
           set buttons_chosen_before []
           set max_value max bidding
        ][
@@ -316,8 +319,8 @@ to go
           ]
 
         set max_value (max bidding_no_repeat)
-        show "max"
-        show max_value
+       ; show "max"
+       ; show max_value
       ]
       ; then obtain the indexes with this value
       set button_chosen (one-of (filter [((item ? bidding)= max_value) and not (member? ? buttons_chosen_before)] n-values (length buttons)[?])); choose one of those with the best bidding value
@@ -346,6 +349,7 @@ to go
     set day (day + 1)
     communicate
     ; TODO: decide the first button to be pressed and the location in the morning
+    bid
     ]
 
   ; if the hour = num_hours then it's another day
@@ -357,7 +361,7 @@ to-report check-goal ; check if the current situation is the same as the goal
   foreach (first goal)[
     let x getx ?
     let y gety ?
-    if (([pcolor] of (patch x y)) = black)[set sign false]
+    if (not (([pcolor] of (patch x y)) = green))[set sign false]
     ]
   foreach (last goal)[
     let x getx ?
@@ -529,7 +533,7 @@ tick
 end
 
 ;==================================bidding and planning===========================================
-; datatype for A* planning
+; datatype for depth-first searching as planning
 ; a tuple of the followings:
 ; the hour
 ; the bidding value
@@ -544,38 +548,84 @@ to bid ; calculate the bidding value for each agent for each action
   ; simple-bidding
 
 
-  ;A* planning algorithm
+  ;depth-first search as planning
 
   ; initialise the planning part
   ; 1) construct an instance of the date structure
   ask turtles [
   let world_now represent_visable_world
   let current_node obtain_node hour (calculate_bidding world_now) buttons_chosen_before world_now
-  let result (a_star_planning current_node)
-
+  depth_first_planning current_node
+  ; 2) extract information from the best_node
+  if (not (best_node = [])) [
+    let act_best item (length buttons_chosen_before) (reverse item 2 best_node)
+    if (item act_best bidding < (item 1 best_node)) [set bidding replace-item act_best bidding (item 1 best_node)]; then update the bidding
+    ]
+  ; change the bidding
   ]
 end
 
 ; the result is a pair of action and the bidding value
-to-report a_star_planning [current_node]
+to depth_first_planning [current_node]
   ; first, obtain the node with the best bidding value
   let stack (fput current_node [])
-  set stack (a_star_planning_rec stack)
-  let best_final_node (find_best_node stack)
-  report list 1 21 ; only report the (first) action and its bidding value
+  set best_node []
+  depth_first_planning_rec stack
 end
 
-to-report a_star_planning_rec [stack]
+to depth_first_planning_rec [stack]
+  ifelse(not (stack = []))[
+    let node (first stack)
+    set stack remove node stack
+    let h item 0 node
+    let bv item 1 node
+    let pl item 2 node ; the list of actions performed so far
+    let wd item 3 node
+
+    ; find all the actions performable in this world (i.e. not in the plan)
+    let acts (n-values length buttons [?])
+    foreach pl [
+      set acts (remove ? acts);
+      ]
+    if (not (length acts = 0)) [
+
+      foreach acts [
+        let h' (h + 1)
+        let pl' (fput ? pl)
+        let wd' (expected_local_world wd (item ? action_knowledge))
+        let bv' calculate_bidding wd'
+        let node' obtain_node h' bv' pl' wd'
+        ; if the h = num_hours then this is a terminating world
+
+          ifelse (h' = num_hours)
+          [
+            ifelse (best_node = [])
+            [set best_node node']
+            [if ( bv' > (item 1 best_node) )[set best_node node']] ; if it is better than the best node
+          ][
+            if (not(wd' = []))[
+              ; add to the stack
+              show "----act------"
+              show wd
+              show (item ? action_knowledge)
+              show wd'
+              set stack (fput node' stack)
+             ; depth_first_planning_rec stack
+
+              ]
+
+          ]
+      ]
+      depth_first_planning_rec stack
+    ]
+  ][
+;  show "**********************end of search********************"
+  ]; else if the stack is empty then do nothing
 
 
-  report stack
+
 end
 
-
-to-report find_best_node [stack]
-  ; obtain the node with the best bidding value
-  report first stack
-end
 
 to-report obtain_node [h v p w]
   ; TODO: this method can be simplied using task
@@ -584,7 +634,6 @@ to-report obtain_node [h v p w]
   set node (fput v node)
   set node (fput h node)
   report node
-
 end
 
 
@@ -596,18 +645,18 @@ to reset_bidding
 end
 
 ;a simple bidding methods where each agent think only one step ahead
-to simple-bidding
-  ask turtles [
-    ; for each action
-    foreach (n-values length buttons [?]) [
-      let world_now represent_visable_world ;a representation of the world from the agent knows
-      let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
-      let learning_value (compute_learning_value world_now (item ? action_knowledge))
-      let bidding_value calculate_bidding world_after + learning_value
-      if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
-    ]
-  ]
-end
+;to simple-bidding
+;  ask turtles [
+;    ; for each action
+;    foreach (n-values length buttons [?]) [
+;      let world_now represent_visable_world ;a representation of the world from the agent knows
+;      let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
+;      let learning_value (compute_learning_value world_now (item ? action_knowledge))
+;      let bidding_value calculate_bidding world_after + learning_value
+;      if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
+;    ]
+;  ]
+;end
 
 
 ; calculate the bidding function without learning factor
@@ -627,9 +676,9 @@ to-report calculate_bidding [world_after] ;  compare it with the goal and calcul
 end
 
 ; calculate the bidding function with learning factor
-to-report calculate_bidding_with_learning_factor [world_now act] ; see the simple bidding case to get an idea how to use it
-   let world_after (expected_local_world world_now act); perform the action according to the knowledge of the action
-   let learning_value (compute_learning_value world_now act)
+to-report compute_bidding_with_learning_factor [world_now act_k] ; see the simple bidding case to get an idea how to use it
+   let world_after (expected_local_world world_now act_k); perform the action according to the knowledge of the action
+   let learning_value (compute_learning_value world_now act_k)
    let bidding_value calculate_bidding world_after + learning_value
 
    report bidding_value
@@ -695,15 +744,24 @@ to-report expected_local_world [world act]; to perform an action according to th
       if ((? < 0) and (member? (-3 * ?) know_true))[set expected (fput (-1 * ?) expected)]
 
       ]
+    ; the agent also knows what is going to be true and false according to its knowledge of the action
+    foreach know_true [
+      ; get the index
+      let index floor (? / 3)
+      ; get the color
+      if ((remainder ? 3) = 0) [set expected (fput index expected)]
+      if ((remainder ? 3) = 1) [set expected (fput (index * -1) expected)]
+      ; if it is green then keep it positive, it black then keep it negative
+      ]
     ; the rest is not sure for the agent.
     ]
-
+  set expected (remove-duplicates expected)
   report expected
 end
 
 
 to walk
-  ask turtles [fd 1]
+  ask turtles [ifelse (can-move? 1) [fd 1][right 90]]
 end
 
 ; TODO: button generation can be done using "shuffle"
@@ -714,11 +772,11 @@ end
 GRAPHICS-WINDOW
 725
 44
-1292
-631
+1234
+574
 -1
 -1
-15.625
+125.0
 1
 10
 1
@@ -729,9 +787,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-31
+3
 0
-31
+3
 1
 1
 1
@@ -747,7 +805,7 @@ button_each
 button_each
 1
 10
-2
+1
 1
 1
 NIL
@@ -828,7 +886,7 @@ vision_radius
 vision_radius
 0
 10
-4
+1
 1
 1
 NIL
@@ -853,8 +911,8 @@ SLIDER
 num_hours
 num_hours
 (ceiling (button_each * num_agents / 2)) + 1
-ceiling (button_each * num_agents)
-6
+ceiling (button_each * num_agents) - 1
+3
 1
 1
 NIL
@@ -956,7 +1014,7 @@ INPUTBOX
 189
 91
 pattern_name
-Smile.txt
+test.txt
 1
 0
 String
@@ -1068,7 +1126,7 @@ hour
 MONITOR
 27
 409
-633
+189
 454
 plan so far
 buttons_chosen_before
@@ -1099,16 +1157,27 @@ SLIDER
 317
 227
 500
-261
+260
 learning_factor
 learning_factor
 0
 30
-12
+0
 1
 1
 %
 HORIZONTAL
+
+MONITOR
+207
+409
+325
+454
+bidding
+bidding
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
