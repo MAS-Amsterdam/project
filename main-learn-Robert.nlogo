@@ -795,11 +795,10 @@ to move-to-least-unknown; moves to the neighbor or current patch which has the m
 
   let neighbor sort neighbors
   foreach (sentence neighbor patch-here)[;neighbor patches(at most 8 for non-boundary patches) and current patch
-    let x [pxcor] of ?
-    let y [pycor] of ?
+
     let vision_index []
     let world (patches in-cone-nowrap width 360)
-    ask world [if ((distancexy x y) <= vision_radius)[set vision_index lput  ( pxcor + pycor * width ) vision_index]];if the agent is at this patch, its vision.
+    ask world [if ((distancexy x [pxcor] of ? [pycor] of ?) <= vision_radius)[set vision_index lput  ( pxcor + pycor * width ) vision_index]];if the agent is at this patch, its vision.
     let amount [];the amount of information it at most will get in the specific patch neighbor, for each button it owns
 
     foreach buttons_assigned[
