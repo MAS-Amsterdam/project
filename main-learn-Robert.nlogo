@@ -36,7 +36,7 @@ to setup
   clear-all
   ;set noise 12; the randomly set points in each button that belongs to solution.
   ; set noise_dis 8; the randomly set points in each button that not belongs to solution.
-  set color_list n-of num_agents [yellow magenta blue red pink brown grey red pink blue];just for the sake of telling each agent apart
+  set color_list n-of num_agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
 
   reset-ticks
   open_file; set up the goal pattern.
@@ -435,7 +435,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     ; if we know that the action does not have any effect in both cases when a certain patch is on or off. Then we have say it has no effect
     foreach (n-values (width * height) [?])[
       ; if ? * 3 and ? * 3 +1 are both members of know_false then we add ? * 3 + 2 to know true. That is, we know the effect of this action on this patch.
-      if((member? (? * 3) know_false) and (member? (? * 3 + 1) know_false))[
+      if((member? (? * 3) know_false) and (member? (? * 3 + 1) know_false) and not (member? (? * 3 + 2) know_true)[
         set know_true (fput (? * 3 + 2) know_true)
         set know_false (remove (? * 3 + 1) know_false)
         set know_false (remove (? * 3 ) know_false)
@@ -718,7 +718,6 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
   let rep []
   ; first obtain the list of visable patches
   let vision (patches in-cone-nowrap vision_radius 360)
-
   ask vision[
     ifelse (not (pcolor = green))
     [set rep (fput ((pycor * width + pxcor ) * -1) rep)]; if it is black
@@ -795,11 +794,10 @@ to move-to-least-unknown; moves to the neighbor or current patch which has the m
 
   let neighbor sort neighbors
   foreach (sentence neighbor patch-here)[;neighbor patches(at most 8 for non-boundary patches) and current patch
-    let x [pxcor] of ?
-    let y [pycor] of ?
+
     let vision_index []
     let world (patches in-cone-nowrap width 360)
-    ask world [if ((distancexy x y) <= vision_radius)[set vision_index lput  ( pxcor + pycor * width ) vision_index]];if the agent is at this patch, its vision.
+    ask world [if ((distancexy [pxcor] of ? [pycor] of ?) <= vision_radius)[set vision_index lput  ( pxcor + pycor * width ) vision_index]];if the agent is at this patch, its vision.
     let amount [];the amount of information it at most will get in the specific patch neighbor, for each button it owns
 
     foreach buttons_assigned[
