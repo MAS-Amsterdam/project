@@ -435,7 +435,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     ; if we know that the action does not have any effect in both cases when a certain patch is on or off. Then we have say it has no effect
     foreach (n-values (width * height) [?])[
       ; if ? * 3 and ? * 3 +1 are both members of know_false then we add ? * 3 + 2 to know true. That is, we know the effect of this action on this patch.
-      if((member? (? * 3) know_false) and (member? (? * 3 + 1) know_false) and not (member? (? * 3 + 2) know_true)[
+      if((member? (? * 3) know_false) and (member? (? * 3 + 1) know_false) and not (member? (? * 3 + 2) know_true))[
         set know_true (fput (? * 3 + 2) know_true)
         set know_false (remove (? * 3 + 1) know_false)
         set know_false (remove (? * 3 ) know_false)
