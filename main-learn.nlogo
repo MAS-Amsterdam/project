@@ -352,11 +352,11 @@ to go
     ; TODO: decide the first button to be pressed and the location in the morning
     bid
 
-    walk; randomly distribute the agents to patches on the world, and each agent can choose to stay or move one step in four directions to where his knownledge about the the buttons is least or among the least loactions.
+    walk_simple; randomly distribute the agents to patches on the world, and each agent can choose to stay or move one step in four directions to where his knownledge about the the buttons is least or among the least loactions.
     show-vision]
 
   ; if the hour = num_hours then it's another day
-
+  ;tick
 end
 
 to-report check-goal ; check if the current situation is the same as the goal
@@ -373,6 +373,11 @@ to-report check-goal ; check if the current situation is the same as the goal
     ]
   if sign = true [report true]
   report false
+end
+
+to walk_simple
+  ask turtles [ifelse (can-move? 1)[fd 1][right 90]]
+
 end
 
 ; two helping function to get the xcor and ycor of the patch according to its index
@@ -797,7 +802,7 @@ ask turtles[
 
 
 ]
-  tick
+  ;tick
   ;?turtles avoid collision
 
 end

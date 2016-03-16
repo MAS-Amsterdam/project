@@ -276,9 +276,10 @@ to show-vision
     set own_color color
     let oc own_color
        ask patches in-cone-nowrap vision_radius 360
-          [set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
+          [
+;            set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
            set plabel-color oc
-           set plabel "*"    ]
+           set plabel "X"    ]
       ]
 end
 
@@ -305,6 +306,7 @@ to go
       set buttons_chosen_before (fput button_chosen [])
       ] ;  select a random action and record its index and there is no button chosen before
     [
+      bid
 
       let max_value 0 ; max bidding value
       ifelse ((length buttons) = (length buttons_chosen_before))
@@ -329,6 +331,7 @@ to go
     ]
   ; then perform the action
   perform-action item button_chosen buttons
+
   if (check-goal = true) [
     show "Game Over"
     show "The total days taken is: "
@@ -337,7 +340,7 @@ to go
   ; then the agent observe and perform learning
   observe-and-learn
   ; the agent start the bidding of the next action (with values stored in the "bidding")
-  bid
+  ;bid
   ; next hour
   walk
   set hour (hour + 1)
@@ -349,11 +352,12 @@ to go
     set day (day + 1)
     communicate
     ; TODO: decide the first button to be pressed and the location in the morning
-    bid
+    ;bid
     ]
 
   ; if the hour = num_hours then it's another day
-
+  show-vision
+  tick
 end
 
 to-report check-goal ; check if the current situation is the same as the goal
@@ -503,7 +507,7 @@ to assign-buttons; randomly assign the buttons to the turtles
    set buttons_assigned []
     foreach n-values button_each [?][
     let n_button ( random  (length remain_bt ))
-    set buttons_assigned lput ((position  (item n_button remain_bt) buttons )  + 1 ) buttons_assigned
+    set buttons_assigned lput ((position  (item n_button remain_bt) buttons ) ) buttons_assigned
     set remain_bt (remove (item n_button remain_bt) remain_bt )
 
    ]
@@ -528,8 +532,6 @@ to perform-action [act]
     let x ( ? - y * width )
     ask patch x y [set pcolor black]
     ]
-
-tick
 end
 
 ;==================================bidding and planning===========================================
@@ -711,7 +713,7 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
   let vision (patches in-cone-nowrap vision_radius 360)
 
   ask vision[
-    ifelse (pcolor = black)
+    ifelse (not (pcolor = green))
     [set rep (fput ((pycor * width + pxcor ) * -1) rep)]; if it is black
     [set rep (fput (pycor * width + pxcor) rep)]; otherwise it is green, positive number
   ]
@@ -772,24 +774,24 @@ end
 GRAPHICS-WINDOW
 725
 44
-1234
-574
+970
+-308
 -1
 -1
-125.0
+15.625
 1
-10
+30
 1
 1
-1
-0
-0
-0
 1
 0
-3
 0
-3
+0
+1
+0
+31
+0
+31
 1
 1
 1
@@ -886,7 +888,7 @@ vision_radius
 vision_radius
 0
 10
-1
+2
 1
 1
 NIL
@@ -1014,7 +1016,7 @@ INPUTBOX
 189
 91
 pattern_name
-test.txt
+Smile.txt
 1
 0
 String
