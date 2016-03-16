@@ -249,6 +249,8 @@ to setup-agents
   create-turtles num_agents [
     set label who
     setxy random-xcor random-ycor
+     face patch-here
+      move-to patch-here
     ; set the observation to black everywhere
 
     ;initialize the knowledge of actions,
@@ -271,15 +273,17 @@ end
 
 
 to show-vision
+  ask patches [set plabel ""]
   ;visulize of the vision,setting plabels in the vision
    ask turtles [
     set own_color color
     let oc own_color
+
        ask patches in-cone-nowrap vision_radius 360
           [
 ;            set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
            set plabel-color oc
-           set plabel "X"    ]
+           set plabel "*"    ]
       ]
 end
 
@@ -340,9 +344,10 @@ to go
   ; then the agent observe and perform learning
   observe-and-learn
   ; the agent start the bidding of the next action (with values stored in the "bidding")
-  ;bid
+  bid
   ; next hour
   walk
+  show-vision
   set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
@@ -352,7 +357,9 @@ to go
     set day (day + 1)
     communicate
     ; TODO: decide the first button to be pressed and the location in the morning
-    ;bid
+    bid
+    walk
+    show-vision
     ]
 
   ; if the hour = num_hours then it's another day
@@ -763,8 +770,60 @@ end
 
 
 to walk
-  ask turtles [ifelse (can-move? 1) [fd 1][right 90]]
+  ;ask turtles [ifelse (can-move? 1) [fd 1][right 90]]
+  ask turtles[
+
+  ifelse (hour = 0)
+  ;at night
+  [if(day != 0)
+    [setxy random-xcor random-ycor
+        face patch-here
+        move-to patch-here];move to the center of the current patch, our agents will always move to the center of a patch.
+        move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
+      ]
+  ;in the daytime
+  [move-to-least-unknown]
+
+
+]
 end
+
+to move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
+  ;===================local variables===================================================
+  ;vision_index:(if the agent was )at each neighbor patch, the invisionindex of the agent
+  ;vision_known_index:(if the agent was )at each neighbor patch, the invisionindex of the agent, which the effect of current assigned button on that patch is known to current agent.
+
+  let neighbor sort neighbors
+  foreach (sentence neighbor patch-here)[;neighbor patches(at most 8 for non-boundary patches) and current patch
+    let x [pxcor] of ?
+    let y [pycor] of ?
+    let vision_index []
+    let world (patches in-cone-nowrap width 360)
+    ask world [if ((distancexy x y) <= vision_radius)[set vision_index lput  ( pxcor + pycor * width ) vision_index]];if the agent is at this patch, its vision.
+    let amount [];the amount of information it at most will get in the specific patch neighbor, for each button it owns
+
+    foreach buttons_assigned[
+      let world_known map [floor( ? / 3 )] (item 0 ( item ?  action_knowledge ))
+      let vision_known_index []
+      if (not (modes (sentence world_known vision_index) = (sentence world_known vision_index)))
+      [set vision_known_index ( modes (sentence world_known vision_index) )]; the visionindex that already in agent's knowledge.
+
+     set amount (lput ((length vision_index) - (length vision_known_index)) amount )
+     ];the amount of information a agent at most could aquire for this button at this patch.
+
+
+   ask ? [set potential_infor mean amount]; calculate the mean value(potential information) of all the buttons it is incharge of for each neighbor and current location.
+
+
+    ]
+
+    uphill potential_infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
+
+end
+
+patches-own[potential_infor;if the agent is at that patch, with its set vision, the amount of information it at most may get.
+  ]
+
 
 ; TODO: button generation can be done using "shuffle"
 ; TODO: random buttons are simply too random and looks ugly
@@ -774,11 +833,11 @@ end
 GRAPHICS-WINDOW
 725
 44
-970
--308
+1235
+575
 -1
 -1
-15.625
+125.0
 1
 30
 1
@@ -789,9 +848,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-31
+3
 0
-31
+3
 1
 1
 1
@@ -888,7 +947,7 @@ vision_radius
 vision_radius
 0
 10
-2
+1
 1
 1
 NIL
@@ -1016,7 +1075,7 @@ INPUTBOX
 189
 91
 pattern_name
-Smile.txt
+test.txt
 1
 0
 String
