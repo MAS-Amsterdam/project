@@ -4,28 +4,28 @@ globals [
   continue ; if the game is goal is achieved, then continue if false
   width
   height
-  color_list; color for different agents
+  color-list; color for different agents
   goal ;the goal pattern
-  num_hours ; the length of solution
+  num-hours ; the length of solution
   day ; the day
   hour; the hour
 
   bidding ; for each action, we record a value
   ;=========================buttons related variables==============================================
   ; noise ; the randomly set points in each button that belongs to solution.
-  ; noise_dis; the randomly set points in each button that not belongs to solution.
+  ; noise-dis; the randomly set points in each button that not belongs to solution.
   buttons; a list of buttons, each button is a pair setting some patches to green and some to black
-  button_chosen; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
-  buttons_chosen_before; all the buttons chosen before
+  button-chosen; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
+  buttons-chosen-before; all the buttons chosen before
   ]
-turtles-own[own_color; color set to the agent
-  buttons_assigned; the order of buttons it owns, relating to the matrix buttons
+turtles-own[own-color; color set to the agent
+  buttons-assigned; the order of buttons it owns, relating to the matrix buttons
   observation ; the agent's observation
   ;======================beliefs===================================================================
-  action_knowledge; Beliefs about the actions. each action is a pair: (know_true, know_false). know_true consists of the propositions the agent is sure about.
+  action-knowledge; Beliefs about the actions. each action is a pair: (know-true, know-false). know-true consists of the propositions the agent is sure about.
   ; know false consists of the propositions the agent knows false about.
-  best_node ; a variable to help out the depth first search
-  know_buttons_in_charge; the percentage of the knownledge each agent acuired for the button(s) it in charge of.
+  best-node ; a variable to help out the depth first search
+  know-buttons-in-charge; the percentage of the knownledge each agent acuired for the button(s) it in charge of.
 ]
 
 
@@ -36,11 +36,11 @@ turtles-own[own_color; color set to the agent
 to setup
   clear-all
   ;set noise 12; the randomly set points in each button that belongs to solution.
-  ; set noise_dis 8; the randomly set points in each button that not belongs to solution.
-  set color_list n-of num_agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
+  ; set noise-dis 8; the randomly set points in each button that not belongs to solution.
+  set color-list n-of num-agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
 
   reset-ticks
-  open_file; set up the goal pattern.
+  open-file; set up the goal pattern.
   setup-time
   setup-button
   setup-agents
@@ -67,9 +67,9 @@ end
 
 ; to load the goal pattern
 
-to open_file
+to open-file
 
-  file-open pattern_name
+  file-open pattern-name
   set goal list [] []
   let delim ","
 
@@ -132,7 +132,7 @@ end
 ; to load and display the goal
 to load-and-display-goal
   clear-all
-  open_file
+  open-file
   foreach (first goal) [
     let x ? mod width
     let y floor (? / width)
@@ -151,30 +151,30 @@ end
 
 to setup-button
 
-  set buttons_chosen_before []
-  ; the total number of buttons =  num_agent * buttons_each
+  set buttons-chosen-before []
+  ; the total number of buttons =  num-agent * buttons-each
   ; we choose the first half and one more of the buttons as the plan
 
-  let solution_buttons [] ; the solution plan to be achieved
+  let solution-buttons [] ; the solution plan to be achieved
 
   ;change the goal representation so patches to be set to black are represented as a negative number
-  let goal_combination first goal
-  foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
-  let total_buttons buttons_each * num_agents
-  set num_hours ( floor ( total_buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
+  let goal-combination first goal
+  foreach (last goal) [set goal-combination lput ( -1 * ? ) goal-combination]
+  let total-buttons buttons-each * num-agents
+  set num-hours ( floor ( total-buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
 
   ;----------------------------------------------------------
   ; Part one: buttons leading to solution
 
-  let choose_num floor (( length goal_combination ) / ( num_hours - 1 )) ; the least number of propositions in each button
+  let choose-num floor (( length goal-combination ) / ( num-hours - 1 )) ; the least number of propositions in each button
 
   ; here we use floor to avoid running out of propositions before the tidy up step (the last step)
-  foreach n-values ( num_hours - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
+  foreach n-values ( num-hours - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
 
   [
-   let remain_g_c goal_combination
-   let chosen n-of choose_num remain_g_c
-   set remain_g_c (remove chosen remain_g_c ) ; the remaining ones to be satisfied/choosen in further steps
+   let remain-g-c goal-combination
+   let chosen n-of choose-num remain-g-c
+   set remain-g-c (remove chosen remain-g-c ) ; the remaining ones to be satisfied/choosen in further steps
 
    let pos []
    let neg []
@@ -188,9 +188,9 @@ to setup-button
 
   ;-----------------------------------------
   ; buttons with random values towards the goal
-   let noise_vals n-of noise (n-values (length goal_combination) [?]);randomly choose positions in the goal with the number of noise
+   let noise-vals n-of noise (n-values (length goal-combination) [?]);randomly choose positions in the goal with the number of noise
    ; check if the random positions is already in the buttons, if not add it to the button.
-   foreach noise_vals [
+   foreach noise-vals [
      ifelse ((member? ? pos) or (member? ? neg) )[
 
        ][
@@ -201,62 +201,62 @@ to setup-button
          ]
        ]
      ]
-   set solution_buttons fput (list pos neg) solution_buttons
+   set solution-buttons fput (list pos neg) solution-buttons
    ]
 
 
 
-  foreach solution_buttons [ perform-action  ? ]
+  foreach solution-buttons [ perform-action  ? ]
  ; a tidy up button
-  let last_pos []
-  let last_neg []
+  let last-pos []
+  let last-neg []
    ask patches [
     let index (width * pycor + pxcor)
-    if ((pcolor = black) and (member? index (first goal)))[set last_pos (lput index (last_pos))] ; should be green and is green now
-    if ((pcolor = green) and (member? index (last goal)))[set last_neg (lput index (last_neg))]; should be black but is green now
+    if ((pcolor = black) and (member? index (first goal)))[set last-pos (lput index (last-pos))] ; should be green and is green now
+    if ((pcolor = green) and (member? index (last goal)))[set last-neg (lput index (last-neg))]; should be black but is green now
     ]
 
-   let last_btn (list last_pos last_neg)
-   set solution_buttons lput (last_btn) solution_buttons
+   let last-btn (list last-pos last-neg)
+   set solution-buttons lput (last-btn) solution-buttons
 
 
-   perform-action last_btn
+   perform-action last-btn
 
   ;----------------------------------------------------------
   ; Part 2: buttons not leading to patterns,i.e. disturbing the agents.
 
-   let disturbing_buttons []
-   let noise_dis  (choose_num + noise) ; the number of propositions in the disturbing buttons
-    foreach n-values  ( buttons_each * num_agents - num_hours ) [?][
-      let noise_dis_vals []
-      ifelse (noise_dis <= length goal_combination)[
-        set noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
+   let disturbing-buttons []
+   let noise-dis  (choose-num + noise) ; the number of propositions in the disturbing buttons
+    foreach n-values  ( buttons-each * num-agents - num-hours ) [?][
+      let noise-dis-vals []
+      ifelse (noise-dis <= length goal-combination)[
+        set noise-dis-vals n-of noise-dis (n-values (length goal-combination) [?]);randomly choose the elements
         ][
-        set noise_dis_vals n-of (length goal_combination) (n-values (length goal_combination) [?]);randomly choose the elements
+        set noise-dis-vals n-of (length goal-combination) (n-values (length goal-combination) [?]);randomly choose the elements
         ]
 
-    let pos_d  []
-    let neg_d  []
-    foreach noise_dis_vals [
-    ifelse (random 2 > 0)[set pos_d fput ? pos_d]
-    [set neg_d fput ? neg_d];randomly set the sign (on/off) to the elements
+    let pos-d  []
+    let neg-d  []
+    foreach noise-dis-vals [
+    ifelse (random 2 > 0)[set pos-d fput ? pos-d]
+    [set neg-d fput ? neg-d];randomly set the sign (on/off) to the elements
     ]
 
-   set disturbing_buttons fput (list pos_d neg_d ) disturbing_buttons
+   set disturbing-buttons fput (list pos-d neg-d ) disturbing-buttons
 
     ]
 
-   set buttons sentence solution_buttons disturbing_buttons ; append the disturbing buttons to the solution buttons
+   set buttons sentence solution-buttons disturbing-buttons ; append the disturbing buttons to the solution buttons
 
 end
 
 
 to setup-agents
-  let all_black [];get the index of all the patches
-  ask patches [set all_black (fput (get-patch-index self) all_black)]
+  let all-black [];get the index of all the patches
+  ask patches [set all-black (fput (get-patch-index self) all-black)]
 
-  create-turtles num_agents [
-    set know_buttons_in_charge 0
+  create-turtles num-agents [
+    set know-buttons-in-charge 0
     set label who
     setxy random-xcor random-ycor
      face patch-here
@@ -264,17 +264,17 @@ to setup-agents
     ; set the observation to black everywhere
 
     ;initialize the knowledge of actions,
-    set action_knowledge []
-    let k_tmp (list [] [])
+    set action-knowledge []
+    let k-tmp (list [] [])
     foreach n-values (length buttons)[?] [
-      set action_knowledge (fput k_tmp action_knowledge)
+      set action-knowledge (fput k-tmp action-knowledge)
       ]
     ; the agent's initial observation is simply all black
 
-    set observation all_black
+    set observation all-black
 
     ]
-    foreach (n-values num_agents [?]) [ ask turtle ? [ set color item ? color_list] ];set different colors to agents.
+    foreach (n-values num-agents [?]) [ ask turtle ? [ set color item ? color-list] ];set different colors to agents.
 
 end
 
@@ -285,10 +285,10 @@ to show-vision
   ask patches [set plabel ""]
   ;visulize of the vision,setting plabels in the vision
    ask turtles [
-    set own_color color
-    let oc own_color
+    set own-color color
+    let oc own-color
 
-       ask patches in-cone-nowrap vision_radius 360
+       ask patches in-cone-nowrap vision-radius 360
           [
 ;            set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
            set plabel-color oc
@@ -308,39 +308,41 @@ end
 to go
 ;  ask patches [set pcolor black]
   ; for day 0, hour 0 the button of the hour is randomly choosen.
-  ifelse (hour < num_hours)
+  ifelse (hour < num-hours)
   ; ====================== in day time =================================
   [
     show "in day time"
     ; first of all choose the action to perform for this hour.
     ifelse (day = 0 and hour = 0)
     [
-      set button_chosen one-of (n-values length buttons [?])
-      set buttons_chosen_before (fput button_chosen [])
+      set button-chosen one-of (n-values length buttons [?])
+      set buttons-chosen-before (fput button-chosen [])
 
       ] ;  select a random action and record its index and there is no button chosen before
     [
 
 
-      ifelse (total_knowledge > knowledge_threshold * 0.01 )
+      ifelse (total-knowledge > knowledge-threshold * 0.01 )
       [bid]
       [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
 
-      let max_value (max bidding)
+      let max-value (max bidding)
       ; then obtain the indexes with this value (those got chosen before remains zero)
-      set button_chosen (one-of (filter [((item ? bidding)= max_value) and not (member? ? buttons_chosen_before)] n-values (length buttons)[?])); choose one of those with the best bidding value
-      set buttons_chosen_before (fput button_chosen buttons_chosen_before)
+      set button-chosen (one-of (filter [((item ? bidding)= max-value) and not (member? ? buttons-chosen-before)] n-values (length buttons)[?])); choose one of those with the best bidding value
+      set buttons-chosen-before (fput button-chosen buttons-chosen-before)
       ; choose the button with the highest bidding value
     ]
     ; then perform the action
-    perform-action item button_chosen buttons
-    show button_chosen
-
-    if (check-goal = true) [
+    perform-action item button-chosen buttons
+    show button-chosen
+    show check-goal
+    if (check-goal) [
       show "Game Over"
       show "The total days taken is: "
       show day
-      stop]
+      stop
+      ask turtles [stop]
+      ]
     ; then the agent observe and perform learning
     observe-and-learn
     ; the agent start the bidding of the next action (with values stored in the "bidding")
@@ -348,11 +350,11 @@ to go
     ; next hour
     walk
     show-vision
-    update_average_individual_knowledge
+    update-average-individual-knowledge
     set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
-    set buttons_chosen_before []
+    set buttons-chosen-before []
     show "at night"
     ask patches [set pcolor black]
     set hour 0
@@ -364,30 +366,30 @@ to go
     show-vision
     ]
 
-  ; if the hour = num_hours then it's another day
+  ; if the hour = num-hours then it's another day
   show-vision
   tick
 end
 
-to-report total_knowledge
+to-report total-knowledge
   let pct 0
   ask turtles [
-    set pct (pct + know_buttons_in_charge)
+    set pct (pct + know-buttons-in-charge)
     ]
-  set pct (pct / num_agents)
+  set pct (pct / num-agents)
   report pct
 end
 
 
-to update_average_individual_knowledge; the average knownledge of the buttons each agent in charge of.
+to update-average-individual-knowledge; the average knownledge of the buttons each agent in charge of.
   ask turtles[
-    ;let total_indi_know 0; the knowldege of all the buttons it
-    set know_buttons_in_charge 0
-    foreach buttons_assigned[
-     let n length first (item ? action_knowledge)
-      set know_buttons_in_charge ( know_buttons_in_charge + n / (width * height))
+    ;let total-indi-know 0; the knowldege of all the buttons it
+    set know-buttons-in-charge 0
+    foreach buttons-assigned[
+     let n length first (item ? action-knowledge)
+      set know-buttons-in-charge ( know-buttons-in-charge + n / (width * height))
     ]
-    set know_buttons_in_charge (know_buttons_in_charge / buttons_each)
+    set know-buttons-in-charge (know-buttons-in-charge / buttons-each)
   ]
 
 end
@@ -404,8 +406,7 @@ to-report check-goal ; check if the current situation is the same as the goal
     let y gety ?
     if (([pcolor] of (patch x y)) = green)[set sign false]
     ]
-  if sign = true [report true]
-  report false
+  report sign
 end
 
 ; two helping function to get the xcor and ycor of the patch according to its index
@@ -420,60 +421,60 @@ end
 
 to observe-and-learn ; ask each agent to change the vision and vision index
   ask turtles [
-    let vision (patches in-cone-nowrap vision_radius 360) ; the agent's vision
-    let vision_indexes []
+    let vision (patches in-cone-nowrap vision-radius 360) ; the agent's vision
+    let vision-indexes []
     ask vision [
-      set vision_indexes fput (get-patch-index self)  vision_indexes
+      set vision-indexes fput (get-patch-index self)  vision-indexes
       ]
 
-    ; compare vision_indexes and observation to learn
+    ; compare vision-indexes and observation to learn
 
     ; Step 1: obtain those not changed
-    let know_false last (item button_chosen action_knowledge)
-    let know_true first (item button_chosen action_knowledge)
+    let know-false last (item button-chosen action-knowledge)
+    let know-true first (item button-chosen action-knowledge)
 
-    let not_changed (modes (sentence observation vision_indexes))
+    let not-changed (modes (sentence observation vision-indexes))
 
-    let new_know_false []
-    foreach not_changed [
+    let new-know-false []
+    foreach not-changed [
       ifelse (? > 0)
-      [set new_know_false fput (? * 3 + 1) new_know_false]
-      [set new_know_false fput (? * -3 + 0) new_know_false]]; compute the new knowledge obtained from vision and observation
-    set know_false remove-duplicates (sentence know_false new_know_false) ; extract information and add to belief of this action remove-duplicates
+      [set new-know-false fput (? * 3 + 1) new-know-false]
+      [set new-know-false fput (? * -3 + 0) new-know-false]]; compute the new knowledge obtained from vision and observation
+    set know-false remove-duplicates (sentence know-false new-know-false) ; extract information and add to belief of this action remove-duplicates
     ; Step 2: obtain those changed
 
-    let tmp (sentence (map [? * -1] observation) vision_indexes)
+    let tmp (sentence (map [? * -1] observation) vision-indexes)
     let changed []
     if (not (modes tmp = tmp)) [set changed modes tmp] ; be careful about this line. if there is no repeated element then it would simply return the original list back!!!
 
-    let new_know_true []
+    let new-know-true []
     foreach changed [
       ifelse (? > 0)
-      [set new_know_true fput (? * 3 + 0) new_know_true]
-      [set new_know_true fput (? * -3 + 1) new_know_true]]; compute the new knowledge obtained from vision and observation
+      [set new-know-true fput (? * 3 + 0) new-know-true]
+      [set new-know-true fput (? * -3 + 1) new-know-true]]; compute the new knowledge obtained from vision and observation
 
-    set know_true (remove-duplicates (sentence know_true new_know_true))
+    set know-true (remove-duplicates (sentence know-true new-know-true))
 
 
     ; Before we changed the knowledge about the action, we need to make sure that there
 
     ; if we know that the action does not have any effect in both cases when a certain patch is on or off. Then we have say it has no effect
     foreach (n-values (width * height) [?])[
-      ; if ? * 3 and ? * 3 +1 are both members of know_false then we add ? * 3 + 2 to know true. That is, we know the effect of this action on this patch.
-      if((member? (? * 3) know_false) and (member? (? * 3 + 1) know_false) and not (member? (? * 3 + 2) know_true))[
-        set know_true (fput (? * 3 + 2) know_true)
-        set know_false (remove (? * 3 + 1) know_false)
-        set know_false (remove (? * 3 ) know_false)
-        show know_true
+      ; if ? * 3 and ? * 3 +1 are both members of know-false then we add ? * 3 + 2 to know true. That is, we know the effect of this action on this patch.
+      if((member? (? * 3) know-false) and (member? (? * 3 + 1) know-false) and not (member? (? * 3 + 2) know-true))[
+        set know-true (fput (? * 3 + 2) know-true)
+        set know-false (remove (? * 3 + 1) know-false)
+        set know-false (remove (? * 3 ) know-false)
+        ;show know-true
         ]
       ]
 
 
     ; replace the knowledge of the action
-    set action_knowledge replace-item button_chosen action_knowledge (list know_true know_false)
+    set action-knowledge replace-item button-chosen action-knowledge (list know-true know-false)
 
-    ; and finally, set vision_indexes as the new observation
-    set observation vision_indexes; TODO: what if after walk, there is no information about new local pathes?
+    ; and finally, set vision-indexes as the new observation
+    set observation vision-indexes; TODO: what if after walk, there is no information about new local pathes?
     ]
 
 end
@@ -481,24 +482,24 @@ end
 
 
 to communicate
-   ; to combine all the action_button of every agent, getting a learning result:action_communication.
+   ; to combine all the action-button of every agent, getting a learning result:action-communication.
    let integration []
 
    foreach n-values (length buttons) [?][
    ; for each agent, we take the all their knowledge
-   let know_true []
-   let know_false []
+   let know-true []
+   let know-false []
    ask turtles [
-     set know_true (remove-duplicates sentence know_true first (item ? action_knowledge))
-     set know_false (remove-duplicates sentence know_false last (item ? action_knowledge))
+     set know-true (remove-duplicates sentence know-true first (item ? action-knowledge))
+     set know-false (remove-duplicates sentence know-false last (item ? action-knowledge))
      ]
-   ; TODO: extract information from know_false to know_true
+   ; TODO: extract information from know-false to know-true
 
-   set integration (lput (list know_true know_false) integration)
+   set integration (lput (list know-true know-false) integration)
    ]
 
    ask turtles [
-     set action_knowledge integration
+     set action-knowledge integration
      ]
 end
 
@@ -507,20 +508,20 @@ end
 
 ;==============variable related to the setup of buttons=============================================================================
 ;goal: a list with two lists, the first list indicates the "on" positions, the second indicates "off" positions.
-;solution_length:the number of buttons that leads to the pattern. The last one button cleans the random sets in the previous buttons.
+;solution-length:the number of buttons that leads to the pattern. The last one button cleans the random sets in the previous buttons.
 ;noise: number of random elements in each solution button.
-;noise_vals:a list consisting of the randomly chosen position in the goal_combination list, with the length eq to noise.
-;choose_num: the extent to which a button's result is similar to the goal.An absolte value.
-;chosen: a list consisting of the elements in the goal_combination that is chosen to a solution button.
+;noise-vals:a list consisting of the randomly chosen position in the goal-combination list, with the length eq to noise.
+;choose-num: the extent to which a button's result is similar to the goal.An absolte value.
+;chosen: a list consisting of the elements in the goal-combination that is chosen to a solution button.
 ;buttons: the matrix consisting of lists, each of which is one button that leads to the pattern.
-;disturbing_buttons: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
+;disturbing-buttons: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
 ;buttons: the matrix consisting of lists, each of which is one button, with the buttons leading to the solution coming first.
-;noise_dis: number of random elements in each disturbing button.
-;noise_dis_vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
+;noise-dis: number of random elements in each disturbing button.
+;noise-dis-vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
 ;==============the design of the buttons========================================================================
-;Every agent has the same number of buttons, so the total number of buttons in the model is decided by the multiplication of (buttons_each * num_agents).
+;Every agent has the same number of buttons, so the total number of buttons in the model is decided by the multiplication of (buttons-each * num-agents).
 ;We set first half of the total buttons to be the solution, i.e. a list of buttons leading to the goal. ( if the total number of the buttons is odd, we set first ( half + 0.5 ) buttons to be the solution.
-;All the solutions buttons form the matrix called "buttons", the remaining buttons form the matrix called "disturbing_buttons".
+;All the solutions buttons form the matrix called "buttons", the remaining buttons form the matrix called "disturbing-buttons".
 ;Each solutions buttons in the matrix "buttons" except the last one , gets equal amount part of similarity to the goal pattern, but different elements of the goal pattern.
 ;The last button in the solution matrix is set to tidy up all the indifference to the goal pattern, by performing/pressing the pervious buttons in sequene and compared the outcome with the goal pattern.
 ;All of the buttons in the matrix is nothing more than randomly set buttons.
@@ -529,18 +530,18 @@ end
 
 
 ;==============the assignment of buttons to turtles============================================================
-;Randomly assigned. The serial number for the button is the sequence of the buttons in the matrix "button_all", it is always that the first half or first (half + 0.5) buttons is the solution buttons.
+;Randomly assigned. The serial number for the button is the sequence of the buttons in the matrix "button-all", it is always that the first half or first (half + 0.5) buttons is the solution buttons.
 ;
 
 
 to assign-buttons; randomly assign the buttons to the turtles
-   let remain_bt buttons; variables remained when assigning buttons to agents one by one
+   let remain-bt buttons; variables remained when assigning buttons to agents one by one
    ask turtles[
-   set buttons_assigned []
-    foreach n-values buttons_each [?][
-    let n_button ( random  (length remain_bt ))
-    set buttons_assigned lput ((position  (item n_button remain_bt) buttons ) ) buttons_assigned
-    set remain_bt (remove (item n_button remain_bt) remain_bt )
+   set buttons-assigned []
+    foreach n-values buttons-each [?][
+    let n-button ( random  (length remain-bt ))
+    set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
+    set remain-bt (remove (item n-button remain-bt) remain-bt )
 
    ]
   ]
@@ -576,7 +577,7 @@ end
 
 to bid ; calculate the bidding value for each agent for each action
   ;a new bidding round
-  reset_bidding
+  reset-bidding
 
   ; simple planning algorithm
   ; simple-bidding
@@ -587,27 +588,27 @@ to bid ; calculate the bidding value for each agent for each action
   ; initialise the planning part
   ; 1) construct an instance of the date structure
   ask turtles [
-  let world_now represent_visable_world
-  let current_node obtain_node hour (calculate_bidding world_now) buttons_chosen_before world_now
-  depth_first_planning current_node
-  ; 2) extract information from the best_node
-  if (not (best_node = [])) [
-    let act_best item (length buttons_chosen_before) (reverse item 2 best_node)
-    if (item act_best bidding < (item 1 best_node)) [set bidding replace-item act_best bidding (item 1 best_node)]; then update the bidding
+  let world-now represent-visable-world
+  let current-node obtain-node hour (calculate-bidding world-now) buttons-chosen-before world-now
+  depth-first-planning current-node
+  ; 2) extract information from the best-node
+  if (not (best-node = [])) [
+    let act-best item (length buttons-chosen-before) (reverse item 2 best-node)
+    if (item act-best bidding < (item 1 best-node)) [set bidding replace-item act-best bidding (item 1 best-node)]; then update the bidding
     ]
   ; change the bidding
   ]
 end
 
 ; the result is a pair of action and the bidding value
-to depth_first_planning [current_node]
+to depth-first-planning [current-node]
   ; first, obtain the node with the best bidding value
-  let stack (fput current_node [])
-  set best_node []
-  depth_first_planning_rec stack
+  let stack (fput current-node [])
+  set best-node []
+  depth-first-planning-rec stack
 end
 
-to depth_first_planning_rec [stack]
+to depth-first-planning-rec [stack]
   ifelse(not (stack = []))[
     let node (first stack)
 
@@ -622,38 +623,38 @@ to depth_first_planning_rec [stack]
     foreach pl [
       set acts (remove ? acts);
       ]
-   show "*********"
-   show acts
-   show pl
-   show h
-   show num_hours
+;   show "*********"
+;   show acts
+;   show pl
+;   show h
+;   show num-hours
 
 
 ;    ifelse (not (length acts = 0)) [
-   ifelse (h <= num_hours - 2) [
+   ifelse (h <= num-hours - 2) [
       foreach acts [
         let h' (h + 1)
         let pl' (fput ? pl)
-        let wd' (expected_world wd (item ? action_knowledge))
-        let bv' calculate_bidding wd'
-        let node' obtain_node h' bv' pl' wd'
+        let wd' (expected-world wd (item ? action-knowledge))
+        let bv' calculate-bidding wd'
+        let node' obtain-node h' bv' pl' wd'
 
-        ; if the h = num_hours - 1 then this is a terminating world
+        ; if the h = num-hours - 1 then this is a terminating world
 
-          ifelse (h' = num_hours - 1)
+          ifelse (h' = num-hours - 1)
           [
-            ifelse (best_node = [])
-            [set best_node node']
-            [if ( bv' > (item 1 best_node))[set best_node node']] ; if it is better than the best node
+            ifelse (best-node = [])
+            [set best-node node']
+            [if ( bv' > (item 1 best-node))[set best-node node']] ; if it is better than the best node
           ][
             if (not(wd' = []))[
               ; add to the stack
 ;              show "----act------"
 ;              show wd
-;              show (item ? action_knowledge)
+;              show (item ? action-knowledge)
 ;              show wd'
               set stack (fput node' stack); add the child
-              depth_first_planning_rec stack
+              depth-first-planning-rec stack
               ]
 
           ]
@@ -674,7 +675,7 @@ to depth_first_planning_rec [stack]
 end
 
 
-to-report obtain_node [h v p w]
+to-report obtain-node [h v p w]
   ; TODO: this method can be simplied using task
   let node (fput w [])
   set node (fput p node)
@@ -684,7 +685,7 @@ to-report obtain_node [h v p w]
 end
 
 
-to reset_bidding
+to reset-bidding
   set bidding []
   foreach buttons [
     set bidding (fput 0 bidding)
@@ -694,25 +695,25 @@ end
 
 
 ; calculate the bidding function without learning factor
-to-report calculate_bidding [world_after] ;  compare it with the goal and calculate a value for bidding
-  let goal_on first goal
-  let goal_off last goal
-  let bidding_value 0
-  foreach world_after[
-     if (member? ? goal_on) [set bidding_value (bidding_value + 1)]
-     if (member? ? goal_off) [set bidding_value (bidding_value - 1)]
-     if (member? (? * -1) goal_off) [set bidding_value (bidding_value + 1)]
-     if (member? (? * -1) goal_on) [set bidding_value (bidding_value - 1)]
+to-report calculate-bidding [world-after] ;  compare it with the goal and calculate a value for bidding
+  let goal-on first goal
+  let goal-off last goal
+  let bidding-value 0
+  foreach world-after[
+     if (member? ? goal-on) [set bidding-value (bidding-value + 1)]
+     if (member? ? goal-off) [set bidding-value (bidding-value - 1)]
+     if (member? (? * -1) goal-off) [set bidding-value (bidding-value + 1)]
+     if (member? (? * -1) goal-on) [set bidding-value (bidding-value - 1)]
     ]
   ; TODO: add the learning values on
 
-  report bidding_value
+  report bidding-value
 end
 
-to-report represent_visable_world ; to give the index of visable patches (for performing action in mind later)
+to-report represent-visable-world ; to give the index of visable patches (for performing action in mind later)
   let rep []
   ; first obtain the list of visable patches
-  let vision (patches in-cone-nowrap vision_radius 360)
+  let vision (patches in-cone-nowrap vision-radius 360)
   ask vision[
     ifelse (not (pcolor = green))
     [set rep (fput ((pycor * width + pxcor ) * -1) rep)]; if it is black
@@ -724,27 +725,27 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
 end
 
 ; expand according to a given action
-to-report expected_world [world act]; to perform an action according to the agent's knowledge
+to-report expected-world [world act]; to perform an action according to the agent's knowledge
   ;show "the knowledge of the action is as follows"
   ;show act
   ; extract the certain effect of this action
-  ; first the know_true part
+  ; first the know-true part
 
   let expected []
 
-  let know_true first act;
-  let know_false last act;
+  let know-true first act;
+  let know-false last act;
 
   foreach world [
     ; ==== the certain part of the expected world
     ; first, there is no effect,
-    if ((member? (3 * ? + 2) know_true) or (member? (-3 * ? + 2) know_true))
+    if ((member? (3 * ? + 2) know-true) or (member? (-3 * ? + 2) know-true))
     [
       set expected (fput ? expected)] ; if the agent knows that the action has no effect on this patch then it keeps it in the expected world
     ]
 
      ; the agent also knows what is going to be true and false according to its knowledge of the action
-    foreach know_true [
+    foreach know-true [
       ; get the index
       let index floor (? / 3)
       ; get the color
@@ -780,37 +781,37 @@ end
 
 to move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
   ;===================local variables===================================================
-  ;vision_index:(if the agent was )at each neighbor patch, the invisionindex of the agent
-  ;vision_known_index:(if the agent was )at each neighbor patch, the invisionindex of the agent, which the effect of current assigned button on that patch is known to current agent.
+  ;vision-index:(if the agent was )at each neighbor patch, the invisionindex of the agent
+  ;vision-known-index:(if the agent was )at each neighbor patch, the invisionindex of the agent, which the effect of current assigned button on that patch is known to current agent.
 
   let neighbor sort neighbors
   foreach (sentence neighbor patch-here)[;neighbor patches(at most 8 for non-boundary patches) and current patch
 
-    let vision_index []
+    let vision-index []
     let world (patches in-cone-nowrap width 360)
-    ask world [if ((distancexy [pxcor] of ? [pycor] of ?) <= vision_radius)[set vision_index lput  ( pxcor + pycor * width ) vision_index]];if the agent is at this patch, its vision.
+    ask world [if ((distancexy [pxcor] of ? [pycor] of ?) <= vision-radius)[set vision-index lput  ( pxcor + pycor * width ) vision-index]];if the agent is at this patch, its vision.
     let amount [];the amount of information it at most will get in the specific patch neighbor, for each button it owns
 
-    foreach buttons_assigned[
-      let world_known map [floor( ? / 3 )] (item 0 ( item ?  action_knowledge ))
-      let vision_known_index []
-      if (not (modes (sentence world_known vision_index) = (sentence world_known vision_index)))
-      [set vision_known_index ( modes (sentence world_known vision_index) )]; the visionindex that already in agent's knowledge.
+    foreach buttons-assigned[
+      let world-known map [floor( ? / 3 )] (item 0 ( item ?  action-knowledge ))
+      let vision-known-index []
+      if (not (modes (sentence world-known vision-index) = (sentence world-known vision-index)))
+      [set vision-known-index ( modes (sentence world-known vision-index) )]; the visionindex that already in agent's knowledge.
 
-     set amount (lput ((length vision_index) - (length vision_known_index)) amount )
+     set amount (lput ((length vision-index) - (length vision-known-index)) amount )
      ];the amount of information a agent at most could aquire for this button at this patch.
 
 
-   ask ? [set potential_infor mean amount]; calculate the mean value(potential information) of all the buttons it is incharge of for each neighbor and current location.
+   ask ? [set potential-infor mean amount]; calculate the mean value(potential information) of all the buttons it is incharge of for each neighbor and current location.
 
 
     ]
 
-    uphill potential_infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
+    uphill potential-infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
 
 end
 
-patches-own[potential_infor;if the agent is at that patch, with its set vision, the amount of information it at most may get.
+patches-own[potential-infor;if the agent is at that patch, with its set vision, the amount of information it at most may get.
   ]
 
 
@@ -822,11 +823,11 @@ patches-own[potential_infor;if the agent is at that patch, with its set vision, 
 GRAPHICS-WINDOW
 918
 51
-1428
-582
+1427
+581
 -1
 -1
-41.666666666666664
+125.0
 1
 30
 1
@@ -837,9 +838,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-11
+3
 0
-11
+3
 1
 1
 1
@@ -851,11 +852,11 @@ SLIDER
 139
 303
 172
-buttons_each
-buttons_each
+buttons-each
+buttons-each
 1
 10
-2
+3
 1
 1
 NIL
@@ -917,11 +918,11 @@ SLIDER
 139
 163
 172
-num_agents
-num_agents
+num-agents
+num-agents
 2
 7
-2
+3
 1
 1
 NIL
@@ -932,11 +933,11 @@ SLIDER
 181
 159
 214
-vision_radius
-vision_radius
+vision-radius
+vision-radius
 0
 10
-1
+3
 1
 1
 NIL
@@ -1038,7 +1039,7 @@ MONITOR
 192
 520
 buttons of Agent 0
-[buttons_assigned] of turtle 0
+[buttons-assigned] of turtle 0
 17
 1
 11
@@ -1048,8 +1049,8 @@ INPUTBOX
 31
 148
 91
-pattern_name
-Smile2.txt
+pattern-name
+test.txt
 1
 0
 String
@@ -1060,7 +1061,7 @@ MONITOR
 190
 578
 buttons of Agent 1
-[buttons_assigned] of turtle 1
+[buttons-assigned] of turtle 1
 17
 1
 11
@@ -1071,7 +1072,7 @@ MONITOR
 196
 634
 buttons of Agent 2
-[buttons_assigned] of turtle 2
+[buttons-assigned] of turtle 2
 17
 1
 11
@@ -1099,21 +1100,21 @@ MONITOR
 365
 544
 Current Action
-button_chosen
+button-chosen
 17
 1
 15
 
 SLIDER
-22
-222
-160
-255
+167
+179
+305
+212
 noise
 noise
 0
 13
-6
+3
 1
 1
 NIL
@@ -1142,7 +1143,7 @@ MONITOR
 419
 239
 Total buttons
-num_agents * buttons_each
+num-agents * buttons-each
 17
 1
 11
@@ -1164,7 +1165,7 @@ MONITOR
 189
 454
 plan so far
-buttons_chosen_before
+buttons-chosen-before
 17
 1
 11
@@ -1185,20 +1186,20 @@ true
 true
 "" ""
 PENS
-"Agent 0" 1.0 0 -11085214 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0\nset-plot-pen-color ([color] of turtle 0)] [plot 0]"
-"Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 1\nset-plot-pen-color ([color] of turtle 1)\n] [plot 0]"
-"Average" 1.0 2 -16644859 true "" "plot (total_knowledge * 100)"
+"Agent 0" 1.0 0 -11085214 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 0\nset-plot-pen-color ([color] of turtle 0)] [plot 0]"
+"Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 1\nset-plot-pen-color ([color] of turtle 1)\n] [plot 0]"
+"Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
 
 SLIDER
-171
-221
-302
-254
-knowledge_threshold
-knowledge_threshold
+23
+216
+303
+249
+knowledge-threshold
+knowledge-threshold
 0
-40
-11
+60
+28
 1
 1
 %
@@ -1221,7 +1222,7 @@ MONITOR
 532
 237
 hours per day
-num_hours
+num-hours
 17
 1
 11
