@@ -359,7 +359,7 @@ to go
     ask patches [set pcolor black]
     set hour 0
     set day (day + 1)
-    communicate
+    ; communicate
     ; TODO: decide the first button to be pressed and the location in the morning
 
     walk
@@ -823,11 +823,11 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 GRAPHICS-WINDOW
 918
 51
-1427
-581
+1421
+575
 -1
 -1
-125.0
+15.625
 1
 30
 1
@@ -838,9 +838,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+31
 0
-3
+31
 1
 1
 1
@@ -922,7 +922,7 @@ num-agents
 num-agents
 2
 7
-3
+2
 1
 1
 NIL
@@ -937,7 +937,7 @@ vision-radius
 vision-radius
 0
 10
-3
+6
 1
 1
 NIL
@@ -1050,7 +1050,7 @@ INPUTBOX
 148
 91
 pattern-name
-test.txt
+Smile.txt
 1
 0
 String
@@ -1165,7 +1165,7 @@ MONITOR
 189
 454
 plan so far
-buttons-chosen-before
+reverse buttons-chosen-before
 17
 1
 11
@@ -1199,7 +1199,7 @@ knowledge-threshold
 knowledge-threshold
 0
 60
-28
+14
 1
 1
 %
