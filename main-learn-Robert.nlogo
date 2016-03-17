@@ -311,7 +311,10 @@ to go
 
       ] ;  select a random action and record its index and there is no button chosen before
     [
-      bid
+
+      ifelse (total_knowledge > knowledge_threshold)
+      [bid]
+      [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
 
       let max_value 0 ; max bidding value
       ifelse ((length buttons) = (length buttons_chosen_before))
@@ -319,7 +322,9 @@ to go
         ;in fact this game would then terminate
           set buttons_chosen_before []
           set max_value max bidding
+
        ][
+
         let bidding_no_repeat bidding
         foreach buttons_chosen_before[
            set bidding_no_repeat (replace-item ? bidding_no_repeat -999); remove the one from last time
@@ -366,6 +371,11 @@ to go
   ; if the hour = num_hours then it's another day
   show-vision
   tick
+end
+
+to-report total_knowledge
+
+  report 0
 end
 
 to-report check-goal ; check if the current situation is the same as the goal
