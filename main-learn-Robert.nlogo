@@ -326,13 +326,8 @@ to go
       [bid]
       [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
 
-      let bidding_no_repeat bidding
-      foreach buttons_chosen_before[
-         set bidding_no_repeat (replace-item ? bidding_no_repeat -999); remove the one from last time
-        ]
-      let max_value (max bidding_no_repeat)
-
-      ; then obtain the indexes with this value
+      let max_value (max bidding)
+      ; then obtain the indexes with this value (those got chosen before remains zero)
       set button_chosen (one-of (filter [((item ? bidding)= max_value) and not (member? ? buttons_chosen_before)] n-values (length buttons)[?])); choose one of those with the best bidding value
       set buttons_chosen_before (fput button_chosen buttons_chosen_before)
       ; choose the button with the highest bidding value
@@ -614,19 +609,27 @@ end
 to depth_first_planning_rec [stack]
   ifelse(not (stack = []))[
     let node (first stack)
-    set stack remove node stack
+
     let h item 0 node
     let bv item 1 node
     let pl item 2 node ; the list of actions performed so far
     let wd item 3 node
 
     ; find all the actions performable in this world (i.e. not in the plan)
+    ; the variable acts is the remaining buttons to be chosen for this hour
     let acts (n-values length buttons [?])
     foreach pl [
       set acts (remove ? acts);
       ]
-    if (not (length acts = 0)) [
+   show "*********"
+   show acts
+   show pl
+   show h
+   show num_hours
 
+
+;    ifelse (not (length acts = 0)) [
+   ifelse (h <= num_hours - 2) [
       foreach acts [
         let h' (h + 1)
         let pl' (fput ? pl)
@@ -640,7 +643,7 @@ to depth_first_planning_rec [stack]
           [
             ifelse (best_node = [])
             [set best_node node']
-            [if ( bv' > (item 1 best_node) )[set best_node node']] ; if it is better than the best node
+            [if ( bv' > (item 1 best_node))[set best_node node']] ; if it is better than the best node
           ][
             if (not(wd' = []))[
               ; add to the stack
@@ -648,15 +651,19 @@ to depth_first_planning_rec [stack]
 ;              show wd
 ;              show (item ? action_knowledge)
 ;              show wd'
-;              set stack (fput node' stack)
-             ; depth_first_planning_rec stack
-
+              set stack (fput node' stack); add the child
+              depth_first_planning_rec stack
               ]
 
           ]
       ]
-      depth_first_planning_rec stack
+      set stack remove node stack
+
     ]
+    [
+      set stack remove node stack
+      ]
+
   ][
 ;  show "**********************end of search********************"
   ]; else if the stack is empty then do nothing
@@ -913,7 +920,7 @@ num_agents
 num_agents
 2
 7
-3
+2
 1
 1
 NIL
@@ -1177,9 +1184,9 @@ true
 true
 "" ""
 PENS
-"Agent 0" 1.0 0 -11085214 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0] [plot 0]"
-"Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 1] [plot 0]"
-"Average" 1.0 2 -2674135 true "" "plot (total_knowledge * 100)"
+"Agent 0" 1.0 0 -11085214 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0\nset-plot-pen-color ([color] of turtle 0)] [plot 0]"
+"Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 1\nset-plot-pen-color ([color] of turtle 1)\n] [plot 0]"
+"Average" 1.0 2 -16644859 true "" "plot (total_knowledge * 100)"
 
 SLIDER
 171
@@ -1190,7 +1197,7 @@ knowledge_threshold
 knowledge_threshold
 0
 40
-15
+11
 1
 1
 %
