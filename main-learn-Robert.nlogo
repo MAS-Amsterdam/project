@@ -228,7 +228,13 @@ to setup-button
    let disturbing_buttons []
    let noise_dis  (choose_num + noise) ; the number of propositions in the disturbing buttons
     foreach n-values  ( buttons_each * num_agents - num_hours ) [?][
-    let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
+      let noise_dis_vals []
+      ifelse (noise_dis <= length goal_combination)[
+        set noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
+        ][
+        set noise_dis_vals n-of (length goal_combination) (n-values (length goal_combination) [?]);randomly choose the elements
+        ]
+
     let pos_d  []
     let neg_d  []
     foreach noise_dis_vals [
@@ -315,49 +321,42 @@ to go
       ] ;  select a random action and record its index and there is no button chosen before
     [
 
+
       ifelse (total_knowledge > knowledge_threshold * 0.01 )
       [bid]
       [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
 
-      let max_value 0 ; max bidding value
-      ifelse (num_hours - 1 = (length buttons_chosen_before))
-      [
-        ;in fact this game would then terminate
-          set buttons_chosen_before []
-          set max_value max bidding
+      let bidding_no_repeat bidding
+      foreach buttons_chosen_before[
+         set bidding_no_repeat (replace-item ? bidding_no_repeat -999); remove the one from last time
+        ]
+      let max_value (max bidding_no_repeat)
 
-       ][
-
-        let bidding_no_repeat bidding
-        foreach buttons_chosen_before[
-           set bidding_no_repeat (replace-item ? bidding_no_repeat -999); remove the one from last time
-          ]
-        set max_value (max bidding_no_repeat)
-      ]
       ; then obtain the indexes with this value
       set button_chosen (one-of (filter [((item ? bidding)= max_value) and not (member? ? buttons_chosen_before)] n-values (length buttons)[?])); choose one of those with the best bidding value
       set buttons_chosen_before (fput button_chosen buttons_chosen_before)
       ; choose the button with the highest bidding value
     ]
-  ; then perform the action
-  perform-action item button_chosen buttons
+    ; then perform the action
+    perform-action item button_chosen buttons
 
-  if (check-goal = true) [
-    show "Game Over"
-    show "The total days taken is: "
-    show day
-    stop]
-  ; then the agent observe and perform learning
-  observe-and-learn
-  ; the agent start the bidding of the next action (with values stored in the "bidding")
+    if (check-goal = true) [
+      show "Game Over"
+      show "The total days taken is: "
+      show day
+      stop]
+    ; then the agent observe and perform learning
+    observe-and-learn
+    ; the agent start the bidding of the next action (with values stored in the "bidding")
 
-  ; next hour
-  walk
-  show-vision
-  update_average_individual_knowledge
-  set hour (hour + 1)
+    ; next hour
+    walk
+    show-vision
+    update_average_individual_knowledge
+    set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
+    set buttons_chosen_before []
     show "at night"
     ask patches [set pcolor black]
     set hour 0
@@ -645,11 +644,11 @@ to depth_first_planning_rec [stack]
           ][
             if (not(wd' = []))[
               ; add to the stack
-              show "----act------"
-              show wd
-              show (item ? action_knowledge)
-              show wd'
-              set stack (fput node' stack)
+;              show "----act------"
+;              show wd
+;              show (item ? action_knowledge)
+;              show wd'
+;              set stack (fput node' stack)
              ; depth_first_planning_rec stack
 
               ]
@@ -848,7 +847,7 @@ buttons_each
 buttons_each
 1
 10
-3
+2
 1
 1
 NIL
@@ -1191,7 +1190,7 @@ knowledge_threshold
 knowledge_threshold
 0
 40
-0
+15
 1
 1
 %
