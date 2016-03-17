@@ -25,6 +25,7 @@ turtles-own[own_color; color set to the agent
   action_knowledge; Beliefs about the actions. each action is a pair: (know_true, know_false). know_true consists of the propositions the agent is sure about.
   ; know false consists of the propositions the agent knows false about.
   best_node ; a variable to help out the depth first search
+  know_buttons_in_charge; the percentage of the knownledge each agent acuired for the button(s) it in charge of.
 ]
 
 
@@ -41,13 +42,14 @@ to setup
   reset-ticks
   open_file; set up the goal pattern.
   setup-time
-
-  setup-button
-  setup-bidding
   setup-patches
+  setup-button
+
+
   setup-agents
   assign-buttons
   show-vision;show the agents' vision by * mark.
+  setup-bidding
 
 end
 
@@ -152,7 +154,7 @@ end
 to setup-button
 
   set buttons_chosen_before []
-  ; the total number of buttons =  num_agent * button_each
+  ; the total number of buttons =  num_agent * buttons_each
   ; we choose the first half and one more of the buttons as the plan
 
   let solution_buttons [] ; the solution plan to be achieved
@@ -160,7 +162,7 @@ to setup-button
   ;change the goal representation so patches to be set to black are represented as a negative number
   let goal_combination first goal
   foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
-  let total_buttons button_each * num_agents
+  let total_buttons buttons_each * num_agents
   let solution_length ( round ( total_buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
 
   ;----------------------------------------------------------
@@ -224,7 +226,7 @@ to setup-button
 
    let disturbing_buttons []
    let noise_dis  (choose_num + noise) ; the number of propositions in the disturbing buttons
-    foreach n-values  ( button_each * num_agents - solution_length ) [?][
+    foreach n-values  ( buttons_each * num_agents - solution_length ) [?][
     let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
     let pos_d  []
     let neg_d  []
@@ -247,6 +249,7 @@ to setup-agents
   ask patches [set all_black (fput (get-patch-index self) all_black)]
 
   create-turtles num_agents [
+    set know_buttons_in_charge 0
     set label who
     setxy random-xcor random-ycor
      face patch-here
@@ -312,7 +315,7 @@ to go
       ] ;  select a random action and record its index and there is no button chosen before
     [
 
-      ifelse (total_knowledge > knowledge_threshold)
+      ifelse (total_knowledge > knowledge_threshold * 0.01 )
       [bid]
       [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
 
@@ -374,8 +377,25 @@ to go
 end
 
 to-report total_knowledge
+  let pct 0
+  ask turtles [
+    set pct (pct + know_buttons_in_charge)
+    ]
+  set pct (pct / num_agents)
+  report pct
+end
 
-  report 0
+
+to average_individual_knowledge; the average knownledge of the buttons each agent in charge of.
+  ask turtles[
+    ;let total_indi_know 0; the knowldege of all the buttons it
+    foreach buttons_assigned[
+     let n length first (item ? action_knowledge)
+      set know_buttons_in_charge ( know_buttons_in_charge + n / (width * height))
+    ]
+    set know_buttons_in_charge (know_buttons_in_charge / buttons_each)
+  ]
+
 end
 
 to-report check-goal ; check if the current situation is the same as the goal
@@ -504,7 +524,7 @@ end
 ;noise_dis: number of random elements in each disturbing button.
 ;noise_dis_vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
 ;==============the design of the buttons========================================================================
-;Every agent has the same number of buttons, so the total number of buttons in the model is decided by the multiplication of (button_each * num_agents).
+;Every agent has the same number of buttons, so the total number of buttons in the model is decided by the multiplication of (buttons_each * num_agents).
 ;We set first half of the total buttons to be the solution, i.e. a list of buttons leading to the goal. ( if the total number of the buttons is odd, we set first ( half + 0.5 ) buttons to be the solution.
 ;All the solutions buttons form the matrix called "buttons", the remaining buttons form the matrix called "disturbing_buttons".
 ;Each solutions buttons in the matrix "buttons" except the last one , gets equal amount part of similarity to the goal pattern, but different elements of the goal pattern.
@@ -523,7 +543,7 @@ to assign-buttons; randomly assign the buttons to the turtles
    let remain_bt buttons; variables remained when assigning buttons to agents one by one
    ask turtles[
    set buttons_assigned []
-    foreach n-values button_each [?][
+    foreach n-values buttons_each [?][
     let n_button ( random  (length remain_bt ))
     set buttons_assigned lput ((position  (item n_button remain_bt) buttons ) ) buttons_assigned
     set remain_bt (remove (item n_button remain_bt) remain_bt )
@@ -871,8 +891,8 @@ SLIDER
 139
 583
 172
-button_each
-button_each
+buttons_each
+buttons_each
 1
 10
 1
@@ -980,9 +1000,9 @@ SLIDER
 216
 num_hours
 num_hours
-(ceiling (button_each * num_agents / 2)) + 1
-ceiling (button_each * num_agents) - 1
-3
+(ceiling (buttons_each * num_agents / 2)) + 1
+ceiling (buttons_each * num_agents) - 1
+2
 1
 1
 NIL
@@ -1177,7 +1197,7 @@ MONITOR
 694
 181
 Total buttons
-num_agents * button_each
+num_agents * buttons_each
 17
 1
 11
@@ -1217,11 +1237,11 @@ count buttons
 0.0
 100.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -2139308 true "" "count ([action_knowledge] of turtle 0)"
-"pen-1" 1.0 0 -8990512 true "" "count ([action_knowledge] of turtle 1)"
+"Agent 0" 1.0 0 -2139308 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge] of turtle 0] [plot 0]"
+"Agent 1" 1.0 0 -8990512 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge] of turtle 0] [plot 0]"
 
 SLIDER
 317
@@ -1230,7 +1250,7 @@ SLIDER
 260
 knowledge_threshold
 knowledge_threshold
-20
+10
 40
 20
 1
