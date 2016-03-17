@@ -306,7 +306,7 @@ end
 ; =================================================================
 
 to go
-  ask patches [set pcolor black]
+;  ask patches [set pcolor black]
   ; for day 0, hour 0 the button of the hour is randomly choosen.
   ifelse (hour < num_hours)
   ; ====================== in day time =================================
@@ -334,6 +334,7 @@ to go
     ]
     ; then perform the action
     perform-action item button_chosen buttons
+    show button_chosen
 
     if (check-goal = true) [
       show "Game Over"
