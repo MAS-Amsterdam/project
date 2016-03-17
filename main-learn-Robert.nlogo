@@ -1240,8 +1240,8 @@ true
 true
 "" ""
 PENS
-"Agent 0" 1.0 0 -2139308 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge] of turtle 0] [plot 0]"
-"Agent 1" 1.0 0 -8990512 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge] of turtle 0] [plot 0]"
+"Agent 0" 1.0 0 -2139308 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0] [plot 0]"
+"Agent 1" 1.0 0 -8990512 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0] [plot 0]"
 
 SLIDER
 317
