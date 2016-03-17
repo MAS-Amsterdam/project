@@ -299,7 +299,7 @@ end
 to go
   ask patches [set pcolor black]
   ; for day 0, hour 0 the button of the hour is randomly choosen.
-  ifelse (hour <= num_hours)
+  ifelse (hour < num_hours)
   ; ====================== in day time =================================
   [
     show "in day time"
@@ -308,6 +308,7 @@ to go
     [
       set button_chosen one-of (n-values length buttons [?])
       set buttons_chosen_before (fput button_chosen [])
+
       ] ;  select a random action and record its index and there is no button chosen before
     [
       bid
@@ -344,7 +345,7 @@ to go
   ; then the agent observe and perform learning
   observe-and-learn
   ; the agent start the bidding of the next action (with values stored in the "bidding")
-  bid
+
   ; next hour
   walk
   show-vision
@@ -357,7 +358,7 @@ to go
     set day (day + 1)
     communicate
     ; TODO: decide the first button to be pressed and the location in the morning
-    bid
+
     walk
     show-vision
     ]
@@ -684,35 +685,35 @@ to-report calculate_bidding [world_after] ;  compare it with the goal and calcul
   report bidding_value
 end
 
-; calculate the bidding function with learning factor
-to-report compute_bidding_with_learning_factor [world_now act_k] ; see the simple bidding case to get an idea how to use it
-   let world_after (expected_local_world world_now act_k); perform the action according to the knowledge of the action
-   let learning_value (compute_learning_value world_now act_k)
-   let bidding_value calculate_bidding world_after + learning_value
+;; calculate the bidding function with learning factor
+;to-report compute_bidding_with_learning_factor [world_now act_k] ; see the simple bidding case to get an idea how to use it
+;   let world_after (expected_local_world world_now act_k); perform the action according to the knowledge of the action
+;   let learning_value (compute_learning_value world_now act_k)
+;   let bidding_value calculate_bidding world_after + learning_value
+;
+;   report bidding_value
+;end
 
-   report bidding_value
-end
-
-to-report compute_learning_value [world_now act_knowledge]; the learning value of the local world regarding the knowledge of the action
-  ; the more the agent knows about this buttons's postcondition locally, the lower the value is
-  let value 0
-  set value (-1 * (value + (length (first act_knowledge)) * 2 + (length (last act_knowledge))));
-  foreach world_now [
-    if ((member? (? * 3) first act_knowledge) or (member? (? * -3) first act_knowledge)
-      or (member? ((? * 3) + 1) first act_knowledge) or (member? ((? * -3) + 1) first act_knowledge)
-      or (member? ((? * 3) + 2) first act_knowledge) or (member? ((? * -3) + 2) first act_knowledge)
-      ) ;  if the agent knows how the patch is going to be changed
-    [set value (value - 2)]
-
-    if ((member? (? * 3) last act_knowledge) or (member? (? * -3) last act_knowledge)
-      or (member? ((? * 3) + 1) last act_knowledge) or (member? ((? * -3) + 1) last act_knowledge)
-      or (member? ((? * 3) + 2) last act_knowledge) or (member? ((? * -3) + 2) last act_knowledge)
-      ) ;  if the agent knows how the patch is not going to be changed
-    [set value (value - 1)]
-    set value (value * learning_factor / 100)
-    ]
-  report value
-end
+;to-report compute_learning_value [world_now act_knowledge]; the learning value of the local world regarding the knowledge of the action
+;  ; the more the agent knows about this buttons's postcondition locally, the lower the value is
+;  let value 0
+;  set value (-1 * (value + (length (first act_knowledge)) * 2 + (length (last act_knowledge))));
+;  foreach world_now [
+;    if ((member? (? * 3) first act_knowledge) or (member? (? * -3) first act_knowledge)
+;      or (member? ((? * 3) + 1) first act_knowledge) or (member? ((? * -3) + 1) first act_knowledge)
+;      or (member? ((? * 3) + 2) first act_knowledge) or (member? ((? * -3) + 2) first act_knowledge)
+;      ) ;  if the agent knows how the patch is going to be changed
+;    [set value (value - 2)]
+;
+;    if ((member? (? * 3) last act_knowledge) or (member? (? * -3) last act_knowledge)
+;      or (member? ((? * 3) + 1) last act_knowledge) or (member? ((? * -3) + 1) last act_knowledge)
+;      or (member? ((? * 3) + 2) last act_knowledge) or (member? ((? * -3) + 2) last act_knowledge)
+;      ) ;  if the agent knows how the patch is not going to be changed
+;    [set value (value - 1)]
+;    set value (value * learning_factor / 100)
+;    ]
+;  report value
+;end
 
 to-report represent_visable_world ; to give the index of visable patches (for performing action in mind later)
   let rep []
@@ -1215,13 +1216,13 @@ PENS
 SLIDER
 317
 227
-500
+558
 260
-learning_factor
-learning_factor
-0
-30
-0
+knowledge_threshold
+knowledge_threshold
+20
+40
+20
 1
 1
 %
