@@ -6,7 +6,7 @@ globals [
   height
   color_list; color for different agents
   goal ;the goal pattern
-
+  num_hours ; the length of solution
   day ; the day
   hour; the hour
 
@@ -161,15 +161,15 @@ to setup-button
   let goal_combination first goal
   foreach (last goal) [set goal_combination lput ( -1 * ? ) goal_combination]
   let total_buttons buttons_each * num_agents
-  let solution_length ( round ( total_buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
+  set num_hours ( floor ( total_buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
 
   ;----------------------------------------------------------
   ; Part one: buttons leading to solution
 
-  let choose_num floor (( length goal_combination ) / ( solution_length - 1 )) ; the least number of propositions in each button
+  let choose_num floor (( length goal_combination ) / ( num_hours - 1 )) ; the least number of propositions in each button
 
   ; here we use floor to avoid running out of propositions before the tidy up step (the last step)
-  foreach n-values ( solution_length - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
+  foreach n-values ( num_hours - 1 ) [?] ;each button that leads to solution without the step to tidy up the randomness
 
   [
    let remain_g_c goal_combination
@@ -184,6 +184,8 @@ to setup-button
      ][
      set neg ( lput (-1 * ?) neg )]
    ] ; initialise the pair of pos and neg
+
+
   ;-----------------------------------------
   ; buttons with random values towards the goal
    let noise_vals n-of noise (n-values (length goal_combination) [?]);randomly choose positions in the goal with the number of noise
@@ -219,12 +221,13 @@ to setup-button
 
 
    perform-action last_btn
+
   ;----------------------------------------------------------
-  ; Part tow: buttons not leading to patterns,i.e. disturbing the agents.
+  ; Part 2: buttons not leading to patterns,i.e. disturbing the agents.
 
    let disturbing_buttons []
    let noise_dis  (choose_num + noise) ; the number of propositions in the disturbing buttons
-    foreach n-values  ( buttons_each * num_agents - solution_length ) [?][
+    foreach n-values  ( buttons_each * num_agents - num_hours ) [?][
     let noise_dis_vals n-of noise_dis (n-values (length goal_combination) [?]);randomly choose the elements
     let pos_d  []
     let neg_d  []
@@ -317,8 +320,8 @@ to go
       [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
 
       let max_value 0 ; max bidding value
-      ifelse ((length buttons) = (length buttons_chosen_before))
-      [; all buttons got chosen
+      ifelse (num_hours - 1 = (length buttons_chosen_before))
+      [
         ;in fact this game would then terminate
           set buttons_chosen_before []
           set max_value max bidding
@@ -329,10 +332,7 @@ to go
         foreach buttons_chosen_before[
            set bidding_no_repeat (replace-item ? bidding_no_repeat -999); remove the one from last time
           ]
-
         set max_value (max bidding_no_repeat)
-       ; show "max"
-       ; show max_value
       ]
       ; then obtain the indexes with this value
       set button_chosen (one-of (filter [((item ? bidding)= max_value) and not (member? ? buttons_chosen_before)] n-values (length buttons)[?])); choose one of those with the best bidding value
@@ -631,12 +631,13 @@ to depth_first_planning_rec [stack]
       foreach acts [
         let h' (h + 1)
         let pl' (fput ? pl)
-        let wd' (expected_local_world wd (item ? action_knowledge))
+        let wd' (expected_world wd (item ? action_knowledge))
         let bv' calculate_bidding wd'
         let node' obtain_node h' bv' pl' wd'
-        ; if the h = num_hours then this is a terminating world
 
-          ifelse (h' = num_hours)
+        ; if the h = num_hours - 1 then this is a terminating world
+
+          ifelse (h' = num_hours - 1)
           [
             ifelse (best_node = [])
             [set best_node node']
@@ -683,19 +684,6 @@ to reset_bidding
     ]
 end
 
-;a simple bidding methods where each agent think only one step ahead
-;to simple-bidding
-;  ask turtles [
-;    ; for each action
-;    foreach (n-values length buttons [?]) [
-;      let world_now represent_visable_world ;a representation of the world from the agent knows
-;      let world_after (expected_local_world world_now (item ? action_knowledge)); ; perform the action according to the knowledge of the action
-;      let learning_value (compute_learning_value world_now (item ? action_knowledge))
-;      let bidding_value calculate_bidding world_after + learning_value
-;      if (bidding_value > (item ? bidding)) [set bidding replace-item ? bidding bidding_value]
-;    ]
-;  ]
-;end
 
 
 ; calculate the bidding function without learning factor
@@ -714,36 +702,6 @@ to-report calculate_bidding [world_after] ;  compare it with the goal and calcul
   report bidding_value
 end
 
-;; calculate the bidding function with learning factor
-;to-report compute_bidding_with_learning_factor [world_now act_k] ; see the simple bidding case to get an idea how to use it
-;   let world_after (expected_local_world world_now act_k); perform the action according to the knowledge of the action
-;   let learning_value (compute_learning_value world_now act_k)
-;   let bidding_value calculate_bidding world_after + learning_value
-;
-;   report bidding_value
-;end
-
-;to-report compute_learning_value [world_now act_knowledge]; the learning value of the local world regarding the knowledge of the action
-;  ; the more the agent knows about this buttons's postcondition locally, the lower the value is
-;  let value 0
-;  set value (-1 * (value + (length (first act_knowledge)) * 2 + (length (last act_knowledge))));
-;  foreach world_now [
-;    if ((member? (? * 3) first act_knowledge) or (member? (? * -3) first act_knowledge)
-;      or (member? ((? * 3) + 1) first act_knowledge) or (member? ((? * -3) + 1) first act_knowledge)
-;      or (member? ((? * 3) + 2) first act_knowledge) or (member? ((? * -3) + 2) first act_knowledge)
-;      ) ;  if the agent knows how the patch is going to be changed
-;    [set value (value - 2)]
-;
-;    if ((member? (? * 3) last act_knowledge) or (member? (? * -3) last act_knowledge)
-;      or (member? ((? * 3) + 1) last act_knowledge) or (member? ((? * -3) + 1) last act_knowledge)
-;      or (member? ((? * 3) + 2) last act_knowledge) or (member? ((? * -3) + 2) last act_knowledge)
-;      ) ;  if the agent knows how the patch is not going to be changed
-;    [set value (value - 1)]
-;    set value (value * learning_factor / 100)
-;    ]
-;  report value
-;end
-
 to-report represent_visable_world ; to give the index of visable patches (for performing action in mind later)
   let rep []
   ; first obtain the list of visable patches
@@ -759,7 +717,7 @@ to-report represent_visable_world ; to give the index of visable patches (for pe
 end
 
 ; expand according to a given action
-to-report expected_local_world [world act]; to perform an action according to the agent's knowledge
+to-report expected_world [world act]; to perform an action according to the agent's knowledge
   ;show "the knowledge of the action is as follows"
   ;show act
   ; extract the certain effect of this action
@@ -773,16 +731,12 @@ to-report expected_local_world [world act]; to perform an action according to th
   foreach world [
     ; ==== the certain part of the expected world
     ; first, there is no effect,
-    ifelse ((member? (3 * ? + 2) know_true) or (member? (-3 * ? + 2) know_true))
-    [set expected (fput ? expected)] ; if the agent knows that the action has no effect on this patch then it keeps it in the expected world
+    if ((member? (3 * ? + 2) know_true) or (member? (-3 * ? + 2) know_true))
     [
-      if ((? > 0) and (member? (3 * ?) know_true))[set expected (fput ? expected)]
-      if ((? > 0) and (member? (3 * ? + 1) know_true))[set expected (fput (-1 * ?) expected)]
-      if ((? < 0) and (member? (-3 * ? + 1) know_true))[set expected (fput ? expected)]
-      if ((? < 0) and (member? (-3 * ?) know_true))[set expected (fput (-1 * ?) expected)]
+      set expected (fput ? expected)] ; if the agent knows that the action has no effect on this patch then it keeps it in the expected world
+    ]
 
-      ]
-    ; the agent also knows what is going to be true and false according to its knowledge of the action
+     ; the agent also knows what is going to be true and false according to its knowledge of the action
     foreach know_true [
       ; get the index
       let index floor (? / 3)
@@ -792,8 +746,8 @@ to-report expected_local_world [world act]; to perform an action according to th
       ; if it is green then keep it positive, it black then keep it negative
       ]
     ; the rest is not sure for the agent.
-    ]
   set expected (remove-duplicates expected)
+
   report expected
 end
 
@@ -859,10 +813,10 @@ patches-own[potential_infor;if the agent is at that patch, with its set vision, 
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-979
-102
-1489
-633
+918
+51
+1428
+582
 -1
 -1
 41.666666666666664
@@ -886,9 +840,9 @@ ticks
 30.0
 
 SLIDER
-306
+170
 139
-583
+303
 172
 buttons_each
 buttons_each
@@ -954,7 +908,7 @@ NIL
 SLIDER
 21
 139
-298
+163
 172
 num_agents
 num_agents
@@ -969,7 +923,7 @@ HORIZONTAL
 SLIDER
 22
 181
-300
+159
 214
 vision_radius
 vision_radius
@@ -992,26 +946,11 @@ day
 1
 11
 
-SLIDER
-314
-183
-595
-216
-num_hours
-num_hours
-(ceiling (buttons_each * num_agents / 2)) + 1
-ceiling (buttons_each * num_agents) - 1
-2
-1
-1
-NIL
-HORIZONTAL
-
 MONITOR
-479
-35
-685
-84
+321
+140
+527
+189
 NIL
 goal
 17
@@ -1098,9 +1037,9 @@ buttons of Agent 0
 11
 
 INPUTBOX
-9
+19
 31
-189
+148
 91
 pattern_name
 Smile2.txt
@@ -1131,10 +1070,10 @@ buttons of Agent 2
 11
 
 BUTTON
-190
-36
-339
-92
+151
+34
+300
+90
 load and display
 load-and-display-goal
 NIL
@@ -1161,7 +1100,7 @@ button_chosen
 SLIDER
 22
 222
-298
+160
 255
 noise
 noise
@@ -1174,10 +1113,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-344
-36
-468
-93
+305
+33
+429
+90
 clear display
 ask patches [set pcolor black]
 NIL
@@ -1191,10 +1130,10 @@ NIL
 1
 
 MONITOR
-348
-412
-448
-457
+319
+194
+419
+239
 Total buttons
 num_agents * buttons_each
 17
@@ -1224,10 +1163,10 @@ buttons_chosen_before
 11
 
 PLOT
-620
-103
-972
-633
+559
+52
+911
+582
 Agents' knowledge about their actions (percentage)
 total hour
 knowledge percentage
@@ -1244,15 +1183,15 @@ PENS
 "Average" 1.0 2 -2674135 true "" "plot (total_knowledge * 100)"
 
 SLIDER
-317
-227
-558
-260
+171
+221
+302
+254
 knowledge_threshold
 knowledge_threshold
-10
+0
 40
-15
+0
 1
 1
 %
@@ -1261,10 +1200,21 @@ HORIZONTAL
 MONITOR
 207
 409
-325
+456
 454
 bidding
 bidding
+17
+1
+11
+
+MONITOR
+427
+192
+532
+237
+hours per day
+num_hours
 17
 1
 11
