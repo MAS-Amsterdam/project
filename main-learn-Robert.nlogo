@@ -357,6 +357,7 @@ to go
   ; next hour
   walk
   show-vision
+  update_average_individual_knowledge
   set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
@@ -386,9 +387,10 @@ to-report total_knowledge
 end
 
 
-to average_individual_knowledge; the average knownledge of the buttons each agent in charge of.
+to update_average_individual_knowledge; the average knownledge of the buttons each agent in charge of.
   ask turtles[
     ;let total_indi_know 0; the knowldege of all the buttons it
+    set know_buttons_in_charge 0
     foreach buttons_assigned[
      let n length first (item ? action_knowledge)
       set know_buttons_in_charge ( know_buttons_in_charge + n / (width * height))
@@ -860,13 +862,13 @@ patches-own[potential_infor;if the agent is at that patch, with its set vision, 
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-725
-44
-1235
-575
+1169
+26
+1898
+779
 -1
 -1
-125.0
+41.666666666666664
 1
 30
 1
@@ -877,9 +879,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+11
 0
-3
+11
 1
 1
 1
@@ -895,7 +897,7 @@ buttons_each
 buttons_each
 1
 10
-1
+3
 1
 1
 NIL
@@ -961,7 +963,7 @@ num_agents
 num_agents
 2
 7
-3
+4
 1
 1
 NIL
@@ -983,10 +985,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-498
-355
-581
-400
+222
+555
+305
+600
 Day
 day
 17
@@ -1104,7 +1106,7 @@ INPUTBOX
 189
 91
 pattern_name
-test.txt
+Smile2.txt
 1
 0
 String
@@ -1149,10 +1151,10 @@ NIL
 1
 
 MONITOR
-500
-283
-642
-344
+223
+483
+365
+544
 Current Action
 button_chosen
 17
@@ -1192,10 +1194,10 @@ NIL
 1
 
 MONITOR
-594
-136
-694
-181
+348
+412
+448
+457
 Total buttons
 num_agents * buttons_each
 17
@@ -1203,10 +1205,10 @@ num_agents * buttons_each
 11
 
 MONITOR
-588
-355
-676
+312
+555
 400
+600
 hour
 hour
 17
@@ -1225,23 +1227,23 @@ buttons_chosen_before
 11
 
 PLOT
-214
-472
-701
-635
+620
+103
+1118
+633
 Agents' knowledge about their actions (percentage)
 day * num_hours + hour
 count buttons
 0.0
-100.0
+10.0
 0.0
-100.0
+30.0
 true
 true
 "" ""
 PENS
 "Agent 0" 1.0 0 -2139308 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0] [plot 0]"
-"Agent 1" 1.0 0 -8990512 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0] [plot 0]"
+"Agent 1" 1.0 0 -8990512 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 1] [plot 0]"
 
 SLIDER
 317
