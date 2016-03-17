@@ -42,14 +42,12 @@ to setup
   reset-ticks
   open_file; set up the goal pattern.
   setup-time
-  setup-patches
   setup-button
-
-
   setup-agents
   assign-buttons
   show-vision;show the agents' vision by * mark.
   setup-bidding
+  setup-patches
 
 end
 
@@ -239,7 +237,7 @@ to setup-button
 
     ]
 
-     set buttons sentence solution_buttons disturbing_buttons ; append the disturbing buttons to the solution buttons
+   set buttons sentence solution_buttons disturbing_buttons ; append the disturbing buttons to the solution buttons
 
 end
 
@@ -267,9 +265,8 @@ to setup-agents
     set observation all_black
 
     ]
-
-
     foreach (n-values num_agents [?]) [ ask turtle ? [ set color item ? color_list] ];set different colors to agents.
+
 end
 
 
@@ -862,10 +859,10 @@ patches-own[potential_infor;if the agent is at that patch, with its set vision, 
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-1169
-26
-1898
-779
+979
+102
+1489
+633
 -1
 -1
 41.666666666666664
@@ -963,7 +960,7 @@ num_agents
 num_agents
 2
 7
-4
+3
 1
 1
 NIL
@@ -1229,21 +1226,22 @@ buttons_chosen_before
 PLOT
 620
 103
-1118
+972
 633
 Agents' knowledge about their actions (percentage)
-day * num_hours + hour
-count buttons
+total hour
+knowledge percentage
 0.0
 10.0
 0.0
-30.0
+10.0
 true
 true
 "" ""
 PENS
-"Agent 0" 1.0 0 -2139308 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0] [plot 0]"
-"Agent 1" 1.0 0 -8990512 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 1] [plot 0]"
+"Agent 0" 1.0 0 -11085214 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 0] [plot 0]"
+"Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know_buttons_in_charge * 100] of turtle 1] [plot 0]"
+"Average" 1.0 2 -2674135 true "" "plot (total_knowledge * 100)"
 
 SLIDER
 317
@@ -1254,7 +1252,7 @@ knowledge_threshold
 knowledge_threshold
 10
 40
-20
+15
 1
 1
 %
