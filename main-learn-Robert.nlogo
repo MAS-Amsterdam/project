@@ -778,16 +778,16 @@ to walk
     [setxy random-xcor random-ycor
         face patch-here
         move-to patch-here];move to the center of the current patch, our agents will always move to the center of a patch.
-        move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
+        move-to-most-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
       ]
   ;in the daytime
-  [move-to-least-unknown]
+  [move-to-most-unknown]
 
 
 ]
 end
 
-to move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
+to move-to-most-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
   ;===================local variables===================================================
   ;vision_index:(if the agent was )at each neighbor patch, the invisionindex of the agent
   ;vision_known_index:(if the agent was )at each neighbor patch, the invisionindex of the agent, which the effect of current assigned button on that patch is known to current agent.
