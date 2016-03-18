@@ -821,13 +821,13 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-918
-51
-1421
-575
+841
+37
+1350
+567
 -1
 -1
-15.625
+41.666666666666664
 1
 30
 1
@@ -838,9 +838,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-31
+11
 0
-31
+11
 1
 1
 1
@@ -848,10 +848,10 @@ ticks
 30.0
 
 SLIDER
-170
-139
-303
-172
+167
+126
+300
+159
 buttons-each
 buttons-each
 1
@@ -863,44 +863,44 @@ NIL
 HORIZONTAL
 
 BUTTON
-200
-300
-352
-333
-NIL
-go
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-354
-300
-473
-333
-NIL
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
 23
-284
-183
-346
+439
+138
+472
+NIL
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+145
+438
+264
+471
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+24
+276
+162
+343
 NIL
 setup
 NIL
@@ -914,10 +914,10 @@ NIL
 1
 
 SLIDER
-21
-139
-163
-172
+18
+126
+160
+159
 num-agents
 num-agents
 2
@@ -929,10 +929,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-22
-181
-159
-214
+19
+168
+156
+201
 vision-radius
 vision-radius
 0
@@ -944,32 +944,21 @@ NIL
 HORIZONTAL
 
 MONITOR
-222
-555
-305
-600
+282
+518
+365
+563
 Day
 day
 17
 1
 11
 
-MONITOR
-321
-140
-527
-189
-NIL
-goal
-17
-1
-12
-
 BUTTON
-24
-355
-129
-388
+169
+275
+274
+308
 button 1
 perform-action item 0 buttons
 NIL
@@ -983,10 +972,10 @@ NIL
 1
 
 BUTTON
-140
-355
-245
-388
+279
+274
+384
+307
 button 2
 perform-action item 1 buttons
 NIL
@@ -1000,10 +989,10 @@ NIL
 1
 
 BUTTON
-260
-354
-365
-387
+169
+312
+274
+345
 button 3
 perform-action item 2 buttons
 NIL
@@ -1017,10 +1006,10 @@ NIL
 1
 
 BUTTON
-380
-355
-485
-388
+279
+312
+384
+345
 button 4
 perform-action item 3 buttons
 NIL
@@ -1034,10 +1023,10 @@ NIL
 1
 
 MONITOR
-19
-475
-192
-520
+24
+357
+146
+402
 buttons of Agent 0
 [buttons-assigned] of turtle 0
 17
@@ -1050,16 +1039,16 @@ INPUTBOX
 148
 91
 pattern-name
-Smile.txt
+smile.txt
 1
 0
 String
 
 MONITOR
-17
-533
-190
-578
+150
+357
+275
+402
 buttons of Agent 1
 [buttons-assigned] of turtle 1
 17
@@ -1067,10 +1056,10 @@ buttons of Agent 1
 11
 
 MONITOR
-19
-589
-196
-634
+280
+358
+409
+403
 buttons of Agent 2
 [buttons-assigned] of turtle 2
 17
@@ -1094,22 +1083,11 @@ NIL
 NIL
 1
 
-MONITOR
-223
-483
-365
-544
-Current Action
-button-chosen
-17
-1
-15
-
 SLIDER
-167
-179
-305
-212
+164
+166
+302
+199
 noise
 noise
 0
@@ -1138,10 +1116,10 @@ NIL
 1
 
 MONITOR
-319
-194
-419
-239
+311
+127
+411
+172
 Total buttons
 num-agents * buttons-each
 17
@@ -1149,10 +1127,10 @@ num-agents * buttons-each
 11
 
 MONITOR
-312
-555
-400
-600
+281
+569
+369
+614
 hour
 hour
 17
@@ -1160,10 +1138,10 @@ hour
 11
 
 MONITOR
-27
-409
-189
-454
+35
+570
+197
+615
 plan so far
 reverse buttons-chosen-before
 17
@@ -1171,13 +1149,13 @@ reverse buttons-chosen-before
 11
 
 PLOT
-559
-52
-911
-582
-Agents' knowledge about their actions (percentage)
+437
+11
+836
+608
+Agents' knowledge about their buttons
 total hour
-knowledge percentage
+knowledge (percentage)
 0.0
 10.0
 0.0
@@ -1191,10 +1169,10 @@ PENS
 "Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
 
 SLIDER
-23
-216
-303
-249
+20
+203
+300
+236
 knowledge-threshold
 knowledge-threshold
 0
@@ -1206,10 +1184,10 @@ knowledge-threshold
 HORIZONTAL
 
 MONITOR
-207
-409
-456
-454
+35
+519
+198
+564
 bidding
 bidding
 17
@@ -1217,15 +1195,75 @@ bidding
 11
 
 MONITOR
-427
-192
-532
-237
+312
+177
+417
+222
 hours per day
 num-hours
 17
 1
 11
+
+TEXTBOX
+24
+12
+370
+42
+Step 1: Load a file (test.txt for example)
+12
+0.0
+1
+
+TEXTBOX
+24
+106
+347
+136
+Step 2: initialise the parameters
+12
+0.0
+1
+
+TEXTBOX
+29
+252
+399
+270
+Step 3: setup the game and initialise the buttons
+12
+0.0
+1
+
+TEXTBOX
+30
+414
+180
+432
+Step 4: start the game!
+12
+0.0
+1
+
+TEXTBOX
+287
+493
+437
+511
+calendar
+12
+0.0
+1
+
+TEXTBOX
+52
+495
+202
+513
+bidding and planning
+12
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
