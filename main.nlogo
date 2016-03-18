@@ -12,7 +12,7 @@ globals [
 
   bidding ; for each action, we record a value
   ;=========================buttons related variables==============================================
-  ; noise ; the randomly set points in each button that belongs to solution.
+  noise ; the randomly set points in each button that belongs to solution.
   ; noise-dis; the randomly set points in each button that not belongs to solution.
   buttons; a list of buttons, each button is a pair setting some patches to green and some to black
   button-chosen; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
@@ -79,7 +79,7 @@ to open-file
   set width read-from-string item 0 tmp
   set height read-from-string item 1 tmp
   resize-world 0 (width - 1) 0 ( height - 1)
-  set-patch-size 500 / width
+  set-patch-size 400 / width
 
   let x 0
   let y height - 1
@@ -151,6 +151,7 @@ end
 
 to setup-button
 
+  set noise (noise_per * 100)
   set buttons-chosen-before []
   ; the total number of buttons =  num-agent * buttons-each
   ; we choose the first half and one more of the buttons as the plan
@@ -188,7 +189,13 @@ to setup-button
 
   ;-----------------------------------------
   ; buttons with random values towards the goal
-   let noise-vals n-of noise (n-values (length goal-combination) [?]);randomly choose positions in the goal with the number of noise
+  let noise-vals []
+  ifelse (noise <= (length goal-combination)) [
+     set noise-vals n-of noise (n-values (length goal-combination) [?]);randomly choose positions in the goal with the number of noise
+    ][
+    set noise-vals n-of (length goal-combination) (n-values (length goal-combination) [?]);randomly choose positions in the goal with the number of noise
+    ]
+
    ; check if the random positions is already in the buttons, if not add it to the button.
    foreach noise-vals [
      ifelse ((member? ? pos) or (member? ? neg) )[
@@ -359,7 +366,7 @@ to go
     ask patches [set pcolor black]
     set hour 0
     set day (day + 1)
-    ; communicate
+    communicate
     ; TODO: decide the first button to be pressed and the location in the morning
 
     walk
@@ -406,6 +413,7 @@ to-report check-goal ; check if the current situation is the same as the goal
     let y gety ?
     if (([pcolor] of (patch x y)) = green)[set sign false]
     ]
+  if (knowledge-threshold >= total-knowledge * 100) [report false]
   report sign
 end
 
@@ -621,37 +629,32 @@ to depth-first-planning-rec [stack]
     foreach pl [
       set acts (remove ? acts);
       ]
-   show "**** expand the following branches *****"
-   print "  world"
-   print wd
-   print "  acts"
-   print acts
-   print "  plan so far"
-   print pl
-   show "****************************************"
+    if (debug)[
+      show ""
+      show ""
+      show "**** expand the following branches *****"
+      print "  world"
+      print wd
+      show "knowledge"
+      print action-knowledge
+      show "****************************************"
+    ]
 
-
-;    ifelse (not (length acts = 0)) [
    ifelse (length pl < num-hours) [
       foreach acts [
         let pl' (fput ? pl)
         let wd' (expected-world wd (item ? action-knowledge))
         let bv' calculate-bidding wd'
         let node' obtain-node bv' pl' wd'
-
-          ifelse ( length pl' = num-hours)
-          [
-            ifelse (best-node = [])
-            [set best-node node']
-            [if ( bv' > (item 0 best-node))[set best-node node']] ; if it is better than the best node
-          ][
-            if (not(wd' = []))[ ; avoid nodes where there is no knowledge
-              ; add to the stack
-
+          if (debug)[
+              show ""
+              show ""
               show "---- action and the node afterwards ------"
+              show "action:"
+              show ?
+              show (item ? action-knowledge)
               show "before world:"
               show wd
-              show (item ? action-knowledge)
               show "after world:"
               show wd'
               show "----- plan and bidding value -------"
@@ -659,8 +662,20 @@ to depth-first-planning-rec [stack]
               show pl'
               show "bidding value"
               show bv'
+          ]
+          ifelse ( length pl' = num-hours)
+          [
+            ifelse (best-node = [])
+            [set best-node node']
+            [if ( bv' > (item 0 best-node))[set best-node node']] ; if it is better than the best node
+          ][
+            ifelse (not(wd' = []))[ ; avoid nodes where there is no knowledge
+              ; add to the stack
+
               set stack (fput node' stack); add the child
               depth-first-planning-rec stack
+              ][
+              show "branch terminate because there is no knowledge here to do any prediction"
               ]
 
           ]
@@ -826,13 +841,13 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-841
-37
-1388
-604
+393
+10
+803
+441
 -1
 -1
-125.0
+33.333333333333336
 1
 30
 1
@@ -843,9 +858,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+11
 0
-3
+11
 1
 1
 1
@@ -855,7 +870,7 @@ ticks
 SLIDER
 167
 126
-300
+278
 159
 buttons-each
 buttons-each
@@ -869,9 +884,9 @@ HORIZONTAL
 
 BUTTON
 23
-439
+459
 138
-472
+492
 NIL
 go
 NIL
@@ -886,9 +901,9 @@ NIL
 
 BUTTON
 145
-438
+458
 264
-471
+491
 NIL
 go
 T
@@ -902,10 +917,10 @@ NIL
 1
 
 BUTTON
-24
-276
-162
-343
+23
+288
+161
+355
 NIL
 setup
 NIL
@@ -942,17 +957,17 @@ vision-radius
 vision-radius
 0
 10
-7
+3
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-282
-518
-365
-563
+279
+525
+362
+570
 Day
 day
 17
@@ -960,10 +975,10 @@ day
 11
 
 BUTTON
-169
-275
-274
-308
+168
+287
+273
+320
 button 1
 perform-action item 0 buttons
 NIL
@@ -977,10 +992,10 @@ NIL
 1
 
 BUTTON
-279
-274
-384
-307
+278
+286
+383
+319
 button 2
 perform-action item 1 buttons
 NIL
@@ -994,10 +1009,10 @@ NIL
 1
 
 BUTTON
-169
-312
-274
-345
+168
+324
+273
+357
 button 3
 perform-action item 2 buttons
 NIL
@@ -1011,10 +1026,10 @@ NIL
 1
 
 BUTTON
-279
-312
-384
-345
+278
+324
+383
+357
 button 4
 perform-action item 3 buttons
 NIL
@@ -1028,10 +1043,10 @@ NIL
 1
 
 MONITOR
-24
-357
-146
-402
+23
+369
+145
+414
 buttons of Agent 0
 [buttons-assigned] of turtle 0
 17
@@ -1039,10 +1054,10 @@ buttons of Agent 0
 11
 
 MONITOR
-150
-357
-275
-402
+149
+369
+263
+414
 buttons of Agent 1
 [buttons-assigned] of turtle 1
 17
@@ -1050,10 +1065,10 @@ buttons of Agent 1
 11
 
 MONITOR
-280
-358
-409
-403
+268
+370
+384
+415
 buttons of Agent 2
 [buttons-assigned] of turtle 2
 17
@@ -1063,7 +1078,7 @@ buttons of Agent 2
 BUTTON
 149
 38
-299
+270
 86
 load and display
 load-and-display-goal
@@ -1080,22 +1095,22 @@ NIL
 SLIDER
 164
 166
-302
+279
 199
-noise
-noise
-0
-13
-3
+noise_per
+noise_per
+10
+50
+24
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-304
+275
 37
-429
+373
 89
 clear display
 ask patches [set pcolor black]
@@ -1110,10 +1125,10 @@ NIL
 1
 
 MONITOR
-313
-126
-419
-172
+287
+125
+369
+170
 Total buttons
 num-agents * buttons-each
 17
@@ -1121,10 +1136,10 @@ num-agents * buttons-each
 11
 
 MONITOR
-281
-569
-369
-614
+278
+576
+366
+621
 hour
 hour
 17
@@ -1132,10 +1147,10 @@ hour
 11
 
 MONITOR
-26
-569
-262
-615
+23
+576
+259
+621
 plan so far
 reverse buttons-chosen-before
 17
@@ -1143,10 +1158,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-438
-58
-838
-610
+393
+482
+795
+623
 Agents' knowledge about their buttons
 total hour
 knowledge (percentage)
@@ -1165,23 +1180,23 @@ PENS
 SLIDER
 20
 203
-300
+280
 236
 knowledge-threshold
 knowledge-threshold
-0
-60
-0
+30
+100
+75
 1
 1
 %
 HORIZONTAL
 
 MONITOR
-27
-519
-263
-565
+24
+526
+260
+571
 bidding
 bidding
 17
@@ -1189,10 +1204,10 @@ bidding
 11
 
 MONITOR
-312
-177
-417
-222
+287
+178
+377
+223
 hours per day
 num-hours
 17
@@ -1212,7 +1227,7 @@ Step 1: Load a file (test.txt for example)
 TEXTBOX
 24
 106
-347
+235
 136
 Step 2: initialise the parameters
 12
@@ -1220,10 +1235,10 @@ Step 2: initialise the parameters
 1
 
 TEXTBOX
-29
-252
-399
-270
+28
+264
+398
+282
 Step 3: setup the game and initialise the buttons
 12
 0.0
@@ -1231,29 +1246,29 @@ Step 3: setup the game and initialise the buttons
 
 TEXTBOX
 30
-414
+434
 180
-432
+452
 Step 4: start the game!
 12
 0.0
 1
 
 TEXTBOX
-287
-493
-437
-511
+284
+500
+434
+518
 calendar
 12
 0.0
 1
 
 TEXTBOX
-80
-494
-230
-512
+77
+501
+227
+519
 bidding and planning
 12
 0.0
@@ -1263,21 +1278,32 @@ CHOOSER
 22
 38
 145
-84
+83
 pattern-name
 pattern-name
 "test.txt" "smile.txt"
-0
+1
 
 TEXTBOX
-447
-32
-614
-52
+394
+459
+561
+479
 Step 5: evaluation
 12
 0.0
 1
+
+SWITCH
+279
+458
+382
+491
+debug
+debug
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
