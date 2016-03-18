@@ -957,7 +957,7 @@ vision-radius
 vision-radius
 0
 10
-3
+2
 1
 1
 NIL
@@ -1101,7 +1101,7 @@ noise_per
 noise_per
 10
 50
-24
+10
 1
 1
 NIL
@@ -1184,9 +1184,9 @@ SLIDER
 236
 knowledge-threshold
 knowledge-threshold
-30
+10
 100
-75
+10
 1
 1
 %
