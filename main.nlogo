@@ -570,7 +570,7 @@ end
 ;==================================bidding and planning===========================================
 ; datatype for depth-first searching as planning
 ; a tuple of the followings:
-; the hour
+
 ; the bidding value
 ; the plan so far
 ; the world
@@ -579,22 +579,21 @@ to bid ; calculate the bidding value for each agent for each action
   ;a new bidding round
   reset-bidding
 
-  ; simple planning algorithm
+  ; ********* a simple planning algorithm *********
   ; simple-bidding
 
-
-  ;depth-first search as planning
+  ; ********* depth-first searching as planning *********
 
   ; initialise the planning part
   ; 1) construct an instance of the date structure
   ask turtles [
   let world-now represent-visable-world
-  let current-node obtain-node hour (calculate-bidding world-now) buttons-chosen-before world-now
+  let current-node obtain-node (calculate-bidding world-now) buttons-chosen-before world-now
   depth-first-planning current-node
   ; 2) extract information from the best-node
   if (not (best-node = [])) [
-    let act-best item (length buttons-chosen-before) (reverse item 2 best-node)
-    if (item act-best bidding < (item 1 best-node)) [set bidding replace-item act-best bidding (item 1 best-node)]; then update the bidding
+    let act-best item (length buttons-chosen-before) (reverse item 1 best-node)
+    if (item act-best bidding < (item 0 best-node)) [set bidding replace-item act-best bidding (item 0 best-node)]; then update the bidding
     ]
   ; change the bidding
   ]
@@ -612,10 +611,9 @@ to depth-first-planning-rec [stack]
   ifelse(not (stack = []))[
     let node (first stack)
 
-    let h item 0 node
-    let bv item 1 node
-    let pl item 2 node ; the list of actions performed so far
-    let wd item 3 node
+    let bv item 0 node
+    let pl item 1 node ; the list of actions performed so far
+    let wd item 2 node
 
     ; find all the actions performable in this world (i.e. not in the plan)
     ; the variable acts is the remaining buttons to be chosen for this hour
@@ -623,36 +621,44 @@ to depth-first-planning-rec [stack]
     foreach pl [
       set acts (remove ? acts);
       ]
-;   show "*********"
-;   show acts
-;   show pl
-;   show h
-;   show num-hours
+   show "**** expand the following branches *****"
+   print "  world"
+   print wd
+   print "  acts"
+   print acts
+   print "  plan so far"
+   print pl
+   show "****************************************"
 
 
 ;    ifelse (not (length acts = 0)) [
-   ifelse (h <= num-hours - 2) [
+   ifelse (length pl < num-hours) [
       foreach acts [
-        let h' (h + 1)
         let pl' (fput ? pl)
         let wd' (expected-world wd (item ? action-knowledge))
         let bv' calculate-bidding wd'
-        let node' obtain-node h' bv' pl' wd'
+        let node' obtain-node bv' pl' wd'
 
-        ; if the h = num-hours - 1 then this is a terminating world
-
-          ifelse (h' = num-hours - 1)
+          ifelse ( length pl' = num-hours)
           [
             ifelse (best-node = [])
             [set best-node node']
-            [if ( bv' > (item 1 best-node))[set best-node node']] ; if it is better than the best node
+            [if ( bv' > (item 0 best-node))[set best-node node']] ; if it is better than the best node
           ][
-            if (not(wd' = []))[
+            if (not(wd' = []))[ ; avoid nodes where there is no knowledge
               ; add to the stack
-;              show "----act------"
-;              show wd
-;              show (item ? action-knowledge)
-;              show wd'
+
+              show "---- action and the node afterwards ------"
+              show "before world:"
+              show wd
+              show (item ? action-knowledge)
+              show "after world:"
+              show wd'
+              show "----- plan and bidding value -------"
+              show "plan"
+              show pl'
+              show "bidding value"
+              show bv'
               set stack (fput node' stack); add the child
               depth-first-planning-rec stack
               ]
@@ -675,12 +681,11 @@ to depth-first-planning-rec [stack]
 end
 
 
-to-report obtain-node [h v p w]
+to-report obtain-node [v p w]
   ; TODO: this method can be simplied using task
   let node (fput w [])
   set node (fput p node)
   set node (fput v node)
-  set node (fput h node)
   report node
 end
 
@@ -823,11 +828,11 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 GRAPHICS-WINDOW
 841
 37
-1350
-567
+1388
+604
 -1
 -1
-41.666666666666664
+125.0
 1
 30
 1
@@ -838,9 +843,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-11
+3
 0
-11
+3
 1
 1
 1
@@ -1033,17 +1038,6 @@ buttons of Agent 0
 1
 11
 
-INPUTBOX
-19
-31
-148
-91
-pattern-name
-smile.txt
-1
-0
-String
-
 MONITOR
 150
 357
@@ -1067,10 +1061,10 @@ buttons of Agent 2
 11
 
 BUTTON
-151
-34
-300
-90
+149
+38
+299
+86
 load and display
 load-and-display-goal
 NIL
@@ -1099,10 +1093,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-305
-33
+304
+37
 429
-90
+89
 clear display
 ask patches [set pcolor black]
 NIL
@@ -1116,9 +1110,9 @@ NIL
 1
 
 MONITOR
-311
-127
-411
+313
+126
+419
 172
 Total buttons
 num-agents * buttons-each
@@ -1138,9 +1132,9 @@ hour
 11
 
 MONITOR
-35
-570
-197
+26
+569
+262
 615
 plan so far
 reverse buttons-chosen-before
@@ -1149,10 +1143,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-437
-11
-836
-608
+438
+58
+838
+610
 Agents' knowledge about their buttons
 total hour
 knowledge (percentage)
@@ -1177,17 +1171,17 @@ knowledge-threshold
 knowledge-threshold
 0
 60
-14
+0
 1
 1
 %
 HORIZONTAL
 
 MONITOR
-35
+27
 519
-198
-564
+263
+565
 bidding
 bidding
 17
@@ -1256,11 +1250,31 @@ calendar
 1
 
 TEXTBOX
-52
-495
-202
-513
+80
+494
+230
+512
 bidding and planning
+12
+0.0
+1
+
+CHOOSER
+22
+38
+145
+84
+pattern-name
+pattern-name
+"test.txt" "smile.txt"
+0
+
+TEXTBOX
+447
+32
+614
+52
+Step 5: evaluation
 12
 0.0
 1
