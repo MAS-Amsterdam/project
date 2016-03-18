@@ -860,8 +860,8 @@ SLIDER
 buttons-each
 buttons-each
 1
-10
 3
+2
 1
 1
 NIL
@@ -942,7 +942,7 @@ vision-radius
 vision-radius
 0
 10
-6
+7
 1
 1
 NIL
