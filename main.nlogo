@@ -151,7 +151,7 @@ end
 
 to setup-button
 
-  set noise (noise_per * 100)
+  set noise (noise_pct * 100)
   set buttons-chosen-before []
   ; the total number of buttons =  num-agent * buttons-each
   ; we choose the first half and one more of the buttons as the plan
@@ -366,9 +366,10 @@ to go
     ask patches [set pcolor black]
     set hour 0
     set day (day + 1)
-    communicate
-    ; TODO: decide the first button to be pressed and the location in the morning
-
+    if (communicate_at_night) [
+      communicate
+      update-average-individual-knowledge
+      ]
     walk
     show-vision
     ]
@@ -675,7 +676,9 @@ to depth-first-planning-rec [stack]
               set stack (fput node' stack); add the child
               depth-first-planning-rec stack
               ][
-              show "branch terminate because there is no knowledge here to do any prediction"
+                if (debug)[
+                show "branch terminate because there is no knowledge here to do any prediction"
+                ]
               ]
 
           ]
@@ -841,10 +844,10 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-393
-10
-803
-441
+762
+85
+1172
+516
 -1
 -1
 33.333333333333336
@@ -868,59 +871,59 @@ ticks
 30.0
 
 SLIDER
-167
-126
-278
-159
+164
+196
+355
+229
 buttons-each
 buttons-each
 1
-3
 2
+1
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-23
-459
-138
-492
-NIL
-go
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-145
-458
-264
-491
-NIL
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-23
-288
+399
+128
+501
 161
-355
+NIL
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+510
+128
+617
+161
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+18
+409
+106
+476
 NIL
 setup
 NIL
@@ -934,40 +937,40 @@ NIL
 1
 
 SLIDER
-18
-126
-160
-159
+15
+196
+153
+229
 num-agents
 num-agents
-2
-7
-2
+3
+5
+5
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-19
-168
-156
-201
+16
+238
+153
+271
 vision-radius
 vision-radius
 0
-10
-2
+7
+3
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-279
-525
-362
-570
+652
+197
+735
+242
 Day
 day
 17
@@ -975,10 +978,10 @@ day
 11
 
 BUTTON
-168
-287
-273
-320
+113
+409
+218
+442
 button 1
 perform-action item 0 buttons
 NIL
@@ -992,10 +995,10 @@ NIL
 1
 
 BUTTON
-278
-286
-383
-319
+223
+408
+328
+441
 button 2
 perform-action item 1 buttons
 NIL
@@ -1009,10 +1012,10 @@ NIL
 1
 
 BUTTON
-168
-324
-273
-357
+113
+446
+218
+479
 button 3
 perform-action item 2 buttons
 NIL
@@ -1026,10 +1029,10 @@ NIL
 1
 
 BUTTON
-278
-324
-383
-357
+223
+446
+328
+479
 button 4
 perform-action item 3 buttons
 NIL
@@ -1043,10 +1046,10 @@ NIL
 1
 
 MONITOR
-23
-369
-145
-414
+15
+492
+161
+537
 buttons of Agent 0
 [buttons-assigned] of turtle 0
 17
@@ -1054,32 +1057,21 @@ buttons of Agent 0
 11
 
 MONITOR
-149
-369
-263
-414
+179
+492
+326
+537
 buttons of Agent 1
 [buttons-assigned] of turtle 1
 17
 1
 11
 
-MONITOR
-268
-370
-384
-415
-buttons of Agent 2
-[buttons-assigned] of turtle 2
-17
-1
-11
-
 BUTTON
-149
-38
-270
-86
+146
+108
+267
+156
 load and display
 load-and-display-goal
 NIL
@@ -1093,25 +1085,25 @@ NIL
 1
 
 SLIDER
-164
-166
-279
-199
-noise_per
-noise_per
-10
+15
+276
+153
+309
+noise_pct
+noise_pct
+25
 50
-10
+33
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-275
-37
-373
-89
+272
+107
+370
+159
 clear display
 ask patches [set pcolor black]
 NIL
@@ -1125,10 +1117,10 @@ NIL
 1
 
 MONITOR
-287
-125
-369
-170
+20
+320
+167
+365
 Total buttons
 num-agents * buttons-each
 17
@@ -1136,10 +1128,10 @@ num-agents * buttons-each
 11
 
 MONITOR
-278
-576
-366
-621
+651
+248
+739
+293
 hour
 hour
 17
@@ -1147,10 +1139,10 @@ hour
 11
 
 MONITOR
-23
-576
-259
-621
+396
+248
+632
+293
 plan so far
 reverse buttons-chosen-before
 17
@@ -1158,10 +1150,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-393
-482
-795
-623
+349
+332
+748
+509
 Agents' knowledge about their buttons
 total hour
 knowledge (percentage)
@@ -1178,25 +1170,25 @@ PENS
 "Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
 
 SLIDER
-20
-203
-280
-236
+161
+238
+355
+271
 knowledge-threshold
 knowledge-threshold
-10
+25
 100
-10
+68
 1
 1
 %
 HORIZONTAL
 
 MONITOR
-24
-526
-260
-571
+397
+198
+633
+243
 bidding
 bidding
 17
@@ -1204,10 +1196,10 @@ bidding
 11
 
 MONITOR
-287
-178
-377
-223
+177
+321
+327
+366
 hours per day
 num-hours
 17
@@ -1215,95 +1207,116 @@ num-hours
 11
 
 TEXTBOX
-24
-12
-370
-42
+21
+82
+367
+112
 Step 1: Load a file (test.txt for example)
 12
 0.0
 1
 
 TEXTBOX
-24
-106
-235
-136
+21
+176
+232
+206
 Step 2: initialise the parameters
 12
 0.0
 1
 
 TEXTBOX
-28
-264
-398
-282
+20
+387
+390
+405
 Step 3: setup the game and initialise the buttons
 12
 0.0
 1
 
 TEXTBOX
-30
-434
-180
-452
+406
+103
+556
+121
 Step 4: start the game!
 12
 0.0
 1
 
 TEXTBOX
-284
-500
-434
-518
+657
+172
+807
+190
 calendar
 12
 0.0
 1
 
 TEXTBOX
-77
-501
-227
-519
+450
+173
+600
+191
 bidding and planning
 12
 0.0
 1
 
 CHOOSER
-22
-38
-145
-83
+19
+108
+142
+153
 pattern-name
 pattern-name
 "test.txt" "smile.txt"
 1
 
 TEXTBOX
-394
-459
-561
-479
+407
+308
+574
+328
 Step 5: evaluation
 12
 0.0
 1
 
 SWITCH
-279
-458
-382
-491
+630
+128
+733
+161
 debug
 debug
 1
 1
 -1000
+
+SWITCH
+162
+277
+356
+310
+communicate_at_night
+communicate_at_night
+1
+1
+-1000
+
+TEXTBOX
+282
+26
+901
+53
+Multi-agent Epistemic Action Learning for Planning
+24
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
