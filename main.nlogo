@@ -356,6 +356,7 @@ to go
       set buttons-chosen-before (fput button-chosen buttons-chosen-before)
       ; choose the button with the highest bidding value
     ]
+    observe
     ; then perform the action
     perform-action item button-chosen buttons
     show button-chosen
@@ -446,6 +447,15 @@ to-report gety [n]
   report (floor (n / width))
 end
 
+to observe
+   ask turtles [
+    let vision (patches in-cone-nowrap vision-radius 360) ; the agent's vision
+    let vision-indexes []
+    ask vision [
+      set vision-indexes fput (get-patch-index self)  vision-indexes
+            ]
+   set observation vision-indexes]
+end
 
 to observe-and-learn ; ask each agent to change the vision and vision index
   ask turtles [
@@ -502,7 +512,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     set action-knowledge replace-item button-chosen action-knowledge (list know-true know-false)
 
     ; and finally, set vision-indexes as the new observation
-    set observation vision-indexes; TODO: what if after walk, there is no information about new local pathes?
+    ;set observation vision-indexes; TODO: what if after walk, there is no information about new local pathes?
     ]
 
 end
@@ -898,7 +908,7 @@ buttons-each
 buttons-each
 1
 2
-2
+1
 1
 1
 NIL
@@ -964,7 +974,7 @@ num-agents
 num-agents
 3
 5
-4
+5
 1
 1
 NIL
@@ -1323,7 +1333,7 @@ SWITCH
 310
 communicate_at_night
 communicate_at_night
-1
+0
 1
 -1000
 
