@@ -162,7 +162,7 @@ to setup-button
   let goal-combination first goal
   foreach (last goal) [set goal-combination lput ( -1 * ? ) goal-combination]
   let total-buttons buttons-each * num-agents
-  set num-hours ( floor ( total-buttons / 2 ) + 1 ) ; the total number of steps for this plan, which is 1 + half of the total number of buttons
+  set num-hours min list ( floor ( total-buttons / 2 ) + 1 ) 4 ; the total number of steps for this plan, which is 1 + half of the total number of buttons
 
   ;----------------------------------------------------------
   ; Part one: buttons leading to solution
@@ -193,7 +193,8 @@ to setup-button
   ifelse (noise <= (length goal-combination)) [
      set noise-vals n-of noise (n-values (length goal-combination) [?]);randomly choose positions in the goal with the number of noise
     ][
-    set noise-vals n-of (length goal-combination) (n-values (length goal-combination) [?]);randomly choose positions in the goal with the number of noise
+    set noise-vals (n-values (length goal-combination) [?])
+    ;set noise-vals n-of (length goal-combination) (n-values (length goal-combination) [?]);randomly choose positions in the goal with the number of noise
     ]
 
    ; check if the random positions is already in the buttons, if not add it to the button.
@@ -234,26 +235,39 @@ to setup-button
 
    let disturbing-buttons []
    let noise-dis  (choose-num + noise) ; the number of propositions in the disturbing buttons
-    foreach n-values  ( buttons-each * num-agents - num-hours ) [?][
-      let noise-dis-vals []
-      ifelse (noise-dis <= length goal-combination)[
-        set noise-dis-vals n-of noise-dis (n-values (length goal-combination) [?]);randomly choose the elements
+
+      foreach n-values  ( buttons-each * num-agents - num-hours ) [?][
+        let noise-dis-vals []
+        ifelse (noise-dis <= length goal-combination)[
+          set noise-dis-vals n-of noise-dis (n-values (length goal-combination) [?]);randomly choose the elements
         ][
-        set noise-dis-vals n-of (length goal-combination) (n-values (length goal-combination) [?]);randomly choose the elements
+        set noise-dis-vals (n-values (length goal-combination) [?])
+        ;set noise-dis-vals n-of (length goal-combination) (n-values (length goal-combination) [?]);randomly choose the elements
         ]
 
-    let pos-d  []
-    let neg-d  []
-    foreach noise-dis-vals [
-    ifelse (random 2 > 0)[set pos-d fput ? pos-d]
-    [set neg-d fput ? neg-d];randomly set the sign (on/off) to the elements
-    ]
+        let pos-d  []
+        let neg-d  []
+        foreach noise-dis-vals [
+          ifelse (random 2 > 0)[set pos-d fput ? pos-d]
+          [set neg-d fput ? neg-d];randomly set the sign (on/off) to the elements
+        ]
 
-   set disturbing-buttons fput (list pos-d neg-d ) disturbing-buttons
+        set disturbing-buttons fput (list pos-d neg-d ) disturbing-buttons
+        ]
+   ;show length first (last disturbing-buttons)
 
-    ]
+    ; reset the last button such that it lights up all the grids that have never been turned on.
+    let light-so-far []
+    foreach ( sentence  solution-buttons disturbing-buttons )[
+       set light-so-far remove-duplicates ( sentence light-so-far first ? ); sumsming the grids that have been on.
+       ]
+    foreach (n-values (width * height) [?])[
+      if (not (member? ? light-so-far)) [
+        set disturbing-buttons replace-item (length disturbing-buttons - 1 ) disturbing-buttons list (fput ? first (last disturbing-buttons) )(remove ? last (last disturbing-buttons))
+        ]
+      ]
 
-   set buttons sentence solution-buttons disturbing-buttons ; append the disturbing buttons to the solution buttons
+    set buttons sentence solution-buttons disturbing-buttons ; append the disturbing buttons to the solution buttons
 
 end
 
@@ -327,7 +341,10 @@ to go
 
       ] ;  select a random action and record its index and there is no button chosen before
     [
-
+       if (hour = 1)[
+       clear-drawing
+       ask turtles[
+       pen-down]]
 
       ifelse (total-knowledge > knowledge-threshold * 0.01 )
       [bid]
@@ -361,6 +378,8 @@ to go
     set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
+    clear-drawing
+    ask turtles[pen-up]
     set buttons-chosen-before []
     show "at night"
     ask patches [set pcolor black]
@@ -879,7 +898,7 @@ buttons-each
 buttons-each
 1
 2
-1
+2
 1
 1
 NIL
@@ -945,7 +964,7 @@ num-agents
 num-agents
 3
 5
-5
+4
 1
 1
 NIL
