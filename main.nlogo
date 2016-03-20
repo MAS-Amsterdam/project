@@ -875,11 +875,11 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 GRAPHICS-WINDOW
 762
 85
-1172
-516
+1171
+515
 -1
 -1
-33.333333333333336
+12.5
 1
 30
 1
@@ -890,9 +890,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-11
+31
 0
-11
+31
 1
 1
 1
@@ -908,7 +908,7 @@ buttons-each
 buttons-each
 1
 2
-1
+2
 1
 1
 NIL
@@ -1358,7 +1358,52 @@ Multi-agent Epistemic Action Learning for Planning
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+The interface has been designed to be intuitive. As such, the interface follows a flow of buttons, sliders and monitors that an user might need to navigate the program and watch the simulation. The interface, thusly, consists of the following elements:
+
+pattern_name: This input box takes in the name of the file that contains the description of the goal pattern. The file is a CSV file. The first line of the file always consists of 2 values, the height and the width of the world. Then the file follows with a comma separated logical matrix, with the a value of 1 denoting an 	“on” pixel and a value of zero for an “off” pixel. Any resolution goal description can be loaded as long as the file follows the prescribed format.
+
+Load and display: This button loads the file, and displays it in the viewer for the user to see the end goal design.
+
+Clear display: This button simply clears the displays.
+
+Goal: This monitor shows a list of list of the goal pixels. The pixels are represented as a vector in memory rather than an array, so each valid pixel has an index. The first sublist of the list is the collection of all the valid pixels, while the second sublist of the list is the collection of all the non valid pixels.
+
+num_agents: This slider controls how many agents are there in the world to solve the problem.
+
+button_each: This slider controls how many buttons each agent gets.
+
+vision_radius: This slider controls how far an agent can see and observe the environment.
+
+num_hours: This slider controls how many hours make up the day in the environment.
+
+noise: This slider controls how much disturbance is added to the search in order for it to branch into a tree, rather than becoming a linear path to the goal.
+
+learning_factor: This slider controls the agent’s learning rate.
+
+Total buttons: This monitor shows how many buttons in total are there for the goal pattern to be generated. This is determined by multiplying the number of buttons each agent gets with the number of agents.
+
+Setup: This button sets up the world by initialising the world to its primitive state, loading the goal pattern in memory, spawning the agents and initialising their goals, beliefs, desires, intentions and button configurations, etc.
+
+go: This is a once button, and so it advances the world by one tick.
+
+go(forever variant): This is a forever button variant, hence it continuously calls the go method and advances the ticks till the user stops it manually.
+
+Button 1 through Button 4: This are the example buttons that the agents get access too. Pressing them sequentially gradually turns on all the valid pixels and turns off all the invalid pixels. Pressing the first button will light up some pixels with some additional noise, while the next button will turn on some additional valid and invalid button, till button 3. Pressing button 4 will turn off all the invalid pixels and make sure only the valid pixels of the goal configuration remains.
+
+Current Action: This monitor shows the button that was chosen by the agents to be pressed.
+
+Day: This monitor tracks the day.
+
+Hour: This monitor tracks the hour.
+
+Plan so far: This monitor shows the most optimal plan found so far that is nearest to the goal node.
+
+Bidding: This monitor shows which button has won the bidding.
+
+Buttons of Agent 0 through 2: This monitor shows the list of buttons assigned to the agents. The size of the list is equivalent to slider value of button_each. Due to technical limitations, only the first 3 agents are monitored. If the number of agents is less than 3, then the monitor show “N/A”.
+
+Agents' knowledge about their actions (percentage): This plot shows the percentage of accumulated knowledge of the agents over time. This only considers the daytime, however, as that is when new knowledge is learned and accumulated. Only communication is done during the night time.
+
 
 ## THINGS TO NOTICE
 
