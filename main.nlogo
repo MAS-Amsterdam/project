@@ -929,10 +929,10 @@ end
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-760
-113
-1013
-387
+762
+92
+1272
+623
 -1
 -1
 41.666666666666664
@@ -971,10 +971,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-399
-128
-501
-161
+407
+110
+509
+143
 NIL
 go
 NIL
@@ -988,10 +988,10 @@ NIL
 1
 
 BUTTON
-510
-128
-617
-161
+517
+110
+624
+143
 NIL
 go
 T
@@ -1053,9 +1053,9 @@ HORIZONTAL
 
 MONITOR
 652
-197
+179
 735
-242
+224
 Day
 day
 17
@@ -1131,10 +1131,10 @@ NIL
 1
 
 MONITOR
-1040
-168
-1360
-213
+1293
+178
+1582
+223
 buttons of Agent 0
 [buttons-assigned] of turtle 0
 17
@@ -1202,10 +1202,10 @@ num-agents * buttons-each
 11
 
 MONITOR
-651
-248
-739
-293
+650
+230
+738
+275
 hour
 hour
 17
@@ -1213,10 +1213,10 @@ hour
 11
 
 MONITOR
-396
-248
-632
-293
+403
+230
+639
+275
 plan so far
 reverse buttons-chosen-before
 17
@@ -1224,10 +1224,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-390
-383
-708
-618
+397
+365
+715
+600
 Agents' knowledge about their buttons
 total hour
 knowledge (percentage)
@@ -1259,10 +1259,10 @@ knowledge-threshold
 HORIZONTAL
 
 MONITOR
-397
-198
-633
-243
+404
+180
+640
+225
 bidding
 bidding
 17
@@ -1303,18 +1303,18 @@ Step 2: initialise the parameters
 TEXTBOX
 24
 475
-394
-493
+324
+494
 Step 3: setup the game and initialise the buttons
 12
 0.0
 1
 
 TEXTBOX
-406
+413
+85
+563
 103
-556
-121
 Step 4: start the game!
 12
 0.0
@@ -1322,19 +1322,19 @@ Step 4: start the game!
 
 TEXTBOX
 657
-172
+154
 807
-190
+172
 calendar
 12
 0.0
 1
 
 TEXTBOX
-450
+457
+155
+607
 173
-600
-191
 bidding and planning
 12
 0.0
@@ -1351,10 +1351,10 @@ pattern-name
 1
 
 TEXTBOX
-407
-308
-574
-328
+414
+290
+581
+310
 Step 5: evaluation
 12
 0.0
@@ -1407,7 +1407,7 @@ SWITCH
 18
 428
 131
-462
+461
 decidable
 decidable
 1
@@ -1415,10 +1415,10 @@ decidable
 -1000
 
 MONITOR
-1039
-227
-1401
-272
+1293
+237
+1585
+282
 knowledge of agent 0
 [action-knowledge] of turtle 0
 17
@@ -1426,10 +1426,10 @@ knowledge of agent 0
 11
 
 MONITOR
-1178
-373
-1328
-418
+1432
+383
+1582
+428
 move to target patch
 [target-patch] of turtle 0
 17
@@ -1437,20 +1437,20 @@ move to target patch
 11
 
 TEXTBOX
-1038
-108
-1395
-157
+1292
+118
+1649
+167
 Additional Information:\nBelief, desire and intention of agent 0\n1) Belief
 12
 0.0
 1
 
 MONITOR
-1040
-283
-1399
-328
+1293
+293
+1583
+338
 observation of turtle 0
 [observation] of turtle 0
 17
@@ -1458,20 +1458,20 @@ observation of turtle 0
 11
 
 TEXTBOX
-1044
-340
-1232
-363
+1298
+349
+1486
+372
 2) Desire
 12
 0.0
 1
 
 MONITOR
-1042
-372
-1166
-417
+1295
+382
+1419
+427
 stop
 [stop-agent] of turtle 0
 17
@@ -1479,20 +1479,20 @@ stop
 11
 
 TEXTBOX
-1047
-439
-1235
-462
+1300
+449
+1488
+472
 3) Intention
 12
 0.0
 1
 
 MONITOR
-1043
-470
-1143
-515
+1297
+479
+1397
+524
 bidding value
 first [best-node] of turtle 0
 17
@@ -1500,10 +1500,10 @@ first [best-node] of turtle 0
 11
 
 MONITOR
-1162
-469
-1267
-514
+1415
+479
+1520
+524
 bidding action
 item hour (reverse item 1 ([best-node] of turtle 0))
 17
@@ -1511,10 +1511,10 @@ item hour (reverse item 1 ([best-node] of turtle 0))
 11
 
 MONITOR
-1280
-469
-1495
-514
+1297
+532
+1512
+577
 optimal plan (to its knowledge)
 reverse (item 1 [best-node] of turtle 0)
 17
@@ -1522,10 +1522,10 @@ reverse (item 1 [best-node] of turtle 0)
 11
 
 MONITOR
-392
-334
-551
-379
+399
+317
+558
+362
 status
 gamming-status
 17
