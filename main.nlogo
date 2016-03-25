@@ -352,12 +352,6 @@ end
 
 to go
 
-  update-desire
-  update-belief
-  update-intention
-  exe-action; locate
-
-
   ifelse (hour < num-hours)
   ; ====================== in day time =================================
   [
@@ -367,7 +361,8 @@ to go
     if all? turtles [desire = "stop"][
       update-intention; if the goal is reached then update the intention to self-upgrade its program
     ]
-    exe-action; if terminate, output the program, otherwise locate to a random place
+    exe-action
+    ; if terminate, output the program, otherwise locate to a random place
     update-intention; to bid
     exe-action
 
@@ -496,10 +491,13 @@ to exe-action
     if (intention = "to move")
     [walk]
     if (intention = "to locate" and hour  = 0)
-    [locate]
+    [locate; a random location
+      show "to locate"
+      ]
 
     if (intention = "self-upgrade")
     [output-program]
+
   ]
   ;===============<collective actions>=======================
    if all? turtles [intention = "bid"]
@@ -1007,11 +1005,11 @@ end
 GRAPHICS-WINDOW
 762
 92
-1230
-581
+1271
+622
 -1
 -1
-31.25
+125.0
 1
 30
 1
@@ -1022,9 +1020,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-15
+3
 0
-15
+3
 1
 1
 1
@@ -1424,7 +1422,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test.txt" "smile.txt" "sad.txt"
-2
+0
 
 TEXTBOX
 414
@@ -1451,7 +1449,7 @@ SWITCH
 140
 430
 352
-464
+463
 communicate-at-night
 communicate-at-night
 1
@@ -1604,6 +1602,17 @@ MONITOR
 629
 knowledge percentage
 [know-buttons-in-charge] of turtle 0
+17
+1
+11
+
+MONITOR
+1505
+467
+1659
+512
+intention
+[intention] of turtle 0
 17
 1
 11
