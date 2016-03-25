@@ -9,7 +9,7 @@ globals [
   num-hours ; the length of solution
   day ; the day
   hour; the hour
-
+  trying ; a sign of status if the agents are trying or bidding
   bidding ; for each action, we record a value
   ;=========================buttons related variables==============================================
   noise ; the randomly set points in each button that belongs to solution.
@@ -17,17 +17,33 @@ globals [
   buttons; a list of buttons, each button is a pair setting some patches to green and some to black
   button-chosen; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
   buttons-chosen-before; all the buttons chosen before
+
   ]
-turtles-own[own-color; color set to the agent
+
+turtles-own[
+  ;======================beliefs===================================================================
+  own-color; color set to the agent
   buttons-assigned; the order of buttons it owns, relating to the matrix buttons
   observation ; the agent's observation
-  ;======================beliefs===================================================================
   action-knowledge; Beliefs about the actions. each action is a pair: (know-true, know-false). know-true consists of the propositions the agent is sure about.
   ; know false consists of the propositions the agent knows false about.
-  best-node ; a variable to help out the depth first search
+  ;======================desire====================================================================
+  ; the agent has the desire to maximise the knowledge of the buttons it is in charge of
+  ; to stop itself when informed
   know-buttons-in-charge; the percentage of the knownledge each agent acuired for the button(s) it in charge of.
+  stop-agent; the agent is aiming at a stop when the pattern was reached (and the agent will be informed)
+  ;======================intention=================================================================
+  ; to move to a location and to bid
+  ; and to bid for an action (not necessarily to press its buttons)
+  best-node ;a data structure containing the best action and the bidding value (as well as the plan)
+  target-patch
+  ;
 ]
 
+
+patches-own[
+  potential-infor;if the agent is at that patch, with its set vision, the amount of information it at most may get.
+  ]
 
 ; =================================================================
 ; ========================== The Setup part =======================
@@ -48,6 +64,7 @@ to setup
   show-vision;show the agents' vision by * mark.
   setup-bidding
   setup-patches
+  set trying true
 
 end
 
@@ -282,6 +299,7 @@ to setup-agents
   ;ask patches [set all-black (fput (get-patch-index self) all-black)]
 
   create-turtles num-agents [
+    set stop-agent false
     set know-buttons-in-charge 0
     set label who
     setxy random-xcor random-ycor
@@ -369,13 +387,8 @@ to go
       show check-goal
     ]
 
-    if (check-goal) [
-      show "Game Over"
-      show "The total days taken is: "
-      show day
-      stop
-      ask turtles [stop]
-      ]
+
+
     ; then the agent observe and perform learning
     observe-and-learn
     ; the agent start the bidding of the next action (with values stored in the "bidding")
@@ -385,6 +398,19 @@ to go
     show-vision
     update-average-individual-knowledge
     set hour (hour + 1)
+
+    if (check-goal) [
+      show "Game Over"
+      show "The total days taken is: "
+      show day
+      ask turtles [set stop-agent true]
+      stop
+    ]
+
+    ask turtles [
+      if (stop-agent) [stop]
+      ]
+
   ]
   [ ; ====================== at night =================================
     clear-drawing
@@ -406,6 +432,7 @@ to go
 
   ; if the hour = num-hours then it's another day
   show-vision
+  if (knowledge-threshold < total-knowledge * 100) [set trying false]
   tick
 end
 
@@ -446,7 +473,7 @@ to-report check-goal ; check if the current situation is the same as the goal
     let y gety ?
     if (([pcolor] of (patch x y)) = green)[set sign false]
     ]
-  if (knowledge-threshold >= total-knowledge * 100) [report false]
+  if (knowledge-threshold >= total-knowledge * 100 or trying) [report false]
   report sign
 end
 
@@ -842,13 +869,16 @@ to walk
 
   ifelse (hour = 0)
   ;at night
-  [if(day != 0)
-    [setxy random-xcor random-ycor
-        face patch-here
-        move-to patch-here];move to the center of the current patch, our agents will always move to the center of a patch.
-        move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
-      ]
-  ;in the daytime
+  [
+    if(day != 0)
+    [
+      setxy random-xcor random-ycor
+      face patch-here
+      move-to patch-here]
+      ;move to the center of the current patch, our agents will always move to the center of a patch.
+      move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
+    ]
+    ;in the daytime
   [move-to-least-unknown]
 
 
@@ -873,24 +903,25 @@ to move-to-least-unknown; moves to the neighbor or current patch which has the m
       let world-known map [floor( ? / 3 )] (item 0 ( item ?  action-knowledge ))
       let vision-known-index []
       if (not (modes (sentence world-known vision-index) = (sentence world-known vision-index)))
-      [set vision-known-index ( modes (sentence world-known vision-index) )]; the visionindex that already in agent's knowledge.
+        [set vision-known-index ( modes (sentence world-known vision-index) )]; the visionindex that already in agent's knowledge.
 
-     set amount (lput ((length vision-index) - (length vision-known-index)) amount )
+       set amount (lput ((length vision-index) - (length vision-known-index)) amount )
      ];the amount of information a agent at most could aquire for this button at this patch.
-
 
     ask ? [set potential-infor mean amount]; calculate the mean value(potential information) of all the buttons it is incharge of for each neighbor and current location.
 
-
     ]
-
+    set target-patch max-one-of neighbors [potential-infor]
     uphill potential-infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
-
+    ; file:///home/robert/Project/MAS/netlogo-5.3-64/app/docs/dict/uphill.html
 end
 
-patches-own[potential-infor;if the agent is at that patch, with its set vision, the amount of information it at most may get.
-  ]
-
+to-report gamming-status
+  ifelse (trying)
+  [report "trying"]
+  [report "bidding"]
+;  report (ifelse (trying) ["trying"] ["bidding"])
+end
 
 ; TODO: button generation can be done using "shuffle"
 ; TODO: random buttons are simply too random and looks ugly
@@ -898,10 +929,10 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-762
-85
-1015
-359
+760
+113
+1013
+387
 -1
 -1
 41.666666666666664
@@ -932,7 +963,7 @@ SLIDER
 buttons-each
 buttons-each
 1
-2
+3
 1
 1
 1
@@ -1100,23 +1131,12 @@ NIL
 1
 
 MONITOR
-19
-580
-165
-625
+1040
+168
+1360
+213
 buttons of Agent 0
 [buttons-assigned] of turtle 0
-17
-1
-11
-
-MONITOR
-184
-580
-331
-625
-buttons of Agent 1
-[buttons-assigned] of turtle 1
 17
 1
 11
@@ -1171,10 +1191,10 @@ NIL
 1
 
 MONITOR
-20
-320
-167
-365
+165
+278
+357
+323
 Total buttons
 num-agents * buttons-each
 17
@@ -1204,10 +1224,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-349
-332
-748
-509
+390
+383
+708
+618
 Agents' knowledge about their buttons
 total hour
 knowledge (percentage)
@@ -1250,11 +1270,11 @@ bidding
 11
 
 MONITOR
-177
-321
-327
-366
-hours per day
+18
+328
+332
+373
+hours per day (max 4)
 num-hours
 17
 1
@@ -1379,7 +1399,7 @@ SWITCH
 412
 can_walk
 can_walk
-1
+0
 1
 -1000
 
@@ -1393,6 +1413,124 @@ decidable
 1
 1
 -1000
+
+MONITOR
+1039
+227
+1401
+272
+knowledge of agent 0
+[action-knowledge] of turtle 0
+17
+1
+11
+
+MONITOR
+1178
+373
+1328
+418
+move to target patch
+[target-patch] of turtle 0
+17
+1
+11
+
+TEXTBOX
+1038
+108
+1395
+157
+Additional Information:\nBelief, desire and intention of agent 0\n1) Belief
+12
+0.0
+1
+
+MONITOR
+1040
+283
+1399
+328
+observation of turtle 0
+[observation] of turtle 0
+17
+1
+11
+
+TEXTBOX
+1044
+340
+1232
+363
+2) Desire
+12
+0.0
+1
+
+MONITOR
+1042
+372
+1166
+417
+stop
+[stop-agent] of turtle 0
+17
+1
+11
+
+TEXTBOX
+1047
+439
+1235
+462
+3) Intention
+12
+0.0
+1
+
+MONITOR
+1043
+470
+1143
+515
+bidding value
+first [best-node] of turtle 0
+17
+1
+11
+
+MONITOR
+1162
+469
+1267
+514
+bidding action
+item hour (reverse item 1 ([best-node] of turtle 0))
+17
+1
+11
+
+MONITOR
+1280
+469
+1495
+514
+optimal plan (to its knowledge)
+reverse (item 1 [best-node] of turtle 0)
+17
+1
+11
+
+MONITOR
+392
+334
+551
+379
+status
+gamming-status
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
