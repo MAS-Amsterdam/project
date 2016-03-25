@@ -78,8 +78,8 @@ to open-file
 
   set width read-from-string item 0 tmp
   set height read-from-string item 1 tmp
+  set-patch-size 500 / width
   resize-world 0 (width - 1) 0 ( height - 1)
-  set-patch-size 400 / width
 
   let x 0
   let y height - 1
@@ -226,11 +226,12 @@ to setup-button
     ]
 
    let last-btn (list last-pos last-neg)
-   show last-btn
-   show "^^^^^^^^^^^^^^^^^^"
+   if (debug)[
+     show last-btn
+     show "^^^^^^^^^^^^^^^^^^"
+
+     ]
    set solution-buttons lput (last-btn) solution-buttons
-
-
    perform-action last-btn
 
   ;----------------------------------------------------------
@@ -258,17 +259,18 @@ to setup-button
         set disturbing-buttons fput (list pos-d neg-d ) disturbing-buttons
         ]
    ;show length first (last disturbing-buttons)
-
-    ; reset the last button such that it lights up all the grids that have never been turned on.
-    let light-so-far []
-    foreach ( sentence  solution-buttons disturbing-buttons )[
-       set light-so-far remove-duplicates ( sentence light-so-far first ? ); sumsming the grids that have been on.
-       ]
-    foreach (n-values (width * height) [? + 1])[
-      if (not (member? ? light-so-far)) [
-        set disturbing-buttons replace-item (length disturbing-buttons - 1 ) disturbing-buttons list (fput ? first (last disturbing-buttons) )(remove ? last (last disturbing-buttons))
+    if (decidable)[
+      ; reset the last button such that it lights up all the grids that have never been turned on.
+      let light-so-far []
+      foreach ( sentence  solution-buttons disturbing-buttons )[
+         set light-so-far remove-duplicates ( sentence light-so-far first ? ); sumsming the grids that have been on.
+         ]
+      foreach (n-values (width * height) [? + 1])[
+        if (not (member? ? light-so-far)) [
+          set disturbing-buttons replace-item (length disturbing-buttons - 1 ) disturbing-buttons list (fput ? first (last disturbing-buttons) )(remove ? last (last disturbing-buttons))
+          ]
         ]
-      ]
+    ]
 
     set buttons sentence solution-buttons disturbing-buttons ; append the disturbing buttons to the solution buttons
 
@@ -335,7 +337,7 @@ to go
   ifelse (hour < num-hours)
   ; ====================== in day time =================================
   [
-    show "in day time"
+    if (debug) [show "in day time"]
     ; first of all choose the action to perform for this hour.
     ifelse (day = 0 and hour = 0)
     [
@@ -362,8 +364,11 @@ to go
     observe
     ; then perform the action
     perform-action item button-chosen buttons
-    show button-chosen
-    show check-goal
+    if (debug)[
+      show button-chosen
+      show check-goal
+    ]
+
     if (check-goal) [
       show "Game Over"
       show "The total days taken is: "
@@ -376,7 +381,7 @@ to go
     ; the agent start the bidding of the next action (with values stored in the "bidding")
 
     ; next hour
-    walk
+    if (can_walk) [walk]
     show-vision
     update-average-individual-knowledge
     set hour (hour + 1)
@@ -385,7 +390,9 @@ to go
     clear-drawing
     ask turtles[pen-up]
     set buttons-chosen-before []
-    show "at night"
+
+    if (debug)[show "at night"]
+
     ask patches [set pcolor black]
     set hour 0
     set day (day + 1)
@@ -417,10 +424,12 @@ to update-average-individual-knowledge; the average knownledge of the buttons ea
     ;let total-indi-know 0; the knowldege of all the buttons it
     set know-buttons-in-charge 0
     foreach buttons-assigned[
-     let n length first (item ? action-knowledge)
-      set know-buttons-in-charge ( know-buttons-in-charge + n / (width * height))
+      let n length first (remove-duplicates (item ? action-knowledge))
+      set know-buttons-in-charge (know-buttons-in-charge + n / (width * height))
     ]
+
     set know-buttons-in-charge (know-buttons-in-charge / buttons-each)
+    show know-buttons-in-charge
   ]
 
 end
@@ -581,8 +590,12 @@ to assign-buttons; randomly assign the buttons to the turtles
      set buttons-assigned []
      foreach n-values buttons-each [?][
        let n-button ( random  (length remain-bt ))
-       set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
-       set remain-bt (remove (item n-button remain-bt) remain-bt )
+       ifelse (remain-bt = [])
+         [show buttons-assigned
+           show "error"
+           ]
+         [set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
+       set remain-bt (remove (item n-button remain-bt) remain-bt)]
 
    ]
   ]
@@ -592,15 +605,20 @@ end
 
 
 to perform-action [act]
-  show act
-  show "act-------------------------"
+  if (debug)[
+    show act
+    show "act-------------------------"
+  ]
+
   let pos first act
   let neg last act
   foreach pos [
     let y gety ?
     let x getx ?
-    show x
-    show y
+    if (debug)
+    [
+      show x
+      show y]
     ask patch x y [set pcolor green]
     ]
 
@@ -608,8 +626,9 @@ to perform-action [act]
 
     let y gety ?
     let x getx ?
-     show x
-    show y
+    if (debug)[
+      show x
+      show y]
     ask patch x y [set pcolor black]
     ]
 end
@@ -864,7 +883,7 @@ to move-to-least-unknown; moves to the neighbor or current patch which has the m
      ];the amount of information a agent at most could aquire for this button at this patch.
 
 
-   ask ? [set potential-infor mean amount]; calculate the mean value(potential information) of all the buttons it is incharge of for each neighbor and current location.
+    ask ? [set potential-infor mean amount]; calculate the mean value(potential information) of all the buttons it is incharge of for each neighbor and current location.
 
 
     ]
@@ -885,11 +904,11 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 GRAPHICS-WINDOW
 762
 85
-1170
-514
+1272
+616
 -1
 -1
-100.0
+125.0
 1
 30
 1
@@ -918,7 +937,7 @@ buttons-each
 buttons-each
 1
 2
-2
+1
 1
 1
 NIL
@@ -959,10 +978,10 @@ NIL
 1
 
 BUTTON
-18
-409
-106
-476
+23
+498
+111
+565
 NIL
 setup
 NIL
@@ -984,7 +1003,7 @@ num-agents
 num-agents
 3
 5
-4
+3
 1
 1
 NIL
@@ -999,7 +1018,7 @@ vision-radius
 vision-radius
 0
 100
-52
+0
 10
 1
 NIL
@@ -1017,10 +1036,10 @@ day
 11
 
 BUTTON
-113
-409
-218
-442
+118
+498
+223
+531
 button 1
 perform-action item 0 buttons
 NIL
@@ -1034,10 +1053,10 @@ NIL
 1
 
 BUTTON
-223
-408
-328
-441
+228
+497
+333
+530
 button 2
 perform-action item 1 buttons
 NIL
@@ -1051,10 +1070,10 @@ NIL
 1
 
 BUTTON
-113
-446
-218
-479
+118
+534
+223
+567
 button 3
 perform-action item 2 buttons
 NIL
@@ -1068,10 +1087,10 @@ NIL
 1
 
 BUTTON
-223
-446
-328
-479
+228
+534
+333
+567
 button 4
 perform-action item 3 buttons
 NIL
@@ -1085,10 +1104,10 @@ NIL
 1
 
 MONITOR
-15
-492
-161
-537
+19
+580
+165
+625
 buttons of Agent 0
 [buttons-assigned] of turtle 0
 17
@@ -1096,10 +1115,10 @@ buttons of Agent 0
 11
 
 MONITOR
-179
-492
-326
-537
+184
+580
+331
+625
 buttons of Agent 1
 [buttons-assigned] of turtle 1
 17
@@ -1217,7 +1236,7 @@ knowledge-threshold
 knowledge-threshold
 25
 100
-68
+54
 1
 1
 %
@@ -1266,10 +1285,10 @@ Step 2: initialise the parameters
 1
 
 TEXTBOX
-20
-387
-390
-405
+24
+475
+394
+493
 Step 3: setup the game and initialise the buttons
 12
 0.0
@@ -1326,10 +1345,10 @@ Step 5: evaluation
 1
 
 SWITCH
-630
-128
-733
-161
+179
+380
+328
+413
 debug
 debug
 1
@@ -1337,13 +1356,13 @@ debug
 -1000
 
 SWITCH
-162
-277
-356
-310
+140
+430
+334
+463
 communicate_at_night
 communicate_at_night
-0
+1
 1
 -1000
 
@@ -1356,6 +1375,28 @@ Multi-agent Epistemic Action Learning for Planning
 24
 0.0
 1
+
+SWITCH
+19
+379
+171
+412
+can_walk
+can_walk
+1
+1
+-1000
+
+SWITCH
+18
+428
+131
+462
+decidable
+decidable
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
