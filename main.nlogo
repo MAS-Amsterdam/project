@@ -360,16 +360,26 @@ to go
     if all? turtles [desire = "stop"][
       update-intention; if the goal is reached then update the intention to self-upgrade its program
     ]
+    ask turtle 0 [show intention
+      show "))))))))))))))"]
     exe-action
     ; if terminate, output the program, otherwise locate to a random place
     update-intention; to bid
+    ask turtle 0 [show intention
+      show "((((((((((((((((("]
     exe-action
-    update-intention ;set intention to observe the patches in vision (to update the belief)
+    update-intention ;set intention to observethe patches in vision (to update the belief)
+    ask turtle 0 [show intention
+      show "#################"]
     update-belief; observe before the performance of the action
     update-intention; then intend to perform the action
+    ask turtle 0 [show intention
+      show "--------"]
     exe-action
     update-belief ; then the agent observe and perform learning
     update-intention; walk
+    ask turtle 0 [show intention
+      show "*************"]
     exe-action
     show-vision
     set hour (hour + 1)
@@ -440,7 +450,8 @@ to update-intention
             [set intention "to observe and learn"]
             [ifelse (intention = "to observe and learn")
                [ifelse (can-walk)
-                  [set intention "to move"]
+                  [set intention "to move"
+                    show "setttttt move"]
                   [ifelse (hour < num-hours - 1)
                     [set intention "to bid"]
                     [ifelse (communicate-at-night)
@@ -480,7 +491,6 @@ to exe-action
       [
         ifelse (intention = "to locate" and hour  = 0)
         [locate; a random location
-          show "to locate"
           ][
           ifelse (intention = "self-upgrade")
           [output-program]
@@ -1111,7 +1121,7 @@ vision-radius
 vision-radius
 0
 100
-20
+60
 10
 1
 NIL
