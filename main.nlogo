@@ -429,7 +429,8 @@ to update-intention
     ifelse (desire = "stop")
     [set intention "self-upgrade"]
     [ifelse (intention = "to locate") ; every morning, the first locaton will be randomly selected
-      [ifelse(trying) [set intention "to choose a random action"]
+      [ifelse(trying)
+        [set intention "to choose a random action"]
         [set intention "to bid"]
       ][ifelse (intention = "to choose a random action" or intention = "to bid")
         [set intention "to observe"]
@@ -470,19 +471,25 @@ end
 to exe-action
   ;==============<individual actions>====================
   ask turtles [
-    if (intention = "to perform the chosen action")
+    ifelse (intention = "to perform the chosen action")
     [ perform-action item button-chosen buttons
-    ]
+    ][
 
-    if (intention = "to move")
-    [walk]
-    if (intention = "to locate" and hour  = 0)
-    [locate; a random location
-      show "to locate"
+      ifelse (intention = "to move")
+      [walk]
+      [
+        ifelse (intention = "to locate" and hour  = 0)
+        [locate; a random location
+          show "to locate"
+          ][
+          ifelse (intention = "self-upgrade")
+          [output-program]
+          [if (intention = "to observe and learn")
+            [observe-and-learn]
+            ]
+        ]
       ]
-    if (intention = "self-upgrade")
-    [output-program]
-
+    ]
   ]
   ;===============<collective actions>=======================
    if all? turtles [intention = "bid"]
