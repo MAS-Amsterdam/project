@@ -30,13 +30,15 @@ turtles-own[
   ;======================desire====================================================================
   ; the agent has the desire to maximise the knowledge of the buttons it is in charge of
   ; to stop itself when informed
-  know-buttons-in-charge; the percentage of the knownledge each agent acuired for the button(s) it in charge of.
-  stop-agent; the agent is aiming at a stop when the pattern was reached (and the agent will be informed)
+  desire; the agent is aiming at a stop when the pattern was reached (and the agent will be informed)
   ;======================intention=================================================================
   ; to move to a location and to bid
   ; and to bid for an action (not necessarily to press its buttons)
+  intention
+  ; and the following are related variables
   best-node ;a data structure containing the best action and the bidding value (as well as the plan)
   target-patch
+  know-buttons-in-charge; the percentage of the knownledge each agent acuired for the button(s) it in charge of.
   ;
 ]
 
@@ -299,7 +301,7 @@ to setup-agents
   ;ask patches [set all-black (fput (get-patch-index self) all-black)]
 
   create-turtles num-agents [
-    set stop-agent false
+    set desire "light up pathes as the goal"
     set know-buttons-in-charge 0
     set label who
     setxy random-xcor random-ycor
@@ -313,9 +315,8 @@ to setup-agents
     foreach n-values (length buttons)[?] [
       set action-knowledge (fput k-tmp action-knowledge)
       ]
-    ; the agent's initial observation is simply all black
-
-    ;set observation all-black
+    ; the agent's intention is to obtain a random locaton when the game start
+    set intention "to choose a random location"
 
     ]
     foreach (n-values num-agents [?]) [ ask turtle ? [ set color item ? color-list] ];set different colors to agents.
@@ -350,91 +351,176 @@ end
 ; =================================================================
 
 to go
-;  ask patches [set pcolor black]
-  ; for day 0, hour 0 the button of the hour is randomly choosen.
+
+  update-desire
+  update-belief
+  update-intention
+  exe-action; locate
+
+
   ifelse (hour < num-hours)
   ; ====================== in day time =================================
   [
-    if (debug) [show "in day time"]
-    ; first of all choose the action to perform for this hour.
-    ifelse (day = 0 and hour = 0)
-    [
-      set button-chosen one-of (n-values length buttons [?])
-      set buttons-chosen-before (fput button-chosen [])
-
-      ] ;  select a random action and record its index and there is no button chosen before
-    [
-       if (hour = 1)[
-       clear-drawing
-       ask turtles[
-       pen-down]]
-
-      ifelse (total-knowledge > knowledge-threshold * 0.01 )
-      [bid]
-      [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
-
-      let max-value (max bidding)
-      ; then obtain the indexes with this value (those got chosen before remains zero)
-      set button-chosen (one-of (filter [((item ? bidding)= max-value) and not (member? ? buttons-chosen-before)] n-values (length buttons)[?])); choose one of those with the best bidding value
-      set buttons-chosen-before (fput button-chosen buttons-chosen-before)
-      ; choose the button with the highest bidding value
+    ;intieno  = locate
+    update-desire; test if the desire is to light up the patches
+    ; stop / go on
+    if all? turtles [desire = "stop"][
+      update-intention; if the goal is reached then update the intention to self-upgrade its program
     ]
-    observe
-    ; then perform the action
-    perform-action item button-chosen buttons
-    if (debug)[
-      show button-chosen
-      show check-goal
-    ]
+    exe-action; if terminate, output the program, otherwise locate to a random place
+    update-intention; to bid
+    exe-action
 
 
 
-    ; then the agent observe and perform learning
-    observe-and-learn
-    ; the agent start the bidding of the next action (with values stored in the "bidding")
 
-    ; next hour
-    if (can_walk) [walk]
+    update-intention ;set intention to observe the patches in vision (to update the belief)
+    update-belief; observe before the performance of the action
+    update-intention; then intend to perform the action
+    exe-action
+    update-belief ; then the agent observe and perform learning
+
+    update-intention; walk
+    exe-action
+
     show-vision
-    update-average-individual-knowledge
     set hour (hour + 1)
-
-    if (check-goal) [
-      show "Game Over"
-      show "The total days taken is: "
-      show day
-      ask turtles [set stop-agent true]
-      stop
-    ]
-
-    ask turtles [
-      if (stop-agent) [stop]
-      ]
-
   ]
   [ ; ====================== at night =================================
     clear-drawing
     ask turtles[pen-up]
-    set buttons-chosen-before []
+    exe-action; communicate
+    update-intention ; to locate
 
-    if (debug)[show "at night"]
 
-    ask patches [set pcolor black]
     set hour 0
     set day (day + 1)
-    if (communicate_at_night) [
-      communicate
-      update-average-individual-knowledge
-      ]
-    walk
+    set buttons-chosen-before []; a new day
+    ask patches [set pcolor black]
     show-vision
     ]
 
   ; if the hour = num-hours then it's another day
   show-vision
   if (knowledge-threshold < total-knowledge * 100) [set trying false]
+  ; test if the next day is trying or bidding
   tick
 end
+
+
+to update-belief
+  ask turtles [
+    if (intention = "to observe")
+    [observe]
+    if (intention = "to observe and learn")
+    [observe-and-learn]
+    ]
+
+end
+
+to update-desire
+
+  if (check-goal) [
+    ask turtles [
+      set desire "stop"
+      ;stop
+    ]
+
+  if all? turtles [desire = "stop"]
+  [
+    show "Game Over"
+    show "The total days taken is: "
+    show day
+    stop
+    ]
+]
+end
+
+to update-intention
+  ask turtles[
+    if (desire = "stop")
+    [set intention "self-upgrade"]
+
+    if (intention = "to locate" and desire  != "stop") ; every morning, the first locaton will be randomly selected
+    [
+      ifelse(trying) [set intention "to choose a random action"]
+      [set intention "to bid"]
+    ]
+
+    if (intention = "to choose a random action" or intention = "to bid")[
+      set intention "to observe"
+      ]
+
+    if (intention = "to observe")
+    [set intention "to perform the chosen action"]
+
+    if (intention = "to perform the chosen action")
+    [
+      set intention "to observe and learn"
+      ]
+
+    if (intention = "to observe and learn")
+    [
+      ifelse (can-walk)
+      [set intention "to move"]
+      [ifelse (hour < num-hours - 1)
+        [set intention "to bid"]
+        [ifelse (communicate-at-night)
+          [set intention "to communicate"]
+          [set intention "to locate"]
+        ]
+       ]
+    ]
+
+    if (intention = "to communicate")
+    [set intention "to locate"]
+
+    if (intention = "to move")
+    [
+      ifelse (hour < num-hours - 1)
+      [set intention "to bid"]
+      [ifelse (communicate-at-night)
+        [set intention "to communicate"]
+        [set intention "to locate"]]
+    ]
+  ]
+end
+
+to exe-action
+  ;==============<individual actions>====================
+  ask turtles [
+    if (intention = "to perform the chosen action")
+    [ perform-action item button-chosen buttons
+    ]
+
+    if (intention = "to move")
+    [walk]
+    if (intention = "to locate" and hour  = 0)
+    [locate]
+
+    if (intention = "self-upgrade")
+    [output-program]
+  ]
+  ;===============<collective actions>=======================
+   if all? turtles [intention = "bid"]
+   [
+    ifelse (not trying)
+    [bid]
+    [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
+    let max-value (max bidding)
+    set button-chosen (one-of (filter [((item ? bidding)= max-value) and not (member? ? buttons-chosen-before)] n-values (length buttons)[?]))
+    ; choose one of those with the best bidding value
+    set buttons-chosen-before (fput button-chosen buttons-chosen-before)
+   ]
+
+   if all? turtles [intention = "to communicate"]
+   [
+     communicate
+     ask turtles [update-average-individual-knowledge]
+   ]
+
+end
+
 
 to-report total-knowledge
   let pct 0
@@ -447,7 +533,7 @@ end
 
 
 to update-average-individual-knowledge; the average knownledge of the buttons each agent in charge of.
-  ask turtles[
+
     ;let total-indi-know 0; the knowldege of all the buttons it
     set know-buttons-in-charge 0
     foreach buttons-assigned[
@@ -457,7 +543,7 @@ to update-average-individual-knowledge; the average knownledge of the buttons ea
 
     set know-buttons-in-charge (know-buttons-in-charge / buttons-each)
     ;show know-buttons-in-charge
-  ]
+
 
 end
 
@@ -487,17 +573,18 @@ to-report gety [n]
 end
 
 to observe
-   ask turtles [
+;   ask turtles [
     let vision (patches in-cone-nowrap (vision-radius * width / 100) 360) ; the agent's vision
     let vision-indexes []
     ask vision [
       set vision-indexes fput (get-patch-index self)  vision-indexes
             ]
-   set observation vision-indexes]
+   set observation vision-indexes
+   ;]
 end
 
 to observe-and-learn ; ask each agent to change the vision and vision index
-  ask turtles [
+;  ask turtles [
     let vision (patches in-cone-nowrap ((vision-radius * width / 100) * width / 100) 360) ; the agent's vision
     let vision-indexes []
     ask vision [
@@ -552,7 +639,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     set action-knowledge replace-item button-chosen action-knowledge (list know-true know-false)
     ; and finally, set vision-indexes as the new observation
     ;set observation vision-indexes; TODO: what if after walk, there is no information about new local pathes?
-    ]
+    ;]
 
 end
 
@@ -863,29 +950,13 @@ to-report expected-world [world act]; to perform an action according to the agen
 end
 
 
-to walk
-  ;ask turtles [ifelse (can-move? 1) [fd 1][right 90]]
-  ask turtles[
-
-  ifelse (hour = 0)
-  ;at night
-  [
-    if(day != 0)
-    [
-      setxy random-xcor random-ycor
-      face patch-here
-      move-to patch-here]
-      ;move to the center of the current patch, our agents will always move to the center of a patch.
-      move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
-    ]
-    ;in the daytime
-  [move-to-least-unknown]
-
-
-]
+to locate
+  setxy random-xcor random-ycor
+  face patch-here
+  move-to patch-here
 end
 
-to move-to-least-unknown; moves to the neighbor or current patch which has the most potential information to aquire.
+to walk; moves to the neighbor or current patch which has the most potential information to aquire.
   ;===================local variables===================================================
   ;vision-index:(if the agent was )at each neighbor patch, the invisionindex of the agent
   ;vision-known-index:(if the agent was )at each neighbor patch, the invisionindex of the agent, which the effect of current assigned button on that patch is known to current agent.
@@ -923,6 +994,11 @@ to-report gamming-status
 ;  report (ifelse (trying) ["trying"] ["bidding"])
 end
 
+
+to output-program
+  show "outputing"
+end
+
 ; TODO: button generation can be done using "shuffle"
 ; TODO: random buttons are simply too random and looks ugly
 ; TODO: ask the agent to press the button, not the observer
@@ -931,11 +1007,11 @@ end
 GRAPHICS-WINDOW
 762
 92
-1272
-623
+1230
+581
 -1
 -1
-41.666666666666664
+31.25
 1
 30
 1
@@ -946,9 +1022,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-11
+15
 0
-11
+15
 1
 1
 1
@@ -964,7 +1040,7 @@ buttons-each
 buttons-each
 1
 3
-1
+2
 1
 1
 NIL
@@ -1244,9 +1320,9 @@ PENS
 "Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
 
 SLIDER
-161
+164
 238
-355
+358
 271
 knowledge-threshold
 knowledge-threshold
@@ -1263,7 +1339,7 @@ MONITOR
 180
 640
 225
-bidding
+bidding for current execution
 bidding
 17
 1
@@ -1347,8 +1423,8 @@ CHOOSER
 153
 pattern-name
 pattern-name
-"test.txt" "smile.txt"
-1
+"test.txt" "smile.txt" "sad.txt"
+2
 
 TEXTBOX
 414
@@ -1374,10 +1450,10 @@ debug
 SWITCH
 140
 430
-334
-463
-communicate_at_night
-communicate_at_night
+352
+464
+communicate-at-night
+communicate-at-night
 1
 1
 -1000
@@ -1397,8 +1473,8 @@ SWITCH
 379
 171
 412
-can_walk
-can_walk
+can-walk
+can-walk
 0
 1
 -1000
@@ -1410,7 +1486,7 @@ SWITCH
 461
 decidable
 decidable
-1
+0
 1
 -1000
 
@@ -1426,10 +1502,10 @@ knowledge of agent 0
 11
 
 MONITOR
-1432
-383
-1582
-428
+1298
+584
+1448
+629
 move to target patch
 [target-patch] of turtle 0
 17
@@ -1470,10 +1546,10 @@ TEXTBOX
 MONITOR
 1295
 382
-1419
+1585
 427
-stop
-[stop-agent] of turtle 0
+desire
+[desire] of turtle 0
 17
 1
 11
@@ -1491,32 +1567,21 @@ TEXTBOX
 MONITOR
 1297
 479
-1397
+1485
 524
-bidding value
+bidding value for next step
 first [best-node] of turtle 0
 17
 1
 11
 
 MONITOR
-1415
-479
-1520
-524
-bidding action
-item hour (reverse item 1 ([best-node] of turtle 0))
-17
-1
-11
-
-MONITOR
 1297
-532
-1512
-577
-optimal plan (to its knowledge)
-reverse (item 1 [best-node] of turtle 0)
+530
+1490
+575
+bidding action for next step
+item hour (reverse item 1 ([best-node] of turtle 0))
 17
 1
 11
@@ -1528,6 +1593,17 @@ MONITOR
 362
 status
 gamming-status
+17
+1
+11
+
+MONITOR
+1455
+584
+1620
+629
+knowledge percentage
+[know-buttons-in-charge] of turtle 0
 17
 1
 11
