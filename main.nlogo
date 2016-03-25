@@ -316,7 +316,7 @@ to setup-agents
       set action-knowledge (fput k-tmp action-knowledge)
       ]
     ; the agent's intention is to obtain a random locaton when the game start
-    set intention "to choose a random location"
+    set intention "to locate"
 
     ]
     foreach (n-values num-agents [?]) [ ask turtle ? [ set color item ? color-list] ];set different colors to agents.
@@ -357,7 +357,6 @@ to go
   [
     ;intieno  = locate
     update-desire; test if the desire is to light up the patches
-    ; stop / go on
     if all? turtles [desire = "stop"][
       update-intention; if the goal is reached then update the intention to self-upgrade its program
     ]
@@ -365,19 +364,13 @@ to go
     ; if terminate, output the program, otherwise locate to a random place
     update-intention; to bid
     exe-action
-
-
-
-
     update-intention ;set intention to observe the patches in vision (to update the belief)
     update-belief; observe before the performance of the action
     update-intention; then intend to perform the action
     exe-action
     update-belief ; then the agent observe and perform learning
-
     update-intention; walk
     exe-action
-
     show-vision
     set hour (hour + 1)
   ]
@@ -386,7 +379,6 @@ to go
     ask turtles[pen-up]
     exe-action; communicate
     update-intention ; to locate
-
 
     set hour 0
     set day (day + 1)
@@ -432,51 +424,45 @@ to update-desire
 end
 
 to update-intention
+  ; =============individual============
   ask turtles[
-    if (desire = "stop")
+    ifelse (desire = "stop")
     [set intention "self-upgrade"]
-
-    if (intention = "to locate" and desire  != "stop") ; every morning, the first locaton will be randomly selected
-    [
-      ifelse(trying) [set intention "to choose a random action"]
-      [set intention "to bid"]
-    ]
-
-    if (intention = "to choose a random action" or intention = "to bid")[
-      set intention "to observe"
-      ]
-
-    if (intention = "to observe")
-    [set intention "to perform the chosen action"]
-
-    if (intention = "to perform the chosen action")
-    [
-      set intention "to observe and learn"
-      ]
-
-    if (intention = "to observe and learn")
-    [
-      ifelse (can-walk)
-      [set intention "to move"]
-      [ifelse (hour < num-hours - 1)
+    [ifelse (intention = "to locate") ; every morning, the first locaton will be randomly selected
+      [ifelse(trying) [set intention "to choose a random action"]
         [set intention "to bid"]
-        [ifelse (communicate-at-night)
-          [set intention "to communicate"]
-          [set intention "to locate"]
+      ][ifelse (intention = "to choose a random action" or intention = "to bid")
+        [set intention "to observe"]
+        [ifelse (intention = "to observe")
+          [set intention "to perform the chosen action"]
+          [ifelse (intention = "to perform the chosen action")
+            [set intention "to observe and learn"]
+            [ifelse (intention = "to observe and learn")
+               [ifelse (can-walk)
+                  [set intention "to move"]
+                  [ifelse (hour < num-hours - 1)
+                    [set intention "to bid"]
+                    [ifelse (communicate-at-night)
+                      [set intention "to communicate"]
+                      [set intention "to locate"]
+                    ]
+                   ]
+                ][ifelse (intention = "to communicate")
+                   [set intention "to locate"]
+                   [if (intention = "to move")
+                     [
+                       ifelse (hour < num-hours - 1)
+                       [set intention "to bid"]
+                       [ifelse (communicate-at-night)
+                         [set intention "to communicate"]
+                         [set intention "to locate"]]
+                     ]
+                   ]
+                ]
+            ]
+          ]
         ]
-       ]
-    ]
-
-    if (intention = "to communicate")
-    [set intention "to locate"]
-
-    if (intention = "to move")
-    [
-      ifelse (hour < num-hours - 1)
-      [set intention "to bid"]
-      [ifelse (communicate-at-night)
-        [set intention "to communicate"]
-        [set intention "to locate"]]
+      ]
     ]
   ]
 end
@@ -494,7 +480,6 @@ to exe-action
     [locate; a random location
       show "to locate"
       ]
-
     if (intention = "self-upgrade")
     [output-program]
 
@@ -1038,7 +1023,7 @@ buttons-each
 buttons-each
 1
 3
-2
+1
 1
 1
 NIL
@@ -1452,7 +1437,7 @@ SWITCH
 463
 communicate-at-night
 communicate-at-night
-1
+0
 1
 -1000
 
@@ -1515,7 +1500,7 @@ TEXTBOX
 118
 1649
 167
-Additional Information:\nBelief, desire and intention of agent 0\n1) Belief
+Additional Information:\nThe belief, desire and intention of agent 0\n1) Belief
 12
 0.0
 1
