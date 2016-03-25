@@ -97,7 +97,7 @@ to open-file
       [
         ; ask patch x y [set pcolor green]
         ; positive
-        set goal (list (fput (x + y * width) positive) negative)
+        set goal (list (fput (x + y * width + 1 ) positive) negative)
         set x x + 1
         if (x = width)
         [
@@ -107,7 +107,7 @@ to open-file
       ]
       [
         ; negative
-        set goal (list positive (fput (x + (y) * width) negative))
+        set goal (list positive (fput (x + y * width + 1 ) negative))
         set x x + 1
         if (x = width)
         [
@@ -134,8 +134,8 @@ to load-and-display-goal
   clear-all
   open-file
   foreach (first goal) [
-    let x ? mod width
-    let y floor (? / width)
+    let x getx ?
+    let y gety ?
     ask patch x y [set pcolor green]
     ]
 end
@@ -180,10 +180,11 @@ to setup-button
    let pos []
    let neg []
    foreach chosen [
-     ifelse (? >= 0)[
-       set pos (lput ? pos)
+
+     ifelse ( ( ?  ) > 0)[
+       set pos (lput ( ? ) pos)
      ][
-     set neg ( lput (-1 * ?) neg )]
+     set neg  lput  (-1 * ?)  neg ]
    ] ; initialise the pair of pos and neg
 
 
@@ -199,13 +200,13 @@ to setup-button
 
    ; check if the random positions is already in the buttons, if not add it to the button.
    foreach noise-vals [
-     ifelse ((member? ? pos) or (member? ? neg) )[
+     ifelse ((member? (? + 1) pos) or (member? (? + 1) neg) )[
 
        ][
        ifelse (random 2 > 0)[
-         set pos fput ? pos
+         set pos fput (? + 1) pos
          ][
-         set neg fput ? neg
+         set neg fput (? + 1) neg
          ]
        ]
      ]
@@ -219,12 +220,14 @@ to setup-button
   let last-pos []
   let last-neg []
    ask patches [
-    let index (width * pycor + pxcor)
+    let index (width * pycor + pxcor + 1)
     if ((pcolor = black) and (member? index (first goal)))[set last-pos (lput index (last-pos))] ; should be green and is green now
     if ((pcolor = green) and (member? index (last goal)))[set last-neg (lput index (last-neg))]; should be black but is green now
     ]
 
    let last-btn (list last-pos last-neg)
+   show last-btn
+   show "^^^^^^^^^^^^^^^^^^"
    set solution-buttons lput (last-btn) solution-buttons
 
 
@@ -239,9 +242,9 @@ to setup-button
       foreach n-values  ( buttons-each * num-agents - num-hours ) [?][
         let noise-dis-vals []
         ifelse (noise-dis <= length goal-combination)[
-          set noise-dis-vals n-of noise-dis (n-values (length goal-combination) [?]);randomly choose the elements
+          set noise-dis-vals n-of noise-dis (n-values (length goal-combination) [? + 1]);randomly choose the elements
         ][
-        set noise-dis-vals (n-values (length goal-combination) [?])
+        set noise-dis-vals (n-values (length goal-combination) [? + 1])
         ;set noise-dis-vals n-of (length goal-combination) (n-values (length goal-combination) [?]);randomly choose the elements
         ]
 
@@ -261,7 +264,7 @@ to setup-button
     foreach ( sentence  solution-buttons disturbing-buttons )[
        set light-so-far remove-duplicates ( sentence light-so-far first ? ); sumsming the grids that have been on.
        ]
-    foreach (n-values (width * height) [?])[
+    foreach (n-values (width * height) [? + 1])[
       if (not (member? ? light-so-far)) [
         set disturbing-buttons replace-item (length disturbing-buttons - 1 ) disturbing-buttons list (fput ? first (last disturbing-buttons) )(remove ? last (last disturbing-buttons))
         ]
@@ -273,8 +276,8 @@ end
 
 
 to setup-agents
-  let all-black [];get the index of all the patches
-  ask patches [set all-black (fput (get-patch-index self) all-black)]
+  ;let all-black [];get the index of all the patches
+  ;ask patches [set all-black (fput (get-patch-index self) all-black)]
 
   create-turtles num-agents [
     set know-buttons-in-charge 0
@@ -292,7 +295,7 @@ to setup-agents
       ]
     ; the agent's initial observation is simply all black
 
-    set observation all-black
+    ;set observation all-black
 
     ]
     foreach (n-values num-agents [?]) [ ask turtle ? [ set color item ? color-list] ];set different colors to agents.
@@ -309,7 +312,7 @@ to show-vision
     set own-color color
     let oc own-color
 
-       ask patches in-cone-nowrap vision-radius 360
+       ask patches in-cone-nowrap (vision-radius * width / 100) 360
           [
 ;            set pcolor pcolor + 1; this code trace the routes(and vision) the agents go, you can delete it if you don't like it.
            set plabel-color oc
@@ -318,8 +321,8 @@ to show-vision
 end
 
 to-report get-patch-index [p]
-  ifelse ([pcolor] of p = green) [report ([pycor] of p * width + [pxcor] of p)]
-  [report ([pycor] of p * width + [pxcor] of p) * -1]
+  ifelse ([pcolor] of p = green) [report ([pycor] of p * width + [pxcor] of p) + 1]
+  [report ([pycor] of p * width + [pxcor] of p + 1 ) * -1]
 end
 
 ; =================================================================
@@ -440,16 +443,16 @@ end
 
 ; two helping function to get the xcor and ycor of the patch according to its index
 to-report getx [n]
-   report (n mod width)
+   report ((n - 1) mod width)
 end
 
 to-report gety [n]
-  report (floor (n / width))
+  report (floor ((n - 1) / width))
 end
 
 to observe
    ask turtles [
-    let vision (patches in-cone-nowrap vision-radius 360) ; the agent's vision
+    let vision (patches in-cone-nowrap (vision-radius * width / 100) 360) ; the agent's vision
     let vision-indexes []
     ask vision [
       set vision-indexes fput (get-patch-index self)  vision-indexes
@@ -459,7 +462,7 @@ end
 
 to observe-and-learn ; ask each agent to change the vision and vision index
   ask turtles [
-    let vision (patches in-cone-nowrap vision-radius 360) ; the agent's vision
+    let vision (patches in-cone-nowrap ((vision-radius * width / 100) * width / 100) 360) ; the agent's vision
     let vision-indexes []
     ask vision [
       set vision-indexes fput (get-patch-index self)  vision-indexes
@@ -575,11 +578,11 @@ end
 to assign-buttons; randomly assign the buttons to the turtles
    let remain-bt buttons; variables remained when assigning buttons to agents one by one
    ask turtles[
-   set buttons-assigned []
-    foreach n-values buttons-each [?][
-    let n-button ( random  (length remain-bt ))
-    set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
-    set remain-bt (remove (item n-button remain-bt) remain-bt )
+     set buttons-assigned []
+     foreach n-values buttons-each [?][
+       let n-button ( random  (length remain-bt ))
+       set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
+       set remain-bt (remove (item n-button remain-bt) remain-bt )
 
    ]
   ]
@@ -589,18 +592,24 @@ end
 
 
 to perform-action [act]
-
+  show act
+  show "act-------------------------"
   let pos first act
   let neg last act
   foreach pos [
-    let y floor( ? / width )
-    let x ( ? - y * width )
+    let y gety ?
+    let x getx ?
+    show x
+    show y
     ask patch x y [set pcolor green]
     ]
 
     foreach neg [
-    let y floor( ? / width )
-    let x ( ? - y * width )
+
+    let y gety ?
+    let x getx ?
+     show x
+    show y
     ask patch x y [set pcolor black]
     ]
 end
@@ -765,11 +774,11 @@ end
 to-report represent-visable-world ; to give the index of visable patches (for performing action in mind later)
   let rep []
   ; first obtain the list of visable patches
-  let vision (patches in-cone-nowrap vision-radius 360)
+  let vision (patches in-cone-nowrap (vision-radius * width / 100) 360)
   ask vision[
     ifelse (not (pcolor = green))
-    [set rep (fput ((pycor * width + pxcor ) * -1) rep)]; if it is black
-    [set rep (fput (pycor * width + pxcor) rep)]; otherwise it is green, positive number
+    [set rep (fput ((pycor * width + pxcor + 1 ) * -1) rep)]; if it is black
+    [set rep (fput (pycor * width + pxcor + 1 ) rep)]; otherwise it is green, positive number
   ]
 
   ; obtain vision index
@@ -841,7 +850,8 @@ to move-to-least-unknown; moves to the neighbor or current patch which has the m
 
     let vision-index []
     let world (patches in-cone-nowrap width 360)
-    ask world [if ((distancexy [pxcor] of ? [pycor] of ?) <= vision-radius)[set vision-index lput  ( pxcor + pycor * width ) vision-index]];if the agent is at this patch, its vision.
+    ask world [if ((distancexy [pxcor] of ? [pycor] of ?) <= (vision-radius * width / 100))
+      [set vision-index lput  ( pxcor + pycor * width + 1) vision-index]];if the agent is at this patch, its vision.
     let amount [];the amount of information it at most will get in the specific patch neighbor, for each button it owns
 
     foreach buttons-assigned[
@@ -875,11 +885,11 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 GRAPHICS-WINDOW
 762
 85
-1171
-515
+1170
+514
 -1
 -1
-12.5
+100.0
 1
 30
 1
@@ -890,9 +900,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-31
+3
 0
-31
+3
 1
 1
 1
@@ -974,7 +984,7 @@ num-agents
 num-agents
 3
 5
-5
+4
 1
 1
 NIL
@@ -988,9 +998,9 @@ SLIDER
 vision-radius
 vision-radius
 0
-7
-3
-1
+100
+52
+10
 1
 NIL
 HORIZONTAL
@@ -1303,7 +1313,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test.txt" "smile.txt"
-1
+0
 
 TEXTBOX
 407
