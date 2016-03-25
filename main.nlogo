@@ -429,7 +429,7 @@ to update-average-individual-knowledge; the average knownledge of the buttons ea
     ]
 
     set know-buttons-in-charge (know-buttons-in-charge / buttons-each)
-    show know-buttons-in-charge
+    ;show know-buttons-in-charge
   ]
 
 end
@@ -519,10 +519,10 @@ to observe-and-learn ; ask each agent to change the vision and vision index
         ]
       ]
 
-
+    set know-true remove-duplicates know-true
+    set know-false remove-duplicates know-false
     ; replace the knowledge of the action
     set action-knowledge replace-item button-chosen action-knowledge (list know-true know-false)
-
     ; and finally, set vision-indexes as the new observation
     ;set observation vision-indexes; TODO: what if after walk, there is no information about new local pathes?
     ]
@@ -590,12 +590,8 @@ to assign-buttons; randomly assign the buttons to the turtles
      set buttons-assigned []
      foreach n-values buttons-each [?][
        let n-button ( random  (length remain-bt ))
-       ifelse (remain-bt = [])
-         [show buttons-assigned
-           show "error"
-           ]
-         [set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
-       set remain-bt (remove (item n-button remain-bt) remain-bt)]
+       set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
+       set remain-bt (remove (item n-button remain-bt) remain-bt)
 
    ]
   ]
@@ -904,11 +900,11 @@ patches-own[potential-infor;if the agent is at that patch, with its set vision, 
 GRAPHICS-WINDOW
 762
 85
-1272
-616
+1015
+359
 -1
 -1
-125.0
+41.666666666666664
 1
 30
 1
@@ -919,9 +915,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+11
 0
-3
+11
 1
 1
 1
@@ -1018,7 +1014,7 @@ vision-radius
 vision-radius
 0
 100
-0
+20
 10
 1
 NIL
@@ -1236,7 +1232,7 @@ knowledge-threshold
 knowledge-threshold
 25
 100
-54
+34
 1
 1
 %
@@ -1332,7 +1328,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test.txt" "smile.txt"
-0
+1
 
 TEXTBOX
 407
@@ -1394,7 +1390,7 @@ SWITCH
 462
 decidable
 decidable
-0
+1
 1
 -1000
 
