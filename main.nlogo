@@ -11,6 +11,7 @@ globals [
   hour; the hour
   trying ; a sign of status if the agents are trying or bidding
   bidding ; for each action, we record a value
+  ticks-per-hour
   ;=========================buttons related variables==============================================
   noise ; the randomly set points in each button that belongs to solution.
   ; noise-dis; the randomly set points in each button that not belongs to solution.
@@ -57,8 +58,8 @@ to setup
   ;set noise 12; the randomly set points in each button that belongs to solution.
   ; set noise-dis 8; the randomly set points in each button that not belongs to solution.
   set color-list n-of num-agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
+  setup-ticks
 
-  reset-ticks
   open-file; set up the goal pattern.
   setup-time
   setup-button
@@ -71,6 +72,13 @@ to setup
 
 end
 
+to setup-ticks
+  reset-ticks
+  set ticks-per-hour 0
+  if (can-walk) [set ticks-per-hour (ticks-per-hour + 1)]
+  if (can-communicate-at-night) [set ticks-per-hour (ticks-per-hour + 1)]
+  set ticks-per-hour (ticks-per-hour + 6)
+end
 
 to setup-time
   set day 0
@@ -353,8 +361,6 @@ end
 
 to go
 
-
-
    update-desire
    show ([desire] of turtle 0)
    update-intention
@@ -367,8 +373,7 @@ to go
    show ([personal-plan] of turtle 0)
    update-belief
 
-
-   if (all? turtles [intention = "to communicate"])[set hour (hour + 1)]
+   if (floor (remainder ticks ticks-per-hour) = 0) [set hour (hour + 1)]
 
    if (hour = num-hours); a new day
    [
@@ -1347,7 +1352,7 @@ noise_pct
 noise_pct
 25
 50
-30
+32
 1
 1
 NIL
