@@ -366,6 +366,7 @@ to go
      show ([intention] of turtle 0)
      show "------------to locate---------------------"
      exe-action;to locate
+     ask turtles [set personal-plan []]
       ]
 
     update-intention; intention-bid
@@ -514,7 +515,10 @@ to exe-action
         [locate] ;  a random location
         [
           ifelse (intention = "self-upgrade")
-          [output-program]
+          [
+            output-program
+            stop
+            ]
           [ifelse (intention = "to execute")
             [
               ifelse (((first personal-plan) = -1) or ((first personal-plan) = -2))
@@ -1704,6 +1708,17 @@ TEXTBOX
 12
 0.0
 1
+
+MONITOR
+1537
+602
+1724
+647
+personal plan
+[personal-plan] of turtle 0
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
