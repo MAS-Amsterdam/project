@@ -395,7 +395,7 @@ to go
      ask turtles [set personal-plan []]
      ]
 
-;   if (check-goal and not trying) [stop]
+   if (check-goal and not trying) [stop]
 end
 
 
@@ -1037,11 +1037,11 @@ end
 GRAPHICS-WINDOW
 762
 92
-1271
-622
+1011
+362
 -1
 -1
-125.0
+41.666666666666664
 1
 30
 1
@@ -1052,9 +1052,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+11
 0
-3
+11
 1
 1
 1
@@ -1455,7 +1455,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test.txt" "smile.txt" "sad.txt"
-0
+1
 
 TEXTBOX
 414
