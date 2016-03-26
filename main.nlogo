@@ -76,8 +76,9 @@ to setup-ticks
   reset-ticks
   set ticks-per-hour 0
   if (can-walk) [set ticks-per-hour (ticks-per-hour + 1)]
-  if (can-communicate-at-night) [set ticks-per-hour (ticks-per-hour + 1)]
-  set ticks-per-hour (ticks-per-hour + 6)
+
+  set ticks-per-hour (ticks-per-hour + 1); to locate to a patch on the first hour of a day
+  set ticks-per-hour (ticks-per-hour + 4); 4 sticks corresponding to: bid, observe, execute, learn
 end
 
 to setup-time
@@ -371,104 +372,39 @@ to go
    exe-action
    show "-------------- after execute action ------------------------"
    show ([personal-plan] of turtle 0)
-   update-belief
+   ;update-belief
 
-   if (floor (remainder ticks ticks-per-hour) = 0) [set hour (hour + 1)]
+   tick
 
-   if (hour = num-hours); a new day
+   if ((remainder ticks ticks-per-hour) = 0) [
+       set hour (hour + 1)
+       if (can-communicate-at-night and hour = num-hours) [set ticks-per-hour (ticks-per-hour + 1)]
+       reset-ticks
+   ]
+   if ((hour = 1) and (ticks = 0))[set ticks-per-hour (ticks-per-hour - 1)]
+
+   show "this is just a tick"
+   show ticks
+   show "*****************tick finished*************************"
+
+   if (ticks-per-hour = ticks and hour = num-hours); a new day
    [
+
      set day (day + 1)
      set hour 0
      set buttons-chosen-before []
-     ask patches [set pcolor black]
-     show-vision
+     ask patches [
+       set pcolor black
+       set plabel ""; todo
+       ]
      ask turtles [set personal-plan []]
      exe-action ; to locate the agent
    ]
 
-
-   show "this is just a tick"
-   tick
 end
 
-;
-;to go
-;
-;  ifelse (hour < num-hours)
-;  ; ====================== in day time =================================
-;  [
-;
-;    if (hour = 0)[
-;     ask turtles [set personal-plan []]
-;     show ([intention] of turtle 0)
-;     show "------------to locate---------------------"
-;     exe-action;to locate
-;      ]
-;
-;    update-intention; intention-bid
-;
-;    show "------------to bid/random---------------------"
-;    show ([intention] of turtle 0)
-;    exe-action;bid
-;    update-intention ;intention-observe the patches in vision (to update the belief)
-;    show "------------to observe---------------------"
-;    show ([intention] of turtle 0)
-;
-;    exe-action;to excute the actual action if assigned
-;    show "this agent has intention as: "
-;    show ([personal-plan] of turtle 0)
-;    update-intention
-;
-;    show "------------to exe---------------------"
-;    show ([intention] of turtle 0)
-;    exe-action
-;
-;    update-belief; observe before the performance of the action
-;    update-intention; intention-observe and learn
-;
-;    show "------------to observe and learn-------------"
-;    show ([intention] of turtle 0)
-;    exe-action;observe and learn
-;    update-belief ; then the agent observe and perform learning
-;    update-intention; intention-walk
-;
-;    show "-----------to move---------------------"
-;    show ([intention] of turtle 0)
-;    exe-action;walk
-;    show-vision
-;    set hour (hour + 1)
-;    update-intention
-;    show "-----------to communicate---------------------"
-;    show ([intention] of turtle 0)
-;  ]
-;  [ ; ====================== at night =================================
-;
-;    update-desire; test if the desire is to light up the patches
-;    if all? turtles [desire = "stop"][
-;      update-intention; if the goal is reached then update the intention to self-upgrade its program
-;      exe-action; upgrade itself
-;      stop
-;    ] ; if terminate, output the program, otherwise locate to a random place
-;
-;    exe-action; communicate
-;    update-intention ; to locate
-;    set hour 0
-;    set day (day + 1)
-;    set buttons-chosen-before []; a new day
-;    ask patches [set pcolor black]
-;    show-vision
-;
-;
-;    ]
-;
-;  ; if the hour = num-hours then it's another day
-;  show-vision
-;  if (knowledge-threshold < total-knowledge * 100) [set trying false]
-;  ; test if the next day is trying or bidding
-;  tick
-;end
-;
-;
+
+
 to update-belief
   ask turtles [
     ifelse (intention = "to observe")
@@ -515,16 +451,16 @@ to update-intention
               [ifelse (intention = "to execute")
                 [set intention "to observe and learn"]
                 [ifelse (intention = "to observe and learn");============to observe and learn
-                  [ifelse (hour < num-hours and can-walk)
+                  [ifelse (hour <= num-hours and can-walk)
                     [set intention "to move"]
-                    [ifelse (can-communicate-at-night)
+                    [ifelse (hour = num-hours and can-communicate-at-night)
                       [set intention "to communicate"]
                       [set intention "to locate"]
                     ]
                   ]
                   [ifelse (intention = "to move");=======================to move
                     [
-                      ifelse (hour + 1 < num-hours)
+                      ifelse (hour < num-hours)
                       [ifelse (trying)
                         [set intention "to choose a random action"]
                         [set intention "to bid"]
@@ -553,42 +489,31 @@ end
 to exe-action
   ;==============<individual actions>====================
   ask turtles [
-;    ifelse (intention = "to perform the chosen action")
-;    [ perform-action item button-chosen buttons]
-;    [
       ifelse (intention = "to move")
       [walk]
       [
         ifelse (intention = "to locate" and hour  = 0)
-        [locate] ;  a random location
+        [
+          locate
+
+          ] ;  a random location
         [
           ifelse (intention = "self-upgrade")
           [
             output-program
             stop
             ]
-          [ifelse (intention = "to execute")
+          [if (intention = "to execute")
             [
               ifelse (((first personal-plan) = -1) or ((first personal-plan) = -2))
               [show "nothing to do here"]
               [perform-action (item (first personal-plan) buttons)]
             ]
-            [ifelse(intention = "to observe")
-              [observe]
-              [ifelse (intention = "to observe and learn")
-                [observe-and-learn]
-                [show "collective action"]
-              ]
-              ]
-            ]
           ]
         ]
-      ;]
+      ]
     ]
-;  ask turtles [show "****************"]
-;  ask turtles [
-;    show intention
-;    show personal-plan]
+
   ;===============<collective actions>=======================
    if all? turtles [intention = "to bid" or intention = "to choose a random action"]
    [
@@ -627,7 +552,7 @@ to exe-action
      ask turtles [update-average-individual-knowledge
       ]
    ]
-
+  show-vision
 end
 
 
@@ -1094,6 +1019,7 @@ to walk; moves to the neighbor or current patch which has the most potential inf
     set target-patch max-one-of neighbors [potential-infor]
     uphill potential-infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
     ; file:///home/robert/Project/MAS/netlogo-5.3-64/app/docs/dict/uphill.html
+;    show-vision
 end
 
 to-report gamming-status
@@ -1788,6 +1714,17 @@ TEXTBOX
 12
 0.0
 1
+
+MONITOR
+578
+317
+727
+362
+ticks pe hour
+ticks-per-hour
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
