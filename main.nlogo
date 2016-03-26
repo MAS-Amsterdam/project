@@ -363,15 +363,16 @@ to go
     ] ; if terminate, output the program, otherwise locate to a random place
 
     if (hour = 0)[
+     ask turtles [set personal-plan []]
      show ([intention] of turtle 0)
      show "------------to locate---------------------"
      exe-action;to locate
-     ask turtles [set personal-plan []]
       ]
 
     update-intention; intention-bid
-    show ([intention] of turtle 0)
+
     show "------------to bid/random---------------------"
+    show ([intention] of turtle 0)
     exe-action;bid
     update-intention ;intention-observe the patches in vision (to update the belief)
     show "------------to observe---------------------"
@@ -407,8 +408,6 @@ to go
   [ ; ====================== at night =================================
     exe-action; communicate
     update-intention ; to locate
-    show "-----------to locate---------------------"
-    show ([intention] of turtle 0)
     set hour 0
     set day (day + 1)
     set buttons-chosen-before []; a new day
@@ -525,7 +524,13 @@ to exe-action
               [show "nothing to do here"]
               [perform-action (item (first personal-plan) buttons)]
             ]
-            [show "collective action"]
+            [ifelse(intention = "to observe")
+              [observe]
+              [ifelse (intention = "to observe and learn")
+                [observe-and-learn]
+                [show "collective action"]
+              ]
+              ]
             ]
           ]
         ]
@@ -538,6 +543,8 @@ to exe-action
      ifelse (not trying)
      [bid]
      [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
+
+
      let max-value (max bidding)
      set button-chosen (one-of (filter [((item ? bidding)= max-value) and not (member? ? buttons-chosen-before)] n-values (length buttons)[?]))
      ; choose one of those with the best bidding value
