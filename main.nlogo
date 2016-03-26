@@ -397,6 +397,7 @@ to go
 
    if ((hour = 0) and (ticks  = 0))
    [
+     if (knowledge-threshold < total-knowledge * 100) [set trying false]
      set buttons-chosen-before []
      ask patches [
        set pcolor black
@@ -1052,11 +1053,11 @@ end
 GRAPHICS-WINDOW
 762
 92
-1015
-366
+1271
+622
 -1
 -1
-41.666666666666664
+125.0
 1
 30
 1
@@ -1067,9 +1068,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-11
+3
 0
-11
+3
 1
 1
 1
@@ -1469,7 +1470,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test.txt" "smile.txt" "sad.txt"
-1
+0
 
 TEXTBOX
 414
@@ -1710,7 +1711,7 @@ MONITOR
 1549
 717
 personal plan
-[personal-plan] of turtle 0
+reverse ([personal-plan] of turtle 0)
 17
 1
 11
@@ -1735,6 +1736,13 @@ ticks-per-hour
 17
 1
 11
+
+OUTPUT
+1645
+121
+1886
+424
+12
 
 @#$#@#$#@
 ## WHAT IS IT?
