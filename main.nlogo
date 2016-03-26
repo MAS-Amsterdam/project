@@ -356,27 +356,40 @@ to go
   ; ====================== in day time =================================
   [
     ;intieno  = locate
+    ask turtle 0 [show intention
+      show "11111111111111111"]
     update-desire; test if the desire is to light up the patches
     if all? turtles [desire = "stop"][
       update-intention; if the goal is reached then update the intention to self-upgrade its program
-    ]
-    exe-action
-    ; if terminate, output the program, otherwise locate to a random place
-    update-intention; to bid
-    exe-action
-    update-intention ;set intention to observe the patches in vision (to update the belief)
+    ] ; if terminate, output the program, otherwise locate to a random place
+     ask turtle 0 [show intention
+      show "2222222222222222"]
+    exe-action;to locate
+
+    update-intention; intention-bid
+
+     ask turtle 0 [show intention
+      show "3333333333333333333"]
+    exe-action;bid
+    update-intention ;sintention-observe the patches in vision (to update the belief)
+     ask turtle 0 [show intention
+      show "44444444444444n"]
     update-belief; observe before the performance of the action
-    update-intention; then intend to perform the action
-    exe-action
+    update-intention; intention-observe and learn
+     ask turtle 0 [show intention
+      show "555555555555555"]
+    exe-action;observe and learn
     update-belief ; then the agent observe and perform learning
-    update-intention; walk
-    exe-action
+    update-intention; intention-walk
+     ask turtle 0 [show intention
+      show "66666666666666"]
+    exe-action;walk
     show-vision
     set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
-    clear-drawing
-    ask turtles[pen-up]
+;    clear-drawing
+;    ask turtles[pen-up]
     exe-action; communicate
     update-intention ; to locate
 
@@ -431,15 +444,20 @@ to update-intention
     [ifelse (intention = "to locate") ; every morning, the first locaton will be randomly selected
       [ifelse(trying) [set intention "to choose a random action"]
         [set intention "to bid"]
-      ][ifelse (intention = "to choose a random action" or intention = "to bid")
+      ]
+
+
+      [ifelse (intention = "to choose a random action" or intention = "to bid")
         [set intention "to observe"]
         [ifelse (intention = "to observe")
-          [set intention "to perform the chosen action"]
-          [ifelse (intention = "to perform the chosen action")
+          ;[set intention "to perform the chosen action"]
+          ;[ifelse (intention = "to perform the chosen action")
             [set intention "to observe and learn"]
             [ifelse (intention = "to observe and learn")
                [ifelse (can-walk)
-                  [set intention "to move"]
+
+                  [set intention "to move"
+                   ]
                   [ifelse (hour < num-hours - 1)
                     [set intention "to bid"]
                     [ifelse (communicate-at-night)
@@ -447,12 +465,23 @@ to update-intention
                       [set intention "to locate"]
                     ]
                    ]
+
+
+
                 ][ifelse (intention = "to communicate")
                    [set intention "to locate"]
-                   [if (intention = "to move")
+                   [
+
+                     if (intention = "to move")
+
                      [
-                       ifelse (hour < num-hours - 1)
-                       [set intention "to bid"]
+                       ifelse (hour < num-hours )
+                       [
+
+                         ifelse(trying) [set intention "to choose a random action"]
+                         [set intention "to bid"]
+
+                         ]
                        [ifelse (communicate-at-night)
                          [set intention "to communicate"]
                          [set intention "to locate"]]
@@ -461,8 +490,11 @@ to update-intention
                 ]
             ]
           ]
-        ]
+       ;]
       ]
+
+
+
     ]
   ]
 end
@@ -478,7 +510,7 @@ to exe-action
     [walk]
     if (intention = "to locate" and hour  = 0)
     [locate; a random location
-      show "to locate"
+
       ]
     if (intention = "self-upgrade")
     [output-program]
@@ -499,7 +531,8 @@ to exe-action
    if all? turtles [intention = "to communicate"]
    [
      communicate
-     ask turtles [update-average-individual-knowledge]
+     ask turtles [update-average-individual-knowledge
+      ]
    ]
 
 end
@@ -990,8 +1023,8 @@ end
 GRAPHICS-WINDOW
 762
 92
-1271
-622
+1272
+623
 -1
 -1
 125.0
@@ -1104,7 +1137,7 @@ vision-radius
 vision-radius
 0
 100
-20
+30
 10
 1
 NIL
@@ -1311,7 +1344,7 @@ knowledge-threshold
 knowledge-threshold
 25
 100
-34
+29
 1
 1
 %
@@ -1469,7 +1502,7 @@ SWITCH
 461
 decidable
 decidable
-0
+1
 1
 -1000
 
@@ -1594,7 +1627,7 @@ knowledge percentage
 MONITOR
 1505
 467
-1659
+1739
 512
 intention
 [intention] of turtle 0
