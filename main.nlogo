@@ -27,6 +27,7 @@ turtles-own[
   observation ; the agent's observation
   action-knowledge; Beliefs about the actions. each action is a pair: (know-true, know-false). know-true consists of the propositions the agent is sure about.
   ; know false consists of the propositions the agent knows false about.
+  personal-plan;
   ;======================desire====================================================================
   ; the agent has the desire to maximise the knowledge of the buttons it is in charge of
   ; to stop itself when informed
@@ -301,7 +302,9 @@ to setup-agents
   ;ask patches [set all-black (fput (get-patch-index self) all-black)]
 
   create-turtles num-agents [
+    set observation []
     set desire "light up pathes as the goal"
+    set intention "to locate"
     set know-buttons-in-charge 0
     set label who
     setxy random-xcor random-ycor
@@ -315,9 +318,7 @@ to setup-agents
     foreach n-values (length buttons)[?] [
       set action-knowledge (fput k-tmp action-knowledge)
       ]
-    ; the agent's intention is to obtain a random locaton when the game start
-    set intention "to locate"
-
+    set personal-plan []
     ]
     foreach (n-values num-agents [?]) [ ask turtle ? [ set color item ? color-list] ];set different colors to agents.
 
@@ -355,41 +356,40 @@ to go
   ifelse (hour < num-hours)
   ; ====================== in day time =================================
   [
-    ;intieno  = locate
-    ask turtle 0 [show intention
-      show "11111111111111111"]
+    show ([intention] of turtle 0)
+    show "------------to locate---------------------"
     update-desire; test if the desire is to light up the patches
     if all? turtles [desire = "stop"][
       update-intention; if the goal is reached then update the intention to self-upgrade its program
     ] ; if terminate, output the program, otherwise locate to a random place
-     ask turtle 0 [show intention
-      show "2222222222222222"]
     exe-action;to locate
-
     update-intention; intention-bid
-
-     ask turtle 0 [show intention
-      show "3333333333333333333"]
+        show ([intention] of turtle 0)
+    show "------------to bid---------------------"
     exe-action;bid
-    update-intention ;sintention-observe the patches in vision (to update the belief)
-     ask turtle 0 [show intention
-      show "44444444444444n"]
+    update-intention ;intention-observe the patches in vision (to update the belief)
+    show "------------to exe---------------------"
+    show ([personal-plan] of turtle 0)
+    show ([intention] of turtle 0)
+
+    exe-action;to excute the actual action if assigned
+    update-intention
+    show ([intention] of turtle 0)
+    show "44444444444444444"
     update-belief; observe before the performance of the action
     update-intention; intention-observe and learn
-     ask turtle 0 [show intention
-      show "555555555555555"]
+    show ([intention] of turtle 0)
+    show "555555555"
     exe-action;observe and learn
     update-belief ; then the agent observe and perform learning
     update-intention; intention-walk
-     ask turtle 0 [show intention
-      show "66666666666666"]
+    show ([intention] of turtle 0)
+    show "66666666666666"
     exe-action;walk
     show-vision
     set hour (hour + 1)
   ]
   [ ; ====================== at night =================================
-;    clear-drawing
-;    ask turtles[pen-up]
     exe-action; communicate
     update-intention ; to locate
 
@@ -410,125 +410,128 @@ end
 
 to update-belief
   ask turtles [
-    if (intention = "to observe")
+    ifelse (intention = "to observe")
     [observe]
-    if (intention = "to observe and learn")
-    [observe-and-learn]
-    ]
+    [if (intention = "to observe and learn")
+      [observe-and-learn]
+      ]
+  ]
 
 end
 
 to update-desire
 
-  if (check-goal) [
-    ask turtles [
-      set desire "stop"
-      ;stop
-    ]
-
+  if(check-goal)
+  [ask turtles [set desire "stop"]]
   if all? turtles [desire = "stop"]
   [
     show "Game Over"
     show "The total days taken is: "
     show day
     stop
-    ]
-]
+   ]
 end
 
+
 to update-intention
-  ; =============individual============
-  ask turtles[
-    ifelse (desire = "stop")
+
+  ask turtles [
+    ifelse (desire = "stop");========================================to stop
     [set intention "self-upgrade"]
-    [ifelse (intention = "to locate") ; every morning, the first locaton will be randomly selected
-      [ifelse(trying) [set intention "to choose a random action"]
+    [ifelse (intention = "to locate") ;==============================to locate
+      [ifelse(trying)
+        [set intention "to choose a random action"]
         [set intention "to bid"]
-      ]
-
-
-      [ifelse (intention = "to choose a random action" or intention = "to bid")
+      ][ifelse (intention = "to choose a random action");===============to choose a random action
         [set intention "to observe"]
-        [ifelse (intention = "to observe")
-          ;[set intention "to perform the chosen action"]
-          ;[ifelse (intention = "to perform the chosen action")
-            [set intention "to observe and learn"]
-            [ifelse (intention = "to observe and learn")
-               [ifelse (can-walk)
-
-                  [set intention "to move"
-                   ]
-                  [ifelse (hour < num-hours - 1)
-                    [set intention "to bid"]
-                    [ifelse (communicate-at-night)
+        [ifelse (intention = "to bid");==============================to bid
+          [set intention "to observe"]
+          [ifelse (intention =  "to observe");===========================to observe
+            [set intention "to execute"]
+            [ifelse (intention = "to execute")
+              [set intention "to observe and learn"]
+              [ifelse (intention = "to observe and learn");============to observe and learn
+                [ifelse (hour < num-hours and can-walk)
+                  [set intention "to move"]
+                  [ifelse (can-communicate-at-night)
+                    [set intention "to communicate"]
+                    [set intention "to locate"]
+                  ]
+                ]
+                [ifelse (intention = "to move");=======================to move
+                  [
+                    ifelse (can-communicate-at-night)
                       [set intention "to communicate"]
                       [set intention "to locate"]
                     ]
-                   ]
-
-
-
-                ][ifelse (intention = "to communicate")
-                   [set intention "to locate"]
-                   [
-
-                     if (intention = "to move")
-
-                     [
-                       ifelse (hour < num-hours )
-                       [
-
-                         ifelse(trying) [set intention "to choose a random action"]
-                         [set intention "to bid"]
-
-                         ]
-                       [ifelse (communicate-at-night)
-                         [set intention "to communicate"]
-                         [set intention "to locate"]]
-                     ]
-                   ]
+                  [ifelse (intention = "to communicate");==============to communicate
+                    [set intention "to locate"]
+                    [show "error!"]
+                  ]
                 ]
+              ]
             ]
           ]
-       ;]
+        ]
       ]
-
-
-
     ]
   ]
+
 end
+
 
 to exe-action
   ;==============<individual actions>====================
   ask turtles [
-    if (intention = "to perform the chosen action")
-    [ perform-action item button-chosen buttons
+    ifelse (intention = "to perform the chosen action")
+    [ perform-action item button-chosen buttons]
+    [
+      ifelse (intention = "to move")
+      [walk]
+      [
+        ifelse (intention = "to locate" and hour  = 0)
+        [locate] ;  a random location
+        [
+          ifelse (intention = "self-upgrade")
+          [output-program]
+          [ifelse (intention = "to execute")
+            [
+              if (((first personal-plan) != -1) and ((first personal-plan) != -2))
+              [perform-action (item (first personal-plan) buttons)]
+            ]
+            [show "collective action"]
+            ]
+          ]
+        ]
+      ]
     ]
 
-    if (intention = "to move")
-    [walk]
-    if (intention = "to locate" and hour  = 0)
-    [locate; a random location
-
-      ]
-    if (intention = "self-upgrade")
-    [output-program]
-
-  ]
   ;===============<collective actions>=======================
    if all? turtles [intention = "bid"]
    [
-    ifelse (not trying)
-    [bid]
-    [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
-    let max-value (max bidding)
-    set button-chosen (one-of (filter [((item ? bidding)= max-value) and not (member? ? buttons-chosen-before)] n-values (length buttons)[?]))
-    ; choose one of those with the best bidding value
-    set buttons-chosen-before (fput button-chosen buttons-chosen-before)
+     ifelse (not trying)
+     [bid]
+     [set bidding (n-values (length buttons) [0])]; if we have not reached the knowledge threshold, then we randomly select
+     let max-value (max bidding)
+     set button-chosen (one-of (filter [((item ? bidding)= max-value) and not (member? ? buttons-chosen-before)] n-values (length buttons)[?]))
+     ; choose one of those with the best bidding value
+     set buttons-chosen-before (fput button-chosen buttons-chosen-before)
+     ; find the owner of button-chosen  and ask the agent to perform the action
+     let owner 0
+     foreach n-values num-agents [?]
+     [if (member? button-chosen ([buttons-assigned] of (turtle ?)))
+       [set owner ?]
+     ]
+
+     ask turtle owner
+     [
+       set personal-plan (fput button-chosen personal-plan)
+       ask other turtles
+       [set personal-plan (fput -1 personal-plan)]
+     ]
    ]
 
-   if all? turtles [intention = "to communicate"]
+   if all? turtles [intention = "to communicate"]; set up a meeting!
    [
      communicate
      ask turtles [update-average-individual-knowledge
@@ -1050,7 +1053,7 @@ ticks
 SLIDER
 164
 196
-355
+314
 229
 buttons-each
 buttons-each
@@ -1097,10 +1100,10 @@ NIL
 1
 
 BUTTON
-23
-498
-111
-565
+16
+492
+104
+559
 NIL
 setup
 NIL
@@ -1155,10 +1158,10 @@ day
 11
 
 BUTTON
-118
-498
-223
-531
+111
+492
+216
+525
 button 1
 perform-action item 0 buttons
 NIL
@@ -1172,10 +1175,10 @@ NIL
 1
 
 BUTTON
-228
-497
-333
-530
+221
+491
+326
+524
 button 2
 perform-action item 1 buttons
 NIL
@@ -1189,10 +1192,10 @@ NIL
 1
 
 BUTTON
-118
-534
-223
-567
+111
+528
+216
+561
 button 3
 perform-action item 2 buttons
 NIL
@@ -1206,10 +1209,10 @@ NIL
 1
 
 BUTTON
-228
-534
-333
-567
+221
+528
+326
+561
 button 4
 perform-action item 3 buttons
 NIL
@@ -1223,10 +1226,10 @@ NIL
 1
 
 MONITOR
-1293
-178
-1582
-223
+1323
+80
+1612
+125
 buttons of Agent 0
 [buttons-assigned] of turtle 0
 17
@@ -1251,10 +1254,10 @@ NIL
 1
 
 SLIDER
-15
-276
-153
-309
+164
+239
+313
+272
 noise_pct
 noise_pct
 25
@@ -1283,10 +1286,10 @@ NIL
 1
 
 MONITOR
-165
-278
-357
-323
+17
+320
+161
+365
 Total buttons
 num-agents * buttons-each
 17
@@ -1316,10 +1319,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-397
-365
-715
-600
+404
+367
+722
+602
 Agents' knowledge about their buttons
 total hour
 knowledge (percentage)
@@ -1336,10 +1339,10 @@ PENS
 "Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
 
 SLIDER
-164
-238
-358
-271
+16
+279
+311
+312
 knowledge-threshold
 knowledge-threshold
 25
@@ -1362,10 +1365,10 @@ bidding
 11
 
 MONITOR
-18
-328
-332
-373
+172
+323
+314
+368
 hours per day (max 4)
 num-hours
 17
@@ -1393,10 +1396,10 @@ Step 2: initialise the parameters
 1
 
 TEXTBOX
-24
-475
-324
-494
+19
+470
+366
+489
 Step 3: setup the game and initialise the buttons
 12
 0.0
@@ -1453,10 +1456,10 @@ Step 5: evaluation
 1
 
 SWITCH
-179
-380
-328
-413
+177
+379
+326
+412
 debug
 debug
 1
@@ -1464,12 +1467,12 @@ debug
 -1000
 
 SWITCH
-140
-430
-352
-463
-communicate-at-night
-communicate-at-night
+137
+416
+383
+449
+can-communicate-at-night
+can-communicate-at-night
 0
 1
 -1000
@@ -1485,10 +1488,10 @@ Multi-agent Epistemic Action Learning for Planning
 1
 
 SWITCH
-19
-379
-171
-412
+17
+378
+169
+411
 can-walk
 can-walk
 0
@@ -1496,10 +1499,10 @@ can-walk
 -1000
 
 SWITCH
-18
-428
-131
-461
+17
+415
+130
+448
 decidable
 decidable
 1
@@ -1507,10 +1510,10 @@ decidable
 -1000
 
 MONITOR
-1293
-237
-1585
-282
+1323
+139
+1615
+184
 knowledge of agent 0
 [action-knowledge] of turtle 0
 17
@@ -1518,10 +1521,10 @@ knowledge of agent 0
 11
 
 MONITOR
-1298
-584
-1448
-629
+1359
+596
+1509
+641
 move to target patch
 [target-patch] of turtle 0
 17
@@ -1529,20 +1532,20 @@ move to target patch
 11
 
 TEXTBOX
-1292
-118
-1649
-167
+1322
+20
+1679
+69
 Additional Information:\nThe belief, desire and intention of agent 0\n1) Belief
 12
 0.0
 1
 
 MONITOR
-1293
-293
-1583
-338
+1323
+195
+1613
+240
 observation of turtle 0
 [observation] of turtle 0
 17
@@ -1550,20 +1553,20 @@ observation of turtle 0
 11
 
 TEXTBOX
-1298
-349
-1486
-372
+1328
+249
+1516
+272
 2) Desire
 12
 0.0
 1
 
 MONITOR
-1295
-382
-1585
-427
+1323
+272
+1613
+317
 desire
 [desire] of turtle 0
 17
@@ -1571,20 +1574,20 @@ desire
 11
 
 TEXTBOX
-1300
-449
-1488
-472
+1327
+330
+1515
+353
 3) Intention
 12
 0.0
 1
 
 MONITOR
-1297
-479
-1485
-524
+1356
+506
+1544
+551
 bidding value for next step
 first [best-node] of turtle 0
 17
@@ -1592,10 +1595,10 @@ first [best-node] of turtle 0
 11
 
 MONITOR
-1297
-530
-1490
-575
+1553
+505
+1746
+550
 bidding action for next step
 item hour (reverse item 1 ([best-node] of turtle 0))
 17
@@ -1603,9 +1606,9 @@ item hour (reverse item 1 ([best-node] of turtle 0))
 11
 
 MONITOR
-399
+404
 317
-558
+563
 362
 status
 gamming-status
@@ -1614,10 +1617,10 @@ gamming-status
 11
 
 MONITOR
-1455
-584
-1620
-629
+1355
+429
+1520
+474
 knowledge percentage
 [know-buttons-in-charge] of turtle 0
 17
@@ -1625,15 +1628,55 @@ knowledge percentage
 11
 
 MONITOR
-1505
-467
-1739
-512
+1324
+356
+1558
+401
 intention
 [intention] of turtle 0
 17
 1
 11
+
+TEXTBOX
+1357
+410
+1613
+440
+(1) increase knowledge about actions
+12
+0.0
+1
+
+TEXTBOX
+1356
+482
+1745
+500
+(2) to bid for the best action according to its knowledge
+12
+0.0
+1
+
+TEXTBOX
+1358
+559
+1732
+589
+(3) to move to the patch where it can possibly know more about the effect of actions
+12
+0.0
+1
+
+TEXTBOX
+1296
+18
+1311
+663
+|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n
+12
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
