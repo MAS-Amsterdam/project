@@ -391,7 +391,7 @@ to go
      set ticks-per-hour (ticks-per-hour + 1)
      show "***************<<<<<<<< ticks-per-hour extended >>>>>>>>*****************"
      ]
-   [if (hour = 0 and ticks = 0)[set ticks-per-hour (ticks-per-hour + 1)]]
+   [if (day = 0 and hour = 0 and ticks = 0)[set ticks-per-hour (ticks-per-hour + 1)]]
 
    if ((hour = 1) and (ticks = 0))[set ticks-per-hour (ticks-per-hour - 1)]
 
@@ -1499,7 +1499,7 @@ SWITCH
 449
 can-communicate-at-night
 can-communicate-at-night
-1
+0
 1
 -1000
 
@@ -1520,7 +1520,7 @@ SWITCH
 411
 can-walk
 can-walk
-1
+0
 1
 -1000
 
