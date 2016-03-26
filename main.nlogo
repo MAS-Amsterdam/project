@@ -369,38 +369,41 @@ to go
    update-belief
    show " ------------- belief - updated -----------------------"
    show ([personal-plan] of turtle 0)
+
+
    exe-action
    show "-------------- after execute action ------------------------"
    show ([personal-plan] of turtle 0)
    ;update-belief
 
    tick
+   if (ticks = ticks-per-hour)
+   [set hour  (hour + 1)
+     reset-ticks]
 
-   if ((remainder ticks ticks-per-hour) = 0) [
-       set hour (hour + 1)
-       if (can-communicate-at-night and hour = num-hours) [set ticks-per-hour (ticks-per-hour + 1)]
-       reset-ticks
-   ]
+   if (hour = num-hours)
+   [set day (day + 1)
+     set hour 0]
+
+   ; for the next tick
+
+   ifelse (can-communicate-at-night and hour = num-hours - 1 and ticks = 0)[
+     set ticks-per-hour (ticks-per-hour + 1)
+     show "***************<<<<<<<< ticks-per-hour extended >>>>>>>>*****************"
+     ]
+   [if (hour = 0 and ticks = 0)[set ticks-per-hour (ticks-per-hour + 1)]]
+
    if ((hour = 1) and (ticks = 0))[set ticks-per-hour (ticks-per-hour - 1)]
 
-   show "this is just a tick"
-   show ticks
-   show "*****************tick finished*************************"
-
-   if (ticks-per-hour = ticks and hour = num-hours); a new day
+   if ((hour = 0) and (ticks  = 0))
    [
-
-     set day (day + 1)
-     set hour 0
      set buttons-chosen-before []
      ask patches [
        set pcolor black
        set plabel ""; todo
        ]
      ask turtles [set personal-plan []]
-     exe-action ; to locate the agent
-   ]
-
+     ]
 end
 
 
@@ -453,22 +456,29 @@ to update-intention
                 [ifelse (intention = "to observe and learn");============to observe and learn
                   [ifelse (hour <= num-hours and can-walk)
                     [set intention "to move"]
-                    [ifelse (hour = num-hours and can-communicate-at-night)
+                    [ifelse (hour = num-hours - 1 and can-communicate-at-night)
                       [set intention "to communicate"]
-                      [set intention "to locate"]
+                      [
+                        ifelse(hour = 0)
+                        [set intention "to locate"]
+                        [
+                           ifelse (trying)
+                           [set intention "to choose a random action"]
+                           [set intention "to bid"]
+                         ]
+
+                      ]
                     ]
                   ]
                   [ifelse (intention = "to move");=======================to move
                     [
-                      ifelse (hour < num-hours)
-                      [ifelse (trying)
+                      ifelse(can-communicate-at-night and (hour = num-hours - 1) and (ticks != 0))
+                      [set intention "to communicate"]
+                      [
+                        ifelse (trying)
                         [set intention "to choose a random action"]
                         [set intention "to bid"]
-                       ][; night
-                        ifelse (can-communicate-at-night)
-                          [set intention "to communicate"]
-                          [set intention "to locate"]
-                       ]
+                        ]
                     ]
                     [ifelse (intention = "to communicate");==============to communicate
                       [set intention "to locate"]
@@ -1489,7 +1499,7 @@ SWITCH
 449
 can-communicate-at-night
 can-communicate-at-night
-0
+1
 1
 -1000
 
@@ -1510,7 +1520,7 @@ SWITCH
 411
 can-walk
 can-walk
-0
+1
 1
 -1000
 
