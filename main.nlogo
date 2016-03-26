@@ -356,43 +356,58 @@ to go
   ifelse (hour < num-hours)
   ; ====================== in day time =================================
   [
-    show ([intention] of turtle 0)
-    show "------------to locate---------------------"
+
     update-desire; test if the desire is to light up the patches
     if all? turtles [desire = "stop"][
       update-intention; if the goal is reached then update the intention to self-upgrade its program
     ] ; if terminate, output the program, otherwise locate to a random place
-    exe-action;to locate
+
+    if (hour = 0)[
+     show ([intention] of turtle 0)
+     show "------------to locate---------------------"
+     exe-action;to locate
+      ]
+
     update-intention; intention-bid
-        show ([intention] of turtle 0)
-    show "------------to bid---------------------"
+    show ([intention] of turtle 0)
+    show "------------to bid/random---------------------"
     exe-action;bid
     update-intention ;intention-observe the patches in vision (to update the belief)
-    show "------------to exe---------------------"
-    show ([personal-plan] of turtle 0)
+    show "------------to observe---------------------"
     show ([intention] of turtle 0)
 
     exe-action;to excute the actual action if assigned
+    show "this agent has intention as: "
+    show ([personal-plan] of turtle 0)
     update-intention
+
+    show "------------to exe---------------------"
     show ([intention] of turtle 0)
-    show "44444444444444444"
+    exe-action
+
     update-belief; observe before the performance of the action
     update-intention; intention-observe and learn
+
+    show "------------to observe and learn-------------"
     show ([intention] of turtle 0)
-    show "555555555"
     exe-action;observe and learn
     update-belief ; then the agent observe and perform learning
     update-intention; intention-walk
+
+    show "-----------to move---------------------"
     show ([intention] of turtle 0)
-    show "66666666666666"
     exe-action;walk
     show-vision
     set hour (hour + 1)
+    update-intention
+    show "-----------to communicate---------------------"
+    show ([intention] of turtle 0)
   ]
   [ ; ====================== at night =================================
     exe-action; communicate
     update-intention ; to locate
-
+    show "-----------to locate---------------------"
+    show ([intention] of turtle 0)
     set hour 0
     set day (day + 1)
     set buttons-chosen-before []; a new day
@@ -460,10 +475,16 @@ to update-intention
                 ]
                 [ifelse (intention = "to move");=======================to move
                   [
-                    ifelse (can-communicate-at-night)
-                      [set intention "to communicate"]
-                      [set intention "to locate"]
-                    ]
+                    ifelse (hour + 1 < num-hours)
+                    [ifelse (trying)
+                      [set intention "to choose a random action"]
+                      [set intention "to bid"]
+                     ][; night
+                      ifelse (can-communicate-at-night)
+                        [set intention "to communicate"]
+                        [set intention "to locate"]
+                     ]
+                  ]
                   [ifelse (intention = "to communicate");==============to communicate
                     [set intention "to locate"]
                     [show "error!"]
@@ -483,9 +504,9 @@ end
 to exe-action
   ;==============<individual actions>====================
   ask turtles [
-    ifelse (intention = "to perform the chosen action")
-    [ perform-action item button-chosen buttons]
-    [
+;    ifelse (intention = "to perform the chosen action")
+;    [ perform-action item button-chosen buttons]
+;    [
       ifelse (intention = "to move")
       [walk]
       [
@@ -496,18 +517,19 @@ to exe-action
           [output-program]
           [ifelse (intention = "to execute")
             [
-              if (((first personal-plan) != -1) and ((first personal-plan) != -2))
+              ifelse (((first personal-plan) = -1) or ((first personal-plan) = -2))
+              [show "nothing to do here"]
               [perform-action (item (first personal-plan) buttons)]
             ]
             [show "collective action"]
             ]
           ]
         ]
-      ]
+      ;]
     ]
 
   ;===============<collective actions>=======================
-   if all? turtles [intention = "bid"]
+   if all? turtles [intention = "bid" or intention = "to choose a random action"]
    [
      ifelse (not trying)
      [bid]
@@ -522,6 +544,11 @@ to exe-action
      [if (member? button-chosen ([buttons-assigned] of (turtle ?)))
        [set owner ?]
      ]
+
+     show "owner -  -----"
+     show owner
+     show "chosen action - ---"
+     show button-chosen
 
      ask turtle owner
      [
@@ -734,7 +761,7 @@ end
 
 
 to perform-action [act]
-  if (debug)[
+  if (true)[
     show act
     show "act-------------------------"
   ]
@@ -1026,8 +1053,8 @@ end
 GRAPHICS-WINDOW
 762
 92
-1272
-623
+1271
+622
 -1
 -1
 125.0
@@ -1140,7 +1167,7 @@ vision-radius
 vision-radius
 0
 100
-30
+0
 10
 1
 NIL
@@ -1262,7 +1289,7 @@ noise_pct
 noise_pct
 25
 50
-33
+38
 1
 1
 NIL
@@ -1347,7 +1374,7 @@ knowledge-threshold
 knowledge-threshold
 25
 100
-29
+38
 1
 1
 %
@@ -1505,7 +1532,7 @@ SWITCH
 448
 decidable
 decidable
-1
+0
 1
 -1000
 
