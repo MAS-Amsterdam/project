@@ -363,18 +363,10 @@ end
 to go
 
    update-desire
-   show ([desire] of turtle 0)
    update-intention
-   show ([intention] of turtle 0)
    update-belief
-   show " ------------- belief - updated -----------------------"
-   show ([personal-plan] of turtle 0)
-
-
    exe-action
-   show "-------------- after execute action ------------------------"
-   show ([personal-plan] of turtle 0)
-   ;update-belief
+
 
    tick
    if (ticks = ticks-per-hour)
@@ -385,11 +377,8 @@ to go
    [set day (day + 1)
      set hour 0]
 
-   ; for the next tick
-
    ifelse (can-communicate-at-night and hour = num-hours - 1 and ticks = 0)[
      set ticks-per-hour (ticks-per-hour + 1)
-     show "***************<<<<<<<< ticks-per-hour extended >>>>>>>>*****************"
      ]
    [if (day = 0 and hour = 0 and ticks = 0)[set ticks-per-hour (ticks-per-hour + 1)]]
 
@@ -405,6 +394,8 @@ to go
        ]
      ask turtles [set personal-plan []]
      ]
+
+;   if (check-goal and not trying) [stop]
 end
 
 
@@ -423,14 +414,8 @@ end
 to update-desire
 
   if(check-goal)
-  [ask turtles [set desire "stop"]]
-  if all? turtles [desire = "stop"]
-  [
-    show "Game Over"
-    show "The total days taken is: "
-    show day
-    stop
-   ]
+  [ask turtles [set desire "stop"]
+    show "fuck"]
 end
 
 
@@ -441,7 +426,8 @@ to update-intention
     [set intention "to locate"]
     [
       ifelse (desire = "stop");========================================to stop
-      [set intention "self-upgrade"]
+      [set intention "self-upgrade"
+        show "fuck2"]
       [ifelse (intention = "to locate") ;==============================to locate
         [ifelse(trying)
           [set intention "to choose a random action"]
@@ -512,18 +498,22 @@ to exe-action
           ifelse (intention = "self-upgrade")
           [
             output-program
-            stop
+
             ]
           [if (intention = "to execute")
             [
               ifelse (((first personal-plan) = -1) or ((first personal-plan) = -2))
-              [show "nothing to do here"]
+              [
+                ;show "nothing to do here"
+                ]
               [perform-action (item (first personal-plan) buttons)]
             ]
           ]
         ]
       ]
     ]
+
+   if not any? turtles [ stop ]
 
   ;===============<collective actions>=======================
    if all? turtles [intention = "to bid" or intention = "to choose a random action"]
@@ -543,12 +533,6 @@ to exe-action
      [if (member? button-chosen ([buttons-assigned] of (turtle ?)))
        [set owner ?]
      ]
-
-     show "owner -  -----"
-     show owner
-     show "chosen action - ---"
-     show button-chosen
-
      ask turtle owner
      [
        set personal-plan (fput button-chosen personal-plan)
@@ -559,11 +543,12 @@ to exe-action
 
    if all? turtles [intention = "to communicate"]; set up a meeting!
    [
+;     show "communicate at night"
      communicate
-     ask turtles [update-average-individual-knowledge
-      ]
+
    ]
   show-vision
+
 end
 
 
@@ -587,9 +572,6 @@ to update-average-individual-knowledge; the average knownledge of the buttons ea
     ]
 
     set know-buttons-in-charge (know-buttons-in-charge / buttons-each)
-    ;show know-buttons-in-charge
-
-
 end
 
 to-report check-goal ; check if the current situation is the same as the goal
@@ -625,7 +607,7 @@ to observe
       set vision-indexes fput (get-patch-index self)  vision-indexes
             ]
    set observation vision-indexes
-   ;]
+;   ]
 end
 
 to observe-and-learn ; ask each agent to change the vision and vision index
@@ -684,7 +666,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     set action-knowledge replace-item button-chosen action-knowledge (list know-true know-false)
     ; and finally, set vision-indexes as the new observation
     ;set observation vision-indexes; TODO: what if after walk, there is no information about new local pathes?
-    ;]
+;    ]
 
 end
 
@@ -709,6 +691,7 @@ to communicate
 
    ask turtles [
      set action-knowledge integration
+     update-average-individual-knowledge
      ]
 end
 
@@ -1043,6 +1026,7 @@ end
 
 to output-program
   show "outputing"
+  die
 end
 
 ; TODO: button generation can be done using "shuffle"
@@ -1086,7 +1070,7 @@ buttons-each
 buttons-each
 1
 3
-2
+1
 1
 1
 NIL
@@ -1364,6 +1348,7 @@ PENS
 "Agent 0" 1.0 0 -11085214 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 0\nset-plot-pen-color ([color] of turtle 0)] [plot 0]"
 "Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 1\nset-plot-pen-color ([color] of turtle 1)\n] [plot 0]"
 "Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
+"Agent 2" 1.0 0 -7500403 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 2\nset-plot-pen-color ([color] of turtle 2)\n] [plot 0]"
 
 SLIDER
 16
@@ -1374,7 +1359,7 @@ knowledge-threshold
 knowledge-threshold
 25
 100
-38
+25
 1
 1
 %
@@ -1539,7 +1524,7 @@ decidable
 MONITOR
 1323
 139
-1615
+2321
 184
 knowledge of agent 0
 [action-knowledge] of turtle 0
@@ -1738,10 +1723,10 @@ ticks-per-hour
 11
 
 OUTPUT
-1645
-121
-1886
-424
+1767
+193
+2005
+721
 12
 
 @#$#@#$#@
