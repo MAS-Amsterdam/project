@@ -401,13 +401,15 @@ end
 
 
 to update-belief
-  ask turtles [
-    ifelse (intention = "to observe")
-    [observe]
-    [if (intention = "to observe and learn")
-      [observe-and-learn]
-      ]
-  ]
+
+
+  if all? turtles [intention = "to observe"] [
+    observe
+    ]
+  if all? turtles [intention = "to observe and learn"] [
+    observe-and-learn
+    ]
+
 
 end
 
@@ -543,9 +545,8 @@ to exe-action
 
    if all? turtles [intention = "to communicate"]; set up a meeting!
    [
-;     show "communicate at night"
      communicate
-
+     ask turtles [update-average-individual-knowledge]
    ]
   show-vision
 
@@ -592,26 +593,27 @@ end
 
 ; two helping function to get the xcor and ycor of the patch according to its index
 to-report getx [n]
-   report ((n - 1) mod width)
+   report (remainder (n - 1) width)
 end
 
 to-report gety [n]
-  report (floor ((n - 1) / width))
+  report ( floor ((n - 1) / width))
 end
 
 to observe
-;   ask turtles [
+   ask turtles [
     let vision (patches in-cone-nowrap (vision-radius * width / 100) 360) ; the agent's vision
     let vision-indexes []
     ask vision [
       set vision-indexes fput (get-patch-index self)  vision-indexes
             ]
    set observation vision-indexes
-;   ]
+   update-average-individual-knowledge
+   ]
 end
 
 to observe-and-learn ; ask each agent to change the vision and vision index
-;  ask turtles [
+  ask turtles [
     let vision (patches in-cone-nowrap ((vision-radius * width / 100) * width / 100) 360) ; the agent's vision
     let vision-indexes []
     ask vision [
@@ -666,7 +668,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     set action-knowledge replace-item button-chosen action-knowledge (list know-true know-false)
     ; and finally, set vision-indexes as the new observation
     ;set observation vision-indexes; TODO: what if after walk, there is no information about new local pathes?
-;    ]
+    ]
 
 end
 
@@ -751,10 +753,14 @@ to perform-action [act]
   let pos first act
   let neg last act
   foreach pos [
-    let y gety ?
+
     let x getx ?
+    let y gety ?
+
     if (debug)
     [
+      show "---pos x y----"
+      show ?
       show x
       show y]
     ask patch x y [set pcolor green]
@@ -765,6 +771,8 @@ to perform-action [act]
     let y gety ?
     let x getx ?
     if (debug)[
+      show "---neg x y----"
+      show ?
       show x
       show y]
     ask patch x y [set pcolor black]
@@ -1012,7 +1020,7 @@ to walk; moves to the neighbor or current patch which has the most potential inf
     ]
     set target-patch max-one-of neighbors [potential-infor]
     uphill potential-infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
-    ; file:///home/robert/Project/MAS/netlogo-5.3-64/app/docs/dict/uphill.html
+    ; file:///home/robert/Project/MAgeS/netlogo-5.3-64/app/docs/dict/uphill.html
 ;    show-vision
 end
 
@@ -1037,8 +1045,8 @@ end
 GRAPHICS-WINDOW
 762
 92
-1011
-362
+1260
+611
 -1
 -1
 41.666666666666664
@@ -1346,9 +1354,8 @@ true
 "" ""
 PENS
 "Agent 0" 1.0 0 -11085214 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 0\nset-plot-pen-color ([color] of turtle 0)] [plot 0]"
-"Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 1\nset-plot-pen-color ([color] of turtle 1)\n] [plot 0]"
+"Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 1\nset-plot-pen-color ([color] of turtle 1)] [plot 0]"
 "Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
-"Agent 2" 1.0 0 -7500403 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 2\nset-plot-pen-color ([color] of turtle 2)\n] [plot 0]"
 
 SLIDER
 16
@@ -1454,7 +1461,7 @@ CHOOSER
 153
 pattern-name
 pattern-name
-"test.txt" "smile.txt" "sad.txt"
+"test.txt" "smile.txt" "sad.txt" "tiny.txt"
 1
 
 TEXTBOX
