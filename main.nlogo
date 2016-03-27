@@ -1,25 +1,32 @@
 globals [
+  ;==============input/output/goal related===================
   csv
-  fileList ; ???? TODO: what is this?
-  continue ; if the game is goal is achieved, then continue if false
-  width
-  height
-  color-list; color for different agents
-  goal ;the goal pattern
-  num-hours ; the length of solution
-  day ; the day
-  hour; the hour
-  trying ; a sign of status if the agents are trying or bidding
-  bidding ; for each action, we record a value
-  bidding-day; total amount of days where buttons are chosen by bidding
-  ticks-per-hour
-  ;=========================buttons related variables==============================================
+  fileList ;
+  width      ; the width of the patches
+  height     ; the height of the patches
+  color-list ; a list of color for agents
+  goal       ; the goal pattern
+
+  ;==============buttons related attributes==============
   noise ; the randomly set points in each button that belongs to solution.
-  ; noise-dis; the randomly set points in each button that not belongs to solution.
   buttons; a list of buttons, each button is a pair setting some patches to green and some to black
   button-chosen; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
   buttons-chosen-before; all the buttons chosen before
-  succeed-initialise-game
+
+  ;==============time related attributes==================
+  num-hours  ; the length of solution
+  day        ; the day
+  hour       ; the hour
+  ticks-per-hour; totoal number of ticks per day. It may vary from hour to hour
+  succeed-initialise-game; an attribute to indicate the beginning of the game
+
+  ;==============status and planning=======================
+  trying ; a sign of status if the agents are trying or bidding
+  bidding ; for each action, we record a value
+  bidding-day; total amount of days where buttons are chosen by bidding
+
+  ;==============other attributes==================
+  can-walk ; if the agent can move around. In this game, the agents are assumed to be able to
   ]
 
 turtles-own[
@@ -27,8 +34,9 @@ turtles-own[
   own-color; color set to the agent
   buttons-assigned; the order of buttons it owns, relating to the matrix buttons
   observation ; the agent's observation
-  action-knowledge; Beliefs about the actions. each action is a pair: (know-true, know-false). know-true consists of the propositions the agent is sure about.
-  ; know false consists of the propositions the agent knows false about.
+  action-knowledge; knowledge about the actions. each action is a pair: (know-true, know-false).
+  ; know-true consists of the propositions the agent is sure about.
+  ; know false consists of the propositions the agent knows not going to be the case.
   personal-plan;
   ;======================desire====================================================================
   ; the agent has the desire to maximise the knowledge of the buttons it is in charge of
@@ -60,7 +68,7 @@ to setup
   ; set noise-dis 8; the randomly set points in each button that not belongs to solution.
   set color-list n-of num-agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
   set succeed-initialise-game false
-
+  set can-walk true
   setup-ticks
   open-file; set up the goal pattern.
   setup-time
@@ -175,9 +183,6 @@ to load-and-display-goal
     ask patch x y [set pcolor green]
     ]
 end
-
-;==============the initial states=============================================================================
-;it is assumed that the initial state is black, i.e. all lights off.
 
 
 to setup-patches
@@ -363,8 +368,63 @@ to-report get-patch-index [p]
   [report ([pycor] of p * width + [pxcor] of p + 1 ) * -1]
 end
 
+
+
+;==============the assignment of buttons to turtles============================================================
+; Randomly assigned. The serial number for the button is the sequence of the buttons
+; in the matrix "button-all", it is always that the first half or first (half + 0.5)
+; buttons is the solution buttons.
+;
+to assign-buttons; randomly assign the buttons to the turtles
+   let remain-bt buttons; variables remained when assigning buttons to agents one by one
+   ask turtles[
+     set buttons-assigned []
+     foreach n-values buttons-each [?][
+       let n-button ( random  (length remain-bt ))
+       set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
+       set remain-bt (remove (item n-button remain-bt) remain-bt)
+   ]
+  ]
+end
+
+
+to perform-action [act]
+  if (debug)[
+    show act
+    show "act-------------------------"
+  ]
+
+  let pos first act
+  let neg last act
+  foreach pos [
+
+    let x getx ?
+    let y gety ?
+
+    if (debug)
+    [
+      show "---pos x y----"
+      show ?
+      show x
+      show y]
+    ask patch x y [set pcolor green]
+    ]
+
+    foreach neg [
+
+    let y gety ?
+    let x getx ?
+    if (debug)[
+      show "---neg x y----"
+      show ?
+      show x
+      show y]
+    ask patch x y [set pcolor black]
+    ]
+end
+
 ; =================================================================
-; ========================== The Go part ==========================
+; ========================== the "go" part ==========================
 ; =================================================================
 
 to go
@@ -416,10 +476,9 @@ to go
 
 end
 
-
+;=============== the BDI section ===================
 
 to update-belief
-
 
   if all? turtles [intention = "to observe"] [
     observe
@@ -427,8 +486,6 @@ to update-belief
   if all? turtles [intention = "to observe and learn"] [
     observe-and-learn
     ]
-
-
 end
 
 to update-desire
@@ -439,7 +496,8 @@ end
 
 
 to update-intention
-
+  ; this function is to provide a logical flow of the change of agent's intention
+  ; with the impact from knowldege, time, desire, etc.
   ask turtles [
     ifelse (intention = "empty")
     [set intention "to locate"]
@@ -506,7 +564,12 @@ end
 
 
 to exe-action
-    ;===============<collective actions>=======================
+   ; Note that there are two kinds of actions, the collective actions, these actions require
+   ; a good synchronisation. That is, these agents are performing actions together or with
+   ; restrictions of time. For example, communication requires all agents to be listening
+   ; while bidding requires agents to come up with a bidding value and bidding action before
+   ; making a group decision about the action to perform next.
+   ;===============<collective actions>=======================
    if all? turtles [intention = "to bid" or intention = "to choose a random action"]
    [
      ifelse (not trying)
@@ -540,22 +603,22 @@ to exe-action
 
   ;==============<individual actions>====================
   ask turtles [
-      ifelse (intention = "to move")
+      ifelse (intention = "to move");============================to move
       [walk]
       [
-        ifelse (intention = "to locate")
+        ifelse (intention = "to locate");=======================to locate
         [
           locate
 ;          show "set up location"
 
           ] ;  a random location
         [
-          ifelse (intention = "self-upgrade")
+          ifelse (intention = "self-upgrade"); =================to upgrade
           [
             output-program
             die
             ]
-          [if (intention = "to execute")
+          [if (intention = "to execute");======================= to execute an action
             [
               ifelse (((first personal-plan) = -1) or ((first personal-plan) = -2))
               [
@@ -572,7 +635,7 @@ to exe-action
 
 end
 
-
+; to calculate the total (action) knowledge obtained by agents on average
 to-report total-knowledge
   let pct 0
   ask turtles [
@@ -595,6 +658,8 @@ to update-average-individual-knowledge; the average knownledge of the buttons ea
     set know-buttons-in-charge (know-buttons-in-charge / buttons-each)
 end
 
+; check if the goal is reached. If reached, the game will terminates.
+; The goal should not be reached when the agents are trying
 to-report check-goal ; check if the current situation is the same as the goal
   let sign true
   foreach (first goal)[
@@ -694,18 +759,9 @@ to observe-and-learn ; ask each agent to change the vision and vision index
 
       if((member? (? * 3 + 1) know-false) and (member? (? * 3 + 2) know-false) and not (member? (? * 3 + 3) know-true))[
 
-;        show "we are going to add one which is indifferent"
-;        show know-true
-;        show know-false
-;        show "---here are the detailed changes---"
-;        show (? * 3 + 1)
-;        show (? * 3 + 2)
-;        show (? * 3 + 3)
-;
         set know-true (fput (? * 3 + 3) know-true)
         set know-false (remove (? * 3 + 1) know-false)
         set know-false (remove (? * 3 + 2) know-false)
-
 
         ]
       ]
@@ -713,17 +769,16 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     set know-true remove-duplicates know-true
     set know-false remove-duplicates know-false
 
-
-
-
     ; replace the knowledge of the action
     set action-knowledge replace-item button-chosen action-knowledge (list know-true know-false)
     ; and finally, set vision-indexes as the new observation
     ;set observation vision-indexes; TODO: what if after walk, there is no information about new local pathes?
     ]
-
 end
 
+; ===============================================================================
+; ========================== the communicate and walk part ======================
+; ===============================================================================
 
 
 to communicate
@@ -750,91 +805,12 @@ to communicate
 end
 
 
+; ===============================================================================
+; ========================== the bidding and planning part =======================
+; ===============================================================================
 
-
-;==============variable related to the setup of buttons=============================================================================
-;goal: a list with two lists, the first list indicates the "on" positions, the second indicates "off" positions.
-;solution-length:the number of buttons that leads to the pattern. The last one button cleans the random sets in the previous buttons.
-;noise: number of random elements in each solution button.
-;noise-vals:a list consisting of the randomly chosen position in the goal-combination list, with the length eq to noise.
-;choose-num: the extent to which a button's result is similar to the goal.An absolte value.
-;chosen: a list consisting of the elements in the goal-combination that is chosen to a solution button.
-;buttons: the matrix consisting of lists, each of which is one button that leads to the pattern.
-;disturbing-buttons: the matrix consisting of lists, each of which is one button that leads to anything but the pattern.
-;buttons: the matrix consisting of lists, each of which is one button, with the buttons leading to the solution coming first.
-;noise-dis: number of random elements in each disturbing button.
-;noise-dis-vals: list consisting of lights (position) related to the environment.But they have notthing to do with the goal.
-;==============the design of the buttons========================================================================
-;Every agent has the same number of buttons, so the total number of buttons in the model is decided by the multiplication of (buttons-each * num-agents).
-;We set first half of the total buttons to be the solution, i.e. a list of buttons leading to the goal. ( if the total number of the buttons is odd, we set first ( half + 0.5 ) buttons to be the solution.
-;All the solutions buttons form the matrix called "buttons", the remaining buttons form the matrix called "disturbing-buttons".
-;Each solutions buttons in the matrix "buttons" except the last one , gets equal amount part of similarity to the goal pattern, but different elements of the goal pattern.
-;The last button in the solution matrix is set to tidy up all the indifference to the goal pattern, by performing/pressing the pervious buttons in sequene and compared the outcome with the goal pattern.
-;All of the buttons in the matrix is nothing more than randomly set buttons.
-;All the buttons form the matrix called "buttons", in which the solution buttons come before the remaining buttons. And the sequence in this matrxi determines the serial number for the button.
-
-
-
-;==============the assignment of buttons to turtles============================================================
-;Randomly assigned. The serial number for the button is the sequence of the buttons in the matrix "button-all", it is always that the first half or first (half + 0.5) buttons is the solution buttons.
-;
-
-
-to assign-buttons; randomly assign the buttons to the turtles
-   let remain-bt buttons; variables remained when assigning buttons to agents one by one
-   ask turtles[
-     set buttons-assigned []
-     foreach n-values buttons-each [?][
-       let n-button ( random  (length remain-bt ))
-       set buttons-assigned lput ((position  (item n-button remain-bt) buttons ) ) buttons-assigned
-       set remain-bt (remove (item n-button remain-bt) remain-bt)
-
-   ]
-  ]
-end
-
-
-
-
-to perform-action [act]
-  if (debug)[
-    show act
-    show "act-------------------------"
-  ]
-
-  let pos first act
-  let neg last act
-  foreach pos [
-
-    let x getx ?
-    let y gety ?
-
-    if (debug)
-    [
-      show "---pos x y----"
-      show ?
-      show x
-      show y]
-    ask patch x y [set pcolor green]
-    ]
-
-    foreach neg [
-
-    let y gety ?
-    let x getx ?
-    if (debug)[
-      show "---neg x y----"
-      show ?
-      show x
-      show y]
-    ask patch x y [set pcolor black]
-    ]
-end
-
-;==================================bidding and planning===========================================
-; datatype for depth-first searching as planning
-; a tuple of the followings:
-
+; introduce a node structure for depth-first searching as planning
+; it is a 3-tuple as follows:
 ; the bidding value
 ; the plan so far
 ; the world
@@ -849,11 +825,12 @@ to bid ; calculate the bidding value for each agent for each action
   ; 1) construct an instance of the date structure
   ask turtles [
   let world-now represent-visable-world
-
   let current-node obtain-node (calculate-bidding world-now) buttons-chosen-before world-now
 
+  ; 2) invoke the recursive method for planning
   depth-first-planning current-node
-  ; 2) extract information from the best-node
+
+  ; 3) extract information from the best-node
   if (not (best-node = [])) [
     let act-best item (length buttons-chosen-before) (reverse item 1 best-node)
     if (item act-best bidding < (item 0 best-node)) [set bidding replace-item act-best bidding (item 0 best-node)]; then update the bidding
@@ -873,7 +850,7 @@ end
 to depth-first-planning-rec [stack]
   ifelse(not (stack = []))[
     let node (first stack)
-
+    ; extract the information from a node
     let bv item 0 node
     let pl item 1 node ; the list of actions performed so far
     let wd item 2 node
@@ -884,40 +861,15 @@ to depth-first-planning-rec [stack]
     foreach pl [
       set acts (remove ? acts);
       ]
-    if (debug)[
-      show ""
-      show ""
-      show "**** expand the following branches *****"
-      print "  world"
-      print wd
-      show "knowledge"
-      print action-knowledge
-      show "****************************************"
-    ]
 
-   ifelse (length pl < num-hours) [
+
+   ifelse (length pl < num-hours) [ ; test if the node is a leaf node or an internal node
       foreach acts [
         let pl' (fput ? pl)
         let wd' (expected-world wd (item ? action-knowledge))
         let bv' calculate-bidding wd'
         let node' obtain-node bv' pl' wd'
-          if (debug)[
-              show ""
-              show ""
-              show "---- action and the node afterwards ------"
-              show "action:"
-              show ?
-              show (item ? action-knowledge)
-              show "before world:"
-              show wd
-              show "after world:"
-              show wd'
-              show "----- plan and bidding value -------"
-              show "plan"
-              show pl'
-              show "bidding value"
-              show bv'
-          ]
+
           ifelse ( length pl' = num-hours)
           [
             ifelse (best-node = [])
@@ -930,31 +882,22 @@ to depth-first-planning-rec [stack]
               set stack (fput node' stack); add the child
               depth-first-planning-rec stack
               ][
-                if (debug)[
-                show "branch terminate because there is no knowledge here to do any prediction"
-                ]
+                if (debug)[show "branch terminate because there is no knowledge here to do any prediction"]
               ]
-
           ]
       ]
       set stack remove node stack
-
     ]
-    [
+    [ ; it is a leaf node and the plan is too long
       set stack remove node stack
       ]
-
-  ][
-;  show "**********************end of search********************"
+    ][
   ]; else if the stack is empty then do nothing
-
-
 
 end
 
 
 to-report obtain-node [v p w]
-  ; TODO: this method can be simplied using task
   let node (fput w [])
   set node (fput p node)
   set node (fput v node)
@@ -968,8 +911,6 @@ to reset-bidding
     set bidding (fput 0 bidding)
     ]
 end
-
-
 
 ; calculate the bidding function without learning factor
 to-report calculate-bidding [world-after] ;  compare it with the goal and calculate a value for bidding
@@ -1020,7 +961,8 @@ to-report expected-world [world act]; to perform an action according to the agen
     ; first, there is no effect,
     if ((member? (3 * (? - 1) + 3) know-true) or (member? (3 * ((? * -1) - 1) + 3) know-true))
     [
-      set expected (fput ? expected)] ; if the agent knows that the action has no effect on this patch then it keeps it in the expected world
+      set expected (fput ? expected)] ; if the agent knows that the action has
+                                      ; no effect on this patch then it keeps it in the expected world
     ]
 
      ; the agent also knows what is going to be true and false according to its knowledge of the action
@@ -1038,15 +980,17 @@ to-report expected-world [world act]; to perform an action according to the agen
   report expected
 end
 
-
+; randomly locate these agents to the center of a patch
 to locate
   setxy random-xcor random-ycor
+  face patch-here
+  move-to patch-here
 end
 
 to walk; moves to the neighbor or current patch which has the most potential information to aquire.
-  ;===================local variables===================================================
-  ;vision-index:(if the agent was )at each neighbor patch, the invisionindex of the agent
-  ;vision-known-index:(if the agent was )at each neighbor patch, the invisionindex of the agent, which the effect of current assigned button on that patch is known to current agent.
+  ;--------------local variables----------------
+  ;vision-index: the index of the vision of the agent
+  ;vision-known-index: if the agent was at each neighbor patch which would have an effect on current assigned button
 
   let neighbor sort neighbors
   foreach (sentence neighbor patch-here)[;neighbor patches(at most 8 for non-boundary patches) and current patch
@@ -1066,22 +1010,25 @@ to walk; moves to the neighbor or current patch which has the most potential inf
        set amount (lput ((length vision-index) - (length vision-known-index)) amount )
      ];the amount of information a agent at most could aquire for this button at this patch.
 
-    ask ? [set potential-infor mean amount]; calculate the mean value(potential information) of all the buttons it is incharge of for each neighbor and current location.
+    ask ? [set potential-infor mean amount]
+    ; this is to calculate the mean value(potential information) of all the buttons it is incharge of for each neighbor and current location.
 
     ]
     set target-patch max-one-of neighbors [potential-infor]
-    uphill potential-infor; moves to the neighbor or current patch which has the most potential information to aquire.If there are equal amount of potential infor, it randomly chooses one.
-    ; file:///home/robert/Project/MAgeS/netlogo-5.3-64/app/docs/dict/uphill.html
-;    show-vision
+    uphill potential-infor;
 end
 
+; a simple function for the interface
 to-report gamming-status
   ifelse (trying)
   [report "trying"]
   [report "bidding"]
-;  report (ifelse (trying) ["trying"] ["bidding"])
+
 end
 
+; this is the self-upgrade function where the agents update their programs according to the goal specified
+; the output program is a program specification which can be further implemented in any language.
+; the output is a Java (multi-thread) like description for each agent
 
 to output-program
    output-type "Personal-plan of " output-type self output-print ":"
@@ -1116,37 +1063,28 @@ to output-program
      set next-hour next-hour + 1
      ]
 
-
    ;Second, output last plans
    ifelse (last personal-plan-in-order = -1)
    [
     if (last (but-last personal-plan-in-order) != -1)
        [output-print "; Sleep;"]
-    output-print "Check the result and exit."]
+    output-print "Check the result and exit."] ; to confirm
    [output-type "Press Button "
     output-type last  personal-plan-in-order
     output-print "; notify all other agents: Goal Achieved."
     output-print "Check results and exit."]
     output-print "========================================"
 
- ;]
-
-  show "can i see here"
 end
-
-; TODO: button generation can be done using "shuffle"
-; TODO: random buttons are simply too random and looks ugly
-; TODO: ask the agent to press the button, not the observer
-; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
 381
 79
-626
-341
+634
+353
 -1
 -1
-20.833333333333332
+62.5
 1
 30
 1
@@ -1157,9 +1095,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-11
+3
 0
-11
+3
 1
 1
 1
@@ -1183,9 +1121,9 @@ HORIZONTAL
 
 BUTTON
 29
-591
+553
 106
-624
+586
 NIL
 go
 NIL
@@ -1200,9 +1138,9 @@ NIL
 
 BUTTON
 112
-591
+553
 184
-624
+586
 NIL
 go
 T
@@ -1217,9 +1155,9 @@ NIL
 
 BUTTON
 16
-468
+430
 104
-502
+464
 NIL
 setup
 NIL
@@ -1256,7 +1194,7 @@ vision-radius
 vision-radius
 0
 100
-30
+60
 10
 1
 NIL
@@ -1264,9 +1202,9 @@ HORIZONTAL
 
 MONITOR
 225
-568
+530
 314
-613
+575
 Day
 day
 17
@@ -1275,9 +1213,9 @@ day
 
 BUTTON
 112
-468
+430
 217
-501
+463
 button 1
 perform-action item 0 buttons
 NIL
@@ -1292,9 +1230,9 @@ NIL
 
 BUTTON
 222
-467
+429
 327
-500
+462
 button 2
 perform-action item 1 buttons
 NIL
@@ -1309,9 +1247,9 @@ NIL
 
 BUTTON
 112
-504
+466
 217
-537
+499
 button 3
 perform-action item 2 buttons
 NIL
@@ -1326,9 +1264,9 @@ NIL
 
 BUTTON
 222
-504
+466
 327
-537
+499
 button 4
 perform-action item 3 buttons
 NIL
@@ -1403,10 +1341,10 @@ NIL
 
 MONITOR
 16
-506
-104
-551
-Total buttons
+468
+112
+513
+total buttons
 num-agents * buttons-each
 17
 1
@@ -1414,9 +1352,9 @@ num-agents * buttons-each
 
 MONITOR
 224
-617
+579
 315
-662
+624
 hour
 hour
 17
@@ -1425,9 +1363,9 @@ hour
 
 MONITOR
 17
-709
+671
 200
-754
+716
 plan so far
 reverse buttons-chosen-before
 17
@@ -1461,9 +1399,9 @@ SLIDER
 288
 knowledge-threshold
 knowledge-threshold
-35
-100
-58
+40
+50
+49
 1
 1
 %
@@ -1471,9 +1409,9 @@ HORIZONTAL
 
 MONITOR
 18
-659
+621
 199
-704
+666
 bidding for current execution
 bidding
 17
@@ -1481,10 +1419,10 @@ bidding
 11
 
 MONITOR
-141
-343
-326
-388
+172
+341
+311
+386
 hours per day (max 4)
 num-hours
 17
@@ -1513,9 +1451,9 @@ Step 2: initialise the parameters
 
 TEXTBOX
 20
-439
+409
 343
-458
+428
 Step 3: setup the game and initialise the buttons
 12
 0.0
@@ -1523,9 +1461,9 @@ Step 3: setup the game and initialise the buttons
 
 TEXTBOX
 27
-564
+526
 189
-583
+545
 Step 4: play the game!
 12
 0.0
@@ -1533,9 +1471,9 @@ Step 4: play the game!
 
 TEXTBOX
 241
-551
+513
 309
-569
+531
 calendar
 12
 0.0
@@ -1543,9 +1481,9 @@ calendar
 
 TEXTBOX
 45
-634
+596
 195
-652
+614
 bidding and planning
 12
 0.0
@@ -1559,7 +1497,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test2.txt" "smile.txt" "sad.txt" "pi.txt"
-1
+0
 
 TEXTBOX
 383
@@ -1583,13 +1521,13 @@ debug
 -1000
 
 SWITCH
-16
-395
-324
-428
+15
+299
+323
+332
 can-communicate-at-night
 can-communicate-at-night
-0
+1
 1
 -1000
 
@@ -1604,21 +1542,10 @@ Multi-agent Epistemic Action Learning for Planning and Self-upgrading
 1
 
 SWITCH
-18
-345
-125
-378
-can-walk
-can-walk
-0
-1
--1000
-
-SWITCH
-19
-296
-163
-329
+17
+348
+161
+381
 decidable
 decidable
 0
@@ -1785,10 +1712,10 @@ TEXTBOX
 1
 
 TEXTBOX
-671
-66
-686
-711
+676
+69
+691
+714
 |\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n
 12
 0.0
@@ -1817,9 +1744,9 @@ TEXTBOX
 
 MONITOR
 216
-722
+684
 326
-767
+729
 ticks per hour
 ticks-per-hour
 17
@@ -1844,21 +1771,10 @@ Step 6: self-upgrading
 1
 
 MONITOR
-180
-293
-327
-338
-NIL
-succeed-initialise-game
-17
-1
-11
-
-MONITOR
 224
-667
+629
 314
-712
+674
 ticks
 ticks
 17
@@ -1900,23 +1816,43 @@ round (total-knowledge * 1000) / 10
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+This is a demo about a first attempt combining epistemic action learning with planning and self-upgrading for adaptive agents in BDI framework.
 
-## HOW IT WORKS
+#### Description
 
-(what rules the agents use to create the overall behavior of the model)
+There are some agents in this game assigned a task to press some buttons to light up the patch as required (the goal). The agents each got assigned some buttons at the beginning of the game. The agents can decide to perform only one action in one hour. A day consists of several hours. The agents then choose a location and start the game from the first hour. During a trying period, the agents randomly choose actions to perform. After that the agent start to bid about actions to be performed. The owner of the winning action will be notified to perform the action. The agents record the bidding history and once the goal is achieved, the agent then convert this bidding history to a partial plan and further convert to a program to upgrade itself.
+
+#### What is an action? How are actions learnt?
+
+In this game we consider only precondition-free action. By this we mean the precondition/requirement to perform the action is always satisfied. In this project we take pressing buttons as our actions. The agents are required to understand the postcondition of buttons. That is, the effect of the buttons. The action may turn a patch to green or turn a patch black. The agents compare patches before and after the action and extract knowledge about the action. More backgroud about action learning is in the project report as attached. The following is a guidance about this program.
+
+## THINGS TO TRY
+
+Users are encouraged to load the files provided to test the program. There are four files in total in the repository. Note that the pi.txt file may take a long time to run.
 
 ## HOW TO USE IT
 
-The interface has been designed to be intuitive. As such, the interface follows a flow of buttons, sliders and monitors that an user might need to navigate the program and watch the simulation. The interface, thusly, consists of the following elements:
+The interface has been designed to be intuitive. As such, the interface follows a flow of buttons, sliders and monitors that an user might need to navigate the program and watch the simulation. The interface consists of the following steps:
 
-pattern_name: This input box takes in the name of the file that contains the description of the goal pattern. The file is a CSV file. The first line of the file always consists of 2 values, the height and the width of the world. Then the file follows with a comma separated logical matrix, with the a value of 1 denoting an 	“on” pixel and a value of zero for an “off” pixel. Any resolution goal description can be loaded as long as the file follows the prescribed format.
+### Step 1
+
+load a pattern and test it on the patches using the two buttons "load and display" and "clear display". Please note that the "pi.txt" can be consume a long time.
+
+The following are attributes and buttons related to this step:
+
+pattern_name: This input box takes in the name of the file that contains the description of the goal pattern. the format is as follows:
+1) The file is a simple txt file. The first line of the file always consists of 2 values, the height and the width of the world.
+2) The file follows with a comma separated logical matrix, with the a value of 1 denoting an “on” pixel and a value of zero for an “off” pixel.
 
 Load and display: This button loads the file, and displays it in the viewer for the user to see the end goal design.
 
+the goal is in a green-black representation: it is represented as a pair of list of the goal pixels. The first sublist of the list is the collection of all the valid pixels, while the second sublist of the list is the collection of all the non valid pixels.
+
 Clear display: This button simply clears the displays.
 
-Goal: This monitor shows a list of list of the goal pixels. The pixels are represented as a vector in memory rather than an array, so each valid pixel has an index. The first sublist of the list is the collection of all the valid pixels, while the second sublist of the list is the collection of all the non valid pixels.
+### Step 2
+
+There are some parameters to be initialised before setting up the game.
 
 num_agents: This slider controls how many agents are there in the world to solve the problem.
 
@@ -1926,58 +1862,76 @@ vision_radius: This slider controls how far an agent can see and observe the env
 
 num_hours: This slider controls how many hours make up the day in the environment.
 
-noise: This slider controls how much disturbance is added to the search in order for it to branch into a tree, rather than becoming a linear path to the goal.
+noise_pct: This slider controls how much disturbance (in percentage) is added to the search in order for it to branch into a tree, rather than becoming a linear path to the goal.
 
-learning_factor: This slider controls the agent’s learning rate.
+decidable: this decides if all the patches can be turn "on" by at least one button.
 
-Total buttons: This monitor shows how many buttons in total are there for the goal pattern to be generated. This is determined by multiplying the number of buttons each agent gets with the number of agents.
+### Step 3
 
-Setup: This button sets up the world by initialising the world to its primitive state, loading the goal pattern in memory, spawning the agents and initialising their goals, beliefs, desires, intentions and button configurations, etc.
+This step is somply a set up step. Four example buttons generated are avaliable for mannual tests (together with the "clear display" button).
 
-go: This is a once button, and so it advances the world by one tick.
+setup: This button sets up the world by initialising the world to its primitive state, loading the goal pattern in memory, spawning the agents and initialising their goals, beliefs, desires, intentions and button configurations, etc.
 
-go(forever variant): This is a forever button variant, hence it continuously calls the go method and advances the ticks till the user stops it manually.
+total buttons: This monitor shows how many buttons in total are there for the goal pattern to be generated. This is determined by multiplying the number of buttons each agent gets with the number of agents.
 
-Button 1 through Button 4: This are the example buttons that the agents get access too. Pressing them sequentially gradually turns on all the valid pixels and turns off all the invalid pixels. Pressing the first button will light up some pixels with some additional noise, while the next button will turn on some additional valid and invalid button, till button 3. Pressing button 4 will turn off all the invalid pixels and make sure only the valid pixels of the goal configuration remains.
+button 1 - 4: these buttons are generated buttons leading towards the goal: pressing these buttons sequentially would lead to the goal pattern but the agents do not know about this. More specifially, these are the example buttons that the agents get access too (each have access to some of them). Pressing them sequentially would turn on all the valid pixels and turns off all the invalid pixels. Pressing the first button will light up some pixels with some additional noise, while the next button will turn on some additional valid and invalid button, till button 3. If there are only four hours then pressing button 4 will turn off all the invalid pixels and make sure only the valid pixels of the goal configuration remains.
 
-Current Action: This monitor shows the button that was chosen by the agents to be pressed.
+### Step 4
+
+There are two ways to play the game: to do it step by step or run the game automatically.
+
+go: This is a once button, and so it advances the world by one tick. The belief, intention, desire of agents may change. Note that this does not necessarily takes you to the next hour.
+
+go (forever variant): This is a forever button variant, hence it continuously calls the go method and advances the ticks till the user stops it manually. it maybe the case that the agents got stuck because of too little information about actions. This game was designed in a way that these agents would not know the whole plan. So these agents will not be able to distinguish different executions. Therefore, repeated executions are allowed to happen.
 
 Day: This monitor tracks the day.
 
 Hour: This monitor tracks the hour.
 
-Plan so far: This monitor shows the most optimal plan found so far that is nearest to the goal node.
+plan so far: This monitor shows the most optimal plan found so far that is nearest to the goal node. This also represents the actions during the past few hours.
 
-Bidding: This monitor shows which button has won the bidding.
+bidding: This monitor shows the bidding values of each buttons. It is clear to find out which button has won the bidding.
 
-Buttons of Agent 0 through 2: This monitor shows the list of buttons assigned to the agents. The size of the list is equivalent to slider value of button_each. Due to technical limitations, only the first 3 agents are monitored. If the number of agents is less than 3, then the monitor show “N/A”.
+### Step 5
 
-Agents' knowledge about their actions (percentage): This plot shows the percentage of accumulated knowledge of the agents over time. This only considers the daytime, however, as that is when new knowledge is learned and accumulated. Only communication is done during the night time.
+Apart from the patches we also provide a graphical representation of the knowledge of the first two agents and the overall knowledge of all the agents. The x-axis is the total hours taken while the y-axis is the agent's knowledge in percentage. This was calculated by dividing the length of each action's "know true" knowledge by the total number of patches. Notice that there is a chance that the knowledge can not go to 100%. That is, the action can remain undecidable even if the buttons are set to be decidable.
+
+total knowledge: this number is a rough represenation of the overall knowledge of agent's knowledge. This is provided to be compared with the knowledge threshold.
+
+status: there are two status, bidding and trying. When the game is in trying status, even if the agent's reach the goal by accident the agents will not be informed anything. The game continues.
+
+bidding days: the total number of days the agents have been bidding.
+
+### Step 6
+
+Here we also provide a sketchy representation of the distributed upgrading programs. Each agent knows the goal and knows what to do at what time. The agent will pass on notification and wakes each other up to perform actions. When the agents finished pressing the last button, the agent would notify every other agent and they all check if there is anything mismatching the goal.
+
+## Additional Information
+
+Some additional information about the belief, intention and desire (of agent 0) is provided alongside.
+### Belief
+
+The belief consists of the agent's knowledge about the buttons assigned to it, a representation of the action knowledge as well as the world it just observed.
+
+### Desire
+The desire is represented as a string of text. The agent would like to light up the pattern and generate a program to upgrade itself according to the actions and knowledge provided and stop once complete.
+
+### Intention
+
+There are four parts of the intention
+
+1) the agent intend to increase its knowledge about the buttons (especially the buttons it is in charge of).
+
+2) the agent intend to bid for the best action according to its knowledge. This button might not be to press its buttons.
+
+3) the agent is eager to observe the effect of the buttons. Agents are assumed to be free tomove around in this bounded area.
+
+4) the agent would like to record the bidding result. Once informed a valid plan, the agent would like to generate a specification to further update itself accordingly.
 
 
-## THINGS TO NOTICE
+## To report a bug
+Robert White: ai.robert.wangshuai@gmail.com
 
-(suggested things for the user to notice while running the model)
-
-## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
-## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
-
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
-
-## CREDITS AND REFERENCES
-
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
 @#$#@#$#@
 default
 true
