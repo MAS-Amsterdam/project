@@ -1140,10 +1140,10 @@ end
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-380
-103
-633
-377
+381
+79
+626
+341
 -1
 -1
 20.833333333333332
@@ -1167,10 +1167,10 @@ ticks
 30.0
 
 SLIDER
-164
-196
-314
-229
+165
+172
+315
+205
 buttons-each
 buttons-each
 1
@@ -1182,10 +1182,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-28
-615
-105
-648
+29
+591
+106
+624
 NIL
 go
 NIL
@@ -1199,10 +1199,10 @@ NIL
 1
 
 BUTTON
-111
-615
-183
-648
+112
+591
+184
+624
 NIL
 go
 T
@@ -1216,10 +1216,10 @@ NIL
 1
 
 BUTTON
-15
-492
-103
-526
+16
+468
+104
+502
 NIL
 setup
 NIL
@@ -1233,10 +1233,10 @@ NIL
 1
 
 SLIDER
-15
-196
-153
-229
+16
+172
+154
+205
 num-agents
 num-agents
 3
@@ -1248,10 +1248,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-16
-238
-153
-271
+17
+214
+154
+247
 vision-radius
 vision-radius
 0
@@ -1263,10 +1263,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-224
-592
-313
-637
+225
+568
+314
+613
 Day
 day
 17
@@ -1274,10 +1274,10 @@ day
 11
 
 BUTTON
-111
-492
-216
-525
+112
+468
+217
+501
 button 1
 perform-action item 0 buttons
 NIL
@@ -1291,10 +1291,10 @@ NIL
 1
 
 BUTTON
-221
-491
-326
-524
+222
+467
+327
+500
 button 2
 perform-action item 1 buttons
 NIL
@@ -1308,10 +1308,10 @@ NIL
 1
 
 BUTTON
-111
-528
-216
-561
+112
+504
+217
+537
 button 3
 perform-action item 2 buttons
 NIL
@@ -1325,10 +1325,10 @@ NIL
 1
 
 BUTTON
-221
-528
-326
-561
+222
+504
+327
+537
 button 4
 perform-action item 3 buttons
 NIL
@@ -1342,10 +1342,10 @@ NIL
 1
 
 MONITOR
-692
-143
-981
-188
+693
+119
+982
+164
 buttons of Agent 0
 [buttons-assigned] of turtle 0
 17
@@ -1353,10 +1353,10 @@ buttons of Agent 0
 11
 
 BUTTON
-132
-107
-253
-155
+133
+83
+254
+131
 load and display
 load-and-display-goal
 NIL
@@ -1370,10 +1370,10 @@ NIL
 1
 
 SLIDER
-164
-239
-313
-272
+165
+215
+314
+248
 noise_pct
 noise_pct
 25
@@ -1385,10 +1385,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-258
-106
-356
-158
+259
+82
+357
+134
 clear display
 ask patches [set pcolor black]
 NIL
@@ -1402,10 +1402,10 @@ NIL
 1
 
 MONITOR
-15
-530
-103
-575
+16
+506
+104
+551
 Total buttons
 num-agents * buttons-each
 17
@@ -1413,10 +1413,10 @@ num-agents * buttons-each
 11
 
 MONITOR
-223
-641
-314
-686
+224
+617
+315
+662
 hour
 hour
 17
@@ -1424,10 +1424,10 @@ hour
 11
 
 MONITOR
-16
-733
-199
-778
+17
+709
+200
+754
 plan so far
 reverse buttons-chosen-before
 17
@@ -1435,10 +1435,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-357
-393
-655
-555
+358
+369
+656
+531
 Agents' knowledge about their buttons
 total hour
 knowledge (%)
@@ -1455,25 +1455,25 @@ PENS
 "Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
 
 SLIDER
-16
-279
-207
-312
+17
+255
+208
+288
 knowledge-threshold
 knowledge-threshold
-25
+35
 100
-25
+58
 1
 1
 %
 HORIZONTAL
 
 MONITOR
-17
-683
-198
-728
+18
+659
+199
+704
 bidding for current execution
 bidding
 17
@@ -1481,10 +1481,10 @@ bidding
 11
 
 MONITOR
-140
-367
-325
-412
+141
+343
+326
+388
 hours per day (max 4)
 num-hours
 17
@@ -1492,90 +1492,90 @@ num-hours
 11
 
 TEXTBOX
-21
-82
-312
-100
+22
+58
+313
+76
 Step 1: load a file (test.txt for example)
 12
 0.0
 1
 
 TEXTBOX
-21
-176
-232
-206
+22
+152
+233
+182
 Step 2: initialise the parameters
 12
 0.0
 1
 
 TEXTBOX
-19
-463
-342
-482
+20
+439
+343
+458
 Step 3: setup the game and initialise the buttons
 12
 0.0
 1
 
 TEXTBOX
-26
-588
-188
-607
+27
+564
+189
+583
 Step 4: play the game!
 12
 0.0
 1
 
 TEXTBOX
-240
-575
-308
-593
+241
+551
+309
+569
 calendar
 12
 0.0
 1
 
 TEXTBOX
-44
-658
-194
-676
+45
+634
+195
+652
 bidding and planning
 12
 0.0
 1
 
 CHOOSER
-19
-108
-126
-153
+20
+84
+127
+129
 pattern-name
 pattern-name
-"test1.txt" "test2.txt" "smile.txt" "sad.txt" "pi.txt"
-2
+"test2.txt" "smile.txt" "sad.txt" "pi.txt"
+1
 
 TEXTBOX
-382
-79
-549
-99
+383
+55
+550
+75
 Step 5: evaluation
 12
 0.0
 1
 
 SWITCH
-215
-280
-314
-313
+216
+256
+315
+289
 debug
 debug
 1
@@ -1583,10 +1583,10 @@ debug
 -1000
 
 SWITCH
-15
-419
-323
-452
+16
+395
+324
+428
 can-communicate-at-night
 can-communicate-at-night
 0
@@ -1594,20 +1594,20 @@ can-communicate-at-night
 -1000
 
 TEXTBOX
-282
-26
-1176
-53
+74
+16
+968
+43
 Multi-agent Epistemic Action Learning for Planning and Self-upgrading
 24
 0.0
 1
 
 SWITCH
-17
-369
-124
-402
+18
+345
+125
+378
 can-walk
 can-walk
 0
@@ -1615,10 +1615,10 @@ can-walk
 -1000
 
 SWITCH
-18
-320
-162
-353
+19
+296
+163
+329
 decidable
 decidable
 0
@@ -1626,10 +1626,10 @@ decidable
 -1000
 
 MONITOR
-694
-201
-1692
-246
+695
+177
+983
+222
 knowledge of agent 0
 [action-knowledge] of turtle 0
 17
@@ -1637,10 +1637,10 @@ knowledge of agent 0
 11
 
 MONITOR
-728
-659
-878
-704
+729
+635
+879
+680
 move to target patch
 [target-patch] of turtle 0
 17
@@ -1648,20 +1648,20 @@ move to target patch
 11
 
 TEXTBOX
-691
-83
-1048
-132
+692
+59
+1049
+108
 Additional Information:\nThe belief, desire and intention of agent 0\n1) Belief
 12
 0.0
 1
 
 MONITOR
-692
-258
-982
-303
+693
+234
+983
+279
 observation of turtle 0
 [observation] of turtle 0
 17
@@ -1669,20 +1669,20 @@ observation of turtle 0
 11
 
 TEXTBOX
-697
-312
-885
-335
+698
+288
+886
+311
 2) Desire
 12
 0.0
 1
 
 MONITOR
-692
-335
-982
-380
+693
+311
+983
+356
 desire
 [desire] of turtle 0
 17
@@ -1690,42 +1690,42 @@ desire
 11
 
 TEXTBOX
-696
-393
-884
-416
+697
+369
+885
+392
 3) Intention
 12
 0.0
 1
 
 MONITOR
-725
-569
-913
-614
-bidding value for next step
+726
+545
+817
+590
+bidding value
 first [best-node] of turtle 0
 17
 1
 11
 
 MONITOR
+825
+544
 922
-568
-1115
-613
-bidding action for next step
+589
+bidding action
 item hour (reverse item 1 ([best-node] of turtle 0))
 17
 1
 11
 
 MONITOR
-477
-565
-565
-610
+478
+541
+566
+586
 status
 gamming-status
 17
@@ -1733,21 +1733,21 @@ gamming-status
 11
 
 MONITOR
-724
-492
-889
-537
+725
+468
+890
+513
 knowledge percentage
-[know-buttons-in-charge] of turtle 0
+round (([know-buttons-in-charge] of turtle 0 ) * 1000)  / 10
 17
 1
 11
 
 MONITOR
-724
-419
-958
-464
+725
+395
+959
+440
 intention
 [intention] of turtle 0
 17
@@ -1755,50 +1755,50 @@ intention
 11
 
 TEXTBOX
-726
-473
-982
-503
+727
+449
+983
+479
 (1) increase knowledge about actions
 12
 0.0
 1
 
 TEXTBOX
-725
-545
-1114
-563
-(2) to bid for the best action according to its knowledge
+726
+521
+964
+539
+(2) to bid according to its knowledge
 12
 0.0
 1
 
 TEXTBOX
-727
-622
-1101
-652
+728
+598
+1004
+628
 (3) to move to the patch where it can possibly know more about the effect of actions
 12
 0.0
 1
 
 TEXTBOX
-665
-81
-680
-726
+671
+66
+686
+711
 |\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n
 12
 0.0
 1
 
 MONITOR
+726
 725
-735
-912
-780
+913
+770
 personal plan
 reverse ([personal-plan] of turtle 0)
 17
@@ -1806,20 +1806,20 @@ reverse ([personal-plan] of turtle 0)
 11
 
 TEXTBOX
-726
-715
-1098
-748
+727
+691
+989
+724
 (4) to obtain a personal plan for self-upgrading.
 12
 0.0
 1
 
 MONITOR
-215
-746
-325
-791
+216
+722
+326
+767
 ticks per hour
 ticks-per-hour
 17
@@ -1827,27 +1827,27 @@ ticks-per-hour
 11
 
 OUTPUT
-343
-637
-652
-795
+344
+613
+653
+771
 10
 
 TEXTBOX
-389
-620
-539
-638
+390
+596
+540
+614
 Step 6: self-upgrading
 12
 0.0
 1
 
 MONITOR
-179
-317
-326
-362
+180
+293
+327
+338
 NIL
 succeed-initialise-game
 17
@@ -1855,10 +1855,10 @@ succeed-initialise-game
 11
 
 MONITOR
-223
-691
-313
-736
+224
+667
+314
+712
 ticks
 ticks
 17
@@ -1866,20 +1866,20 @@ ticks
 11
 
 TEXTBOX
-707
-473
-722
-773
+708
+449
+723
+749
   /\n |\n |\n |\n |\n |\n |\n |\n |\n/\n\\\n |\n |\n |\n |\n |\n |\n |\n |\n  \\
 12
 0.0
 1
 
 MONITOR
-570
-564
-666
-609
+571
+540
+667
+585
 bidding days
 bidding-day
 17
@@ -1887,12 +1887,12 @@ bidding-day
 11
 
 MONITOR
-343
-564
-472
-609
+344
+540
+473
+585
 total knowledge (%)
-total-knowledge * 100
+round (total-knowledge * 1000) / 10
 17
 1
 11
