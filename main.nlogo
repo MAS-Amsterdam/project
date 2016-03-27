@@ -491,7 +491,9 @@ end
 to update-desire
 
   if(check-goal)
-  [ask turtles [set desire "stop"]]
+  [ask turtles [set desire "stop and upgrade"]]; when the agents are informed that the plan is a valid one.
+                                               ; the agent would upgrade itself according to the
+                                               ; specification generated.
 end
 
 
@@ -502,7 +504,7 @@ to update-intention
     ifelse (intention = "empty")
     [set intention "to locate"]
     [
-      ifelse (desire = "stop");========================================to stop
+      ifelse (desire = "stop and upgrade");========================================to stop
       [set intention "self-upgrade"]
       [ifelse (intention = "to locate") ;==============================to locate
         [ifelse(trying)
@@ -1080,8 +1082,8 @@ end
 GRAPHICS-WINDOW
 381
 79
-634
-353
+641
+360
 -1
 -1
 62.5
@@ -1931,7 +1933,6 @@ There are four parts of the intention
 
 ## To report a bug
 Robert White: ai.robert.wangshuai@gmail.com
-
 @#$#@#$#@
 default
 true
