@@ -324,7 +324,7 @@ to setup-agents
 
   create-turtles num-agents [
     set observation []
-    set desire "light up pathes as the goal"
+    set desire "light up patches as the goal"
     set intention "empty"
     set know-buttons-in-charge 0
     set label who
