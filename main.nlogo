@@ -607,7 +607,7 @@ to-report check-goal ; check if the current situation is the same as the goal
     let y gety ?
     if (([pcolor] of (patch x y)) = green)[set sign false]
     ]
-  if (knowledge-threshold >= total-knowledge * 100 or trying) [report false]
+  if (trying) [report false]
   report sign
 end
 
@@ -849,7 +849,9 @@ to bid ; calculate the bidding value for each agent for each action
   ; 1) construct an instance of the date structure
   ask turtles [
   let world-now represent-visable-world
+
   let current-node obtain-node (calculate-bidding world-now) buttons-chosen-before world-now
+
   depth-first-planning current-node
   ; 2) extract information from the best-node
   if (not (best-node = [])) [
@@ -1001,6 +1003,7 @@ to-report represent-visable-world ; to give the index of visable patches (for pe
 end
 
 ; expand according to a given action
+
 to-report expected-world [world act]; to perform an action according to the agent's knowledge
   ;show "the knowledge of the action is as follows"
   ;show act
@@ -1015,7 +1018,7 @@ to-report expected-world [world act]; to perform an action according to the agen
   foreach world [
     ; ==== the certain part of the expected world
     ; first, there is no effect,
-    if ((member? (3 * ? + 2) know-true) or (member? (-3 * ? + 2) know-true))
+    if ((member? (3 * (? - 1) + 3) know-true) or (member? (3 * ((? * -1) - 1) + 3) know-true))
     [
       set expected (fput ? expected)] ; if the agent knows that the action has no effect on this patch then it keeps it in the expected world
     ]
@@ -1023,10 +1026,10 @@ to-report expected-world [world act]; to perform an action according to the agen
      ; the agent also knows what is going to be true and false according to its knowledge of the action
     foreach know-true [
       ; get the index
-      let index floor (? / 3)
+      let index (floor (? / 3)) + 1
       ; get the color
-      if ((remainder ? 3) = 0) [set expected (fput index expected)]
-      if ((remainder ? 3) = 1) [set expected (fput (index * -1) expected)]
+      if ((remainder ? 3) = 1) [set expected (fput index expected)]
+      if ((remainder ? 3) = 2) [set expected (fput (index * -1) expected)]
       ; if it is green then keep it positive, it black then keep it negative
       ]
     ; the rest is not sure for the agent.
@@ -1130,11 +1133,11 @@ end
 GRAPHICS-WINDOW
 380
 103
-638
-381
+625
+294
 -1
 -1
-83.33333333333333
+3.90625
 1
 30
 1
@@ -1145,9 +1148,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-2
+63
 0
-2
+63
 1
 1
 1
@@ -1451,7 +1454,7 @@ knowledge-threshold
 knowledge-threshold
 25
 100
-50
+25
 1
 1
 %
@@ -1546,8 +1549,8 @@ CHOOSER
 153
 pattern-name
 pattern-name
-"test.txt" "smile.txt" "sad.txt" "tiny.txt"
-3
+"test1.txt" "test2.txt" "smile.txt" "sad.txt" "pi.txt"
+4
 
 TEXTBOX
 382
@@ -1710,10 +1713,10 @@ item hour (reverse item 1 ([best-node] of turtle 0))
 11
 
 MONITOR
-436
-562
-561
-607
+477
+565
+565
+610
 status
 gamming-status
 17
@@ -1866,10 +1869,21 @@ TEXTBOX
 MONITOR
 570
 564
-659
-610
+666
+609
+bidding days
 bidding-day
-bidding-day
+17
+1
+11
+
+MONITOR
+343
+564
+472
+609
+total knowledge (%)
+total-knowledge * 100
 17
 1
 11
