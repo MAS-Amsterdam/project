@@ -1219,7 +1219,7 @@ MONITOR
 530
 314
 575
-Day
+day
 day
 17
 1
