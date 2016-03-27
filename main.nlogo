@@ -134,14 +134,16 @@ to open-file
           set y y - 1
         ]
       ]
-      [
-        ; negative
-        set goal (list positive (fput (x + y * width + 1 ) negative))
-        set x x + 1
-        if (x = width)
+      [if (? = "0")
         [
-          set x 0
-          set y y - 1
+          ; negative
+          set goal (list positive (fput (x + y * width + 1 ) negative))
+          set x x + 1
+          if (x = width)
+          [
+            set x 0
+            set y y - 1
+          ]
         ]
       ]
     ]
@@ -1045,11 +1047,11 @@ end
 GRAPHICS-WINDOW
 762
 92
-1260
-611
+1269
+620
 -1
 -1
-41.666666666666664
+166.66666666666666
 1
 30
 1
@@ -1060,9 +1062,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-11
+2
 0
-11
+2
 1
 1
 1
@@ -1462,7 +1464,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test.txt" "smile.txt" "sad.txt" "tiny.txt"
-1
+3
 
 TEXTBOX
 414
