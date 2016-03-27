@@ -1091,17 +1091,23 @@ to output-program
    let next-hour 0
    foreach but-last personal-plan-in-order [
      ifelse ( ? = -1)
-     [output-print "Sleep;"]
+     [ ifelse (next-hour != 0)[
+        if (item (next-hour - 1) personal-plan-in-order != -1)
+        [output-print "; Sleep;"]
+        ]
+        [output-print "; Sleep;"]
+     ]
      [output-type "Press Button " output-type ?
       ;to figure out who owns next executing button
 
-     ifelse (item ( next-hour + 1) personal-plan-in-order != -1);if it is itself that owns next executing button
-        [output-print ", notifies itself;"
-         ];notificate itself
+     ifelse (item ( next-hour + 1) personal-plan-in-order != -1)
+        [output-print ", continue;"
+         ];keep awake
 
         [ask other turtles[
-          if( item ( next-hour + 1 ) reverse personal-plan != -1)
-             [output-type ", notifies "
+          if( item ( next-hour + 1 ) (reverse personal-plan) != -1)
+             [
+               output-type "; notifies "
               output-type self
               output-print ";" ];notification next agent
           ]
@@ -1113,15 +1119,18 @@ to output-program
 
    ;Second, output last plans
    ifelse (last personal-plan-in-order = -1)
-   [output-print "Sleep;"
+   [
+    if (last (but-last personal-plan-in-order) != -1)
+       [output-print "; Sleep;"]
     output-print "Check the result and exit."]
    [output-type "Press Button "
     output-type last  personal-plan-in-order
-    output-print ", notify all other agents: Goal Achieved."
+    output-print "; notify all other agents: Goal Achieved."
     output-print "Check results and exit."]
     output-print "========================================"
+
  ;]
-  ;die
+
   show "can i see here"
 end
 
@@ -1133,11 +1142,11 @@ end
 GRAPHICS-WINDOW
 380
 103
-625
-294
+633
+377
 -1
 -1
-3.90625
+20.833333333333332
 1
 30
 1
@@ -1148,9 +1157,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-63
+11
 0
-63
+11
 1
 1
 1
@@ -1550,7 +1559,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test1.txt" "test2.txt" "smile.txt" "sad.txt" "pi.txt"
-4
+2
 
 TEXTBOX
 382
