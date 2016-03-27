@@ -1090,7 +1090,12 @@ to output-program
    let next-hour 0
    foreach but-last personal-plan-in-order [
      ifelse ( ? = -1)
-     [output-print "Sleep;"]
+     [ ifelse (next-hour != 0)[
+        if (item (next-hour - 1) personal-plan-in-order != -1)
+        [output-print "Sleep;"]
+        ]
+        [output-print "Sleep;"]
+     ]
      [output-type "Press Button " output-type ?
       ;to figure out who owns next executing button
 
@@ -1099,8 +1104,9 @@ to output-program
          ];notificate itself
 
         [ask other turtles[
-          if( item ( next-hour + 1 ) reverse personal-plan != -1)
-             [output-type ", notifies "
+          if( item ( next-hour + 1 ) (reverse personal-plan) != -1)
+             [
+               output-type ", notifies "
               output-type self
               output-print ";" ];notification next agent
           ]
@@ -1112,15 +1118,18 @@ to output-program
 
    ;Second, output last plans
    ifelse (last personal-plan-in-order = -1)
-   [output-print "Sleep;"
+   [
+    if (last (but-last personal-plan-in-order) != -1)
+       [output-print "Sleep;"]
     output-print "Check the result and exit."]
    [output-type "Press Button "
     output-type last  personal-plan-in-order
     output-print ", notify all other agents: Goal Achieved."
     output-print "Check results and exit."]
     output-print "========================================"
+
  ;]
-  ;die
+
   show "can i see here"
 end
 
@@ -1869,7 +1878,7 @@ MONITOR
 570
 564
 659
-610
+609
 bidding-day
 bidding-day
 17
