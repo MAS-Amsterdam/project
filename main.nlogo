@@ -1098,10 +1098,10 @@ end
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-374
-116
-634
-397
+382
+119
+642
+400
 -1
 -1
 20.833333333333332
@@ -1221,10 +1221,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-341
-323
-430
-368
+224
+592
+313
+637
 Day
 day
 17
@@ -1371,10 +1371,10 @@ num-agents * buttons-each
 11
 
 MONITOR
-339
-270
-430
-315
+223
+641
+314
+686
 hour
 hour
 17
@@ -1490,10 +1490,10 @@ Step 4: play the game!
 1
 
 TEXTBOX
-242
-592
-310
-610
+240
+575
+308
+593
 calendar
 12
 0.0
@@ -1702,10 +1702,10 @@ knowledge percentage
 11
 
 MONITOR
-476
-174
-710
-219
+724
+419
+958
+464
 intention
 [intention] of turtle 0
 17
@@ -1774,10 +1774,10 @@ TEXTBOX
 1
 
 MONITOR
-337
-216
-428
-261
+215
+746
+325
+791
 ticks per hour
 ticks-per-hour
 17
@@ -1808,6 +1808,17 @@ MONITOR
 60
 NIL
 succeed-initialise-game
+17
+1
+11
+
+MONITOR
+223
+691
+313
+736
+ticks
+ticks
 17
 1
 11
