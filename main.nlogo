@@ -38,6 +38,7 @@ turtles-own[
   ; know-true consists of the propositions the agent is sure about.
   ; know false consists of the propositions the agent knows not going to be the case.
   personal-plan;
+  button-owners;agents' belief about the owner of each buttons
   ;======================desire====================================================================
   ; the agent has the desire to maximise the knowledge of the buttons it is in charge of
   ; to stop itself when informed
@@ -324,7 +325,7 @@ to setup-agents
 
   create-turtles num-agents [
     set observation []
-    set desire "light up patches as the goal"
+    set desire "light up pathes as the goal"
     set intention "empty"
     set know-buttons-in-charge 0
     set label who
@@ -385,6 +386,22 @@ to assign-buttons; randomly assign the buttons to the turtles
        set remain-bt (remove (item n-button remain-bt) remain-bt)
    ]
   ]
+   ;anounce to all the agents the owner of the buttons
+   let owner []
+   foreach n-values (length buttons)[?] [
+      set owner (fput -1 owner)
+      ]
+    ask turtles [
+      foreach buttons-assigned[
+        set owner replace-item ? owner who
+
+        ]
+     ]
+   ask turtles[
+     set button-owners owner
+    ]
+
+
 end
 
 
@@ -491,9 +508,7 @@ end
 to update-desire
 
   if(check-goal)
-  [ask turtles [set desire "stop and upgrade"]]; when the agents are informed that the plan is a valid one.
-                                               ; the agent would upgrade itself according to the
-                                               ; specification generated.
+  [ask turtles [set desire "stop"]]
 end
 
 
@@ -504,7 +519,7 @@ to update-intention
     ifelse (intention = "empty")
     [set intention "to locate"]
     [
-      ifelse (desire = "stop and upgrade");========================================to stop
+      ifelse (desire = "stop");========================================to stop
       [set intention "self-upgrade"]
       [ifelse (intention = "to locate") ;==============================to locate
         [ifelse(trying)
@@ -1033,7 +1048,7 @@ end
 ; the output is a Java (multi-thread) like description for each agent
 
 to output-program
-   output-type "Personal-plan of " output-type self output-print ":"
+   output-type "Personal-plan of Agent " output-type who output-print ":"
 
    let personal-plan-in-order reverse personal-plan
    ;First, output plans except last one.
@@ -1042,25 +1057,22 @@ to output-program
      ifelse ( ? = -1)
      [ ifelse (next-hour != 0)[
         if (item (next-hour - 1) personal-plan-in-order != -1)
-        [output-print "; Sleep;"]
+        [output-print "sleep;"]
         ]
-        [output-print "; Sleep;"]
+        [output-print "sleep;"]
      ]
-     [output-type "Press Button " output-type ?
+     [output-type "press Button " output-type ?
       ;to figure out who owns next executing button
 
      ifelse (item ( next-hour + 1) personal-plan-in-order != -1)
-        [output-print ", continue;"
+        [output-print ", continues;"
          ];keep awake
+        [ output-type "; notifies Agent "
+          output-type item (item ( next-hour + 1) (reverse buttons-chosen-before)) button-owners
+          output-print ";"
 
-        [ask other turtles[
-          if( item ( next-hour + 1 ) (reverse personal-plan) != -1)
-             [
-               output-type "; notifies "
-              output-type self
-              output-print ";" ];notification next agent
-          ]
-        ]
+            ]
+
       ]
      set next-hour next-hour + 1
      ]
@@ -1069,12 +1081,12 @@ to output-program
    ifelse (last personal-plan-in-order = -1)
    [
     if (last (but-last personal-plan-in-order) != -1)
-       [output-print "; Sleep;"]
-    output-print "Check the result and exit."] ; to confirm
-   [output-type "Press Button "
+       [output-print "sleep;"]
+    output-print "check the result and exit."] ; to confirm
+   [output-type "press Button "
     output-type last  personal-plan-in-order
     output-print "; notify all other agents: Goal Achieved."
-    output-print "Check results and exit."]
+    output-print "check results and exit."]
     output-print "========================================"
 
 end
@@ -1403,7 +1415,7 @@ knowledge-threshold
 knowledge-threshold
 40
 50
-49
+50
 1
 1
 %
@@ -1529,7 +1541,7 @@ SWITCH
 332
 can-communicate-at-night
 can-communicate-at-night
-1
+0
 1
 -1000
 
