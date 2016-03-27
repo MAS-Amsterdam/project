@@ -399,7 +399,7 @@ to go
      ask turtles [set personal-plan []]
      ]
 
-   if (check-goal and not trying) [stop]
+   ;if (check-goal and not trying) [stop]
 end
 
 
@@ -504,7 +504,7 @@ to exe-action
           ifelse (intention = "self-upgrade")
           [
             output-program
-
+            die
             ]
           [if (intention = "to execute")
             [
@@ -519,7 +519,7 @@ to exe-action
       ]
     ]
 
-   if not any? turtles [ stop ]
+  if not any? turtles [ stop ]
 
   ;===============<collective actions>=======================
    if all? turtles [intention = "to bid" or intention = "to choose a random action"]
@@ -1086,11 +1086,11 @@ end
 GRAPHICS-WINDOW
 762
 92
-1269
-620
+1007
+239
 -1
 -1
-166.66666666666666
+41.666666666666664
 1
 30
 1
@@ -1101,9 +1101,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-2
+11
 0
-2
+11
 1
 1
 1
@@ -1119,7 +1119,7 @@ buttons-each
 buttons-each
 1
 3
-1
+2
 1
 1
 NIL
@@ -1503,7 +1503,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test.txt" "smile.txt" "sad.txt" "tiny.txt"
-3
+1
 
 TEXTBOX
 414
