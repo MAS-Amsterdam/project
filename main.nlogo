@@ -1,5 +1,6 @@
 globals [
   ;==============input/output/goal related===================
+  time
   csv
   fileList ;
   width      ; the width of the patches
@@ -80,7 +81,8 @@ to setup
   setup-bidding
   setup-patches
   set trying true
-
+  set time 0
+  reset-timer
 end
 
 to setup-ticks
@@ -450,7 +452,7 @@ to go
    update-intention
    update-belief
    exe-action
-
+   set time timer
    if (hour = 0 and ticks = 0)[setup-ticks]
    tick
    if (ticks = ticks-per-hour)
@@ -1094,11 +1096,11 @@ end
 GRAPHICS-WINDOW
 381
 79
-641
-360
+635
+354
 -1
 -1
-62.5
+15.625
 1
 30
 1
@@ -1109,9 +1111,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-3
+15
 0
-3
+15
 1
 1
 1
@@ -1511,7 +1513,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test2.txt" "smile.txt" "sad.txt" "pi.txt"
-0
+2
 
 TEXTBOX
 383
@@ -1823,6 +1825,17 @@ MONITOR
 585
 total knowledge (%)
 round (total-knowledge * 1000) / 10
+17
+1
+11
+
+MONITOR
+182
+734
+342
+779
+time to complete the task
+time
 17
 1
 11
