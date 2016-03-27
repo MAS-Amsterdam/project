@@ -11,6 +11,7 @@ globals [
   hour; the hour
   trying ; a sign of status if the agents are trying or bidding
   bidding ; for each action, we record a value
+  bidding-day; total amount of days where buttons are chosen by bidding
   ticks-per-hour
   ;=========================buttons related variables==============================================
   noise ; the randomly set points in each button that belongs to solution.
@@ -59,6 +60,7 @@ to setup
   ; set noise-dis 8; the randomly set points in each button that not belongs to solution.
   set color-list n-of num-agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
   set succeed-initialise-game false
+
   setup-ticks
   open-file; set up the goal pattern.
   setup-time
@@ -84,6 +86,7 @@ end
 to setup-time
   set day 0
   set hour 0
+  set bidding-day 0
 end
 
 to setup-bidding
@@ -409,6 +412,7 @@ to go
   [ stop ]
   [ set succeed-initialise-game true ]
 
+  if (trying = false and hour = 0 and ticks = 0) [set bidding-day (bidding-day + 1)]
 
 end
 
@@ -430,8 +434,7 @@ end
 to update-desire
 
   if(check-goal)
-  [ask turtles [set desire "stop"]
-    show "fuck"]
+  [ask turtles [set desire "stop"]]
 end
 
 
@@ -442,8 +445,7 @@ to update-intention
     [set intention "to locate"]
     [
       ifelse (desire = "stop");========================================to stop
-      [set intention "self-upgrade"
-        show "fuck2"]
+      [set intention "self-upgrade"]
       [ifelse (intention = "to locate") ;==============================to locate
         [ifelse(trying)
           [set intention "to choose a random action"]
@@ -504,38 +506,7 @@ end
 
 
 to exe-action
-  ;==============<individual actions>====================
-  ask turtles [
-      ifelse (intention = "to move")
-      [walk]
-      [
-        ifelse (intention = "to locate" and hour  = 0)
-        [
-          locate
-
-          ] ;  a random location
-        [
-          ifelse (intention = "self-upgrade")
-          [
-            output-program
-            die
-            ]
-          [if (intention = "to execute")
-            [
-              ifelse (((first personal-plan) = -1) or ((first personal-plan) = -2))
-              [
-                ;show "nothing to do here"
-                ]
-              [perform-action (item (first personal-plan) buttons)]
-            ]
-          ]
-        ]
-      ]
-    ]
-
-  if not any? turtles [ stop ]
-
-  ;===============<collective actions>=======================
+    ;===============<collective actions>=======================
    if all? turtles [intention = "to bid" or intention = "to choose a random action"]
    [
      ifelse (not trying)
@@ -566,6 +537,36 @@ to exe-action
      communicate
      ask turtles [update-average-individual-knowledge]
    ]
+
+  ;==============<individual actions>====================
+  ask turtles [
+      ifelse (intention = "to move")
+      [walk]
+      [
+        ifelse (intention = "to locate" and hour  = 0)
+        [
+          locate
+
+          ] ;  a random location
+        [
+          ifelse (intention = "self-upgrade")
+          [
+            output-program
+            die
+            ]
+          [if (intention = "to execute")
+            [
+              ifelse (((first personal-plan) = -1) or ((first personal-plan) = -2))
+              [
+                ;show "nothing to do here"
+                ]
+              [perform-action (item (first personal-plan) buttons)]
+            ]
+          ]
+        ]
+      ]
+    ]
+
   show-vision
 
 end
@@ -586,7 +587,7 @@ to update-average-individual-knowledge; the average knownledge of the buttons ea
     ;let total-indi-know 0; the knowldege of all the buttons it
     set know-buttons-in-charge 0
     foreach buttons-assigned[
-      let n length first (remove-duplicates (item ? action-knowledge))
+      let n length first (item ? action-knowledge)
       set know-buttons-in-charge (know-buttons-in-charge + n / (width * height))
     ]
 
@@ -632,26 +633,43 @@ end
 
 to observe-and-learn ; ask each agent to change the vision and vision index
   ask turtles [
+
     let vision (patches in-cone-nowrap ((vision-radius * width / 100) * width / 100) 360) ; the agent's vision
     let vision-indexes []
     ask vision [
       set vision-indexes fput (get-patch-index self)  vision-indexes
+      show self
       ]
 
+;    show vision
+;    show vision-indexes
     ; compare vision-indexes and observation to learn
 
     ; Step 1: obtain those not changed
     let know-false last (item button-chosen action-knowledge)
     let know-true first (item button-chosen action-knowledge)
 
-    let not-changed (modes (sentence observation vision-indexes))
+    let not-changed  []
+    if not ((modes (sentence observation vision-indexes)) = (sentence observation vision-indexes))
+    [set not-changed (modes (sentence observation vision-indexes))]
+
+
+    show "observation and vision-index"
+    show observation
+    show vision-indexes
+
+    show "not changed"
+    show not-changed
 
     let new-know-false []
     foreach not-changed [
       ifelse (? > 0)
-      [set new-know-false fput (? * 3 + 1) new-know-false]
-      [set new-know-false fput (? * -3 + 0) new-know-false]]; compute the new knowledge obtained from vision and observation
+      [set new-know-false fput ((? - 1) * 3 + 2) new-know-false]
+      [set new-know-false fput (((? * -1) - 1) * 3 + 1) new-know-false]]; compute the new knowledge obtained from vision and observation
     set know-false remove-duplicates (sentence know-false new-know-false) ; extract information and add to belief of this action remove-duplicates
+    show "know false"
+    show know-false
+
     ; Step 2: obtain those changed
 
     let tmp (sentence (map [? * -1] observation) vision-indexes)
@@ -661,27 +679,41 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     let new-know-true []
     foreach changed [
       ifelse (? > 0)
-      [set new-know-true fput (? * 3 + 0) new-know-true]
-      [set new-know-true fput (? * -3 + 1) new-know-true]]; compute the new knowledge obtained from vision and observation
+      [set new-know-true fput ((? - 1) * 3 + 1) new-know-true]
+      [set new-know-true fput (((? * -1) - 1) * 3 + 2) new-know-true]]; compute the new knowledge obtained from vision and observation
 
     set know-true (remove-duplicates (sentence know-true new-know-true))
 
-
-    ; Before we changed the knowledge about the action, we need to make sure that there
+    ; Before we changed the knowledge about the action
 
     ; if we know that the action does not have any effect in both cases when a certain patch is on or off. Then we have say it has no effect
     foreach (n-values (width * height) [?])[
-      ; if ? * 3 and ? * 3 +1 are both members of know-false then we add ? * 3 + 2 to know true. That is, we know the effect of this action on this patch.
-      if((member? (? * 3) know-false) and (member? (? * 3 + 1) know-false) and not (member? (? * 3 + 2) know-true))[
-        set know-true (fput (? * 3 + 2) know-true)
+      ; if the other two are both members of know-false then we add itself to know true. That is, we know the effect of this action on this patch.
+
+      if((member? (? * 3 + 1) know-false) and (member? (? * 3 + 2) know-false) and not (member? (? * 3 + 3) know-true))[
+
+        show "we are going to add one which is indifferent"
+        show know-true
+        show know-false
+        show "---here are the detailed changes---"
+        show (? * 3 + 1)
+        show (? * 3 + 2)
+        show (? * 3 + 3)
+
+        set know-true (fput (? * 3 + 3) know-true)
         set know-false (remove (? * 3 + 1) know-false)
-        set know-false (remove (? * 3 ) know-false)
-        ;show know-true
+        set know-false (remove (? * 3 + 2) know-false)
+
+
         ]
       ]
 
     set know-true remove-duplicates know-true
     set know-false remove-duplicates know-false
+
+
+
+
     ; replace the knowledge of the action
     set action-knowledge replace-item button-chosen action-knowledge (list know-true know-false)
     ; and finally, set vision-indexes as the new observation
@@ -1098,13 +1130,13 @@ end
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-382
-119
-642
-400
+380
+103
+640
+384
 -1
 -1
-20.833333333333332
+83.33333333333333
 1
 30
 1
@@ -1115,9 +1147,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-11
+2
 0
-11
+2
 1
 1
 1
@@ -1140,10 +1172,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-30
-601
-107
-634
+28
+615
+105
+648
 NIL
 go
 NIL
@@ -1157,10 +1189,10 @@ NIL
 1
 
 BUTTON
-113
-601
-185
-634
+111
+615
+183
+648
 NIL
 go
 T
@@ -1174,10 +1206,10 @@ NIL
 1
 
 BUTTON
-16
+15
 492
-104
-559
+103
+526
 NIL
 setup
 NIL
@@ -1360,10 +1392,10 @@ NIL
 1
 
 MONITOR
-17
-320
-161
-365
+15
+530
+103
+575
 Total buttons
 num-agents * buttons-each
 17
@@ -1382,10 +1414,10 @@ hour
 11
 
 MONITOR
-18
-719
-201
-764
+16
+733
+199
+778
 plan so far
 reverse buttons-chosen-before
 17
@@ -1393,10 +1425,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-358
-409
-656
-571
+357
+393
+655
+555
 Agents' knowledge about their buttons
 total hour
 knowledge (%)
@@ -1415,7 +1447,7 @@ PENS
 SLIDER
 16
 279
-311
+207
 312
 knowledge-threshold
 knowledge-threshold
@@ -1428,10 +1460,10 @@ knowledge-threshold
 HORIZONTAL
 
 MONITOR
-19
-669
-200
-714
+17
+683
+198
+728
 bidding for current execution
 bidding
 17
@@ -1439,10 +1471,10 @@ bidding
 11
 
 MONITOR
-172
-323
-314
-368
+140
+367
+325
+412
 hours per day (max 4)
 num-hours
 17
@@ -1471,19 +1503,19 @@ Step 2: initialise the parameters
 
 TEXTBOX
 19
-470
+463
 342
-489
+482
 Step 3: setup the game and initialise the buttons
 12
 0.0
 1
 
 TEXTBOX
-28
-574
-190
-593
+26
+588
+188
+607
 Step 4: play the game!
 12
 0.0
@@ -1500,10 +1532,10 @@ calendar
 1
 
 TEXTBOX
-46
-644
-196
-662
+44
+658
+194
+676
 bidding and planning
 12
 0.0
@@ -1517,7 +1549,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test.txt" "smile.txt" "sad.txt" "tiny.txt"
-1
+3
 
 TEXTBOX
 382
@@ -1530,10 +1562,10 @@ Step 5: evaluation
 1
 
 SWITCH
-171
-377
-320
-410
+215
+280
+314
+313
 debug
 debug
 1
@@ -1541,10 +1573,10 @@ debug
 -1000
 
 SWITCH
-128
-416
-347
-449
+15
+419
+323
+452
 can-communicate-at-night
 can-communicate-at-night
 1
@@ -1562,10 +1594,10 @@ Multi-agent Epistemic Action Learning for Planning and Self-upgrading
 1
 
 SWITCH
-12
-416
-119
-449
+17
+369
+124
+402
 can-walk
 can-walk
 1
@@ -1574,9 +1606,9 @@ can-walk
 
 SWITCH
 18
-374
+320
 162
-407
+353
 decidable
 decidable
 0
@@ -1680,10 +1712,10 @@ item hour (reverse item 1 ([best-node] of turtle 0))
 11
 
 MONITOR
-517
-70
-642
-115
+436
+562
+561
+607
 status
 gamming-status
 17
@@ -1785,27 +1817,27 @@ ticks-per-hour
 11
 
 OUTPUT
-339
-602
-648
-760
+343
+637
+652
+795
 10
 
 TEXTBOX
-386
-585
-536
-603
+389
+620
+539
+638
 Step 6: self-upgrading
 12
 0.0
 1
 
 MONITOR
-23
-15
-190
-60
+179
+317
+326
+362
 NIL
 succeed-initialise-game
 17
@@ -1832,6 +1864,17 @@ TEXTBOX
 12
 0.0
 1
+
+MONITOR
+570
+564
+659
+610
+bidding-day
+bidding-day
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
