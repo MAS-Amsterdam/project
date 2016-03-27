@@ -543,9 +543,10 @@ to exe-action
       ifelse (intention = "to move")
       [walk]
       [
-        ifelse (intention = "to locate" and hour  = 0)
+        ifelse (intention = "to locate")
         [
           locate
+;          show "set up location"
 
           ] ;  a random location
         [
@@ -638,7 +639,7 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     let vision-indexes []
     ask vision [
       set vision-indexes fput (get-patch-index self)  vision-indexes
-      show self
+;      show self
       ]
 
 ;    show vision
@@ -650,16 +651,16 @@ to observe-and-learn ; ask each agent to change the vision and vision index
     let know-true first (item button-chosen action-knowledge)
 
     let not-changed  []
-    if not ((modes (sentence observation vision-indexes)) = (sentence observation vision-indexes))
+    if (not ((modes (sentence observation vision-indexes)) = (sentence observation vision-indexes))) and (not ((modes (sentence observation vision-indexes)) = vision-indexes))
     [set not-changed (modes (sentence observation vision-indexes))]
 
 
-    show "observation and vision-index"
-    show observation
-    show vision-indexes
-
-    show "not changed"
-    show not-changed
+;    show "observation and vision-index"
+;    show observation
+;    show vision-indexes
+;
+;    show "not changed"
+;    show not-changed
 
     let new-know-false []
     foreach not-changed [
@@ -667,9 +668,10 @@ to observe-and-learn ; ask each agent to change the vision and vision index
       [set new-know-false fput ((? - 1) * 3 + 2) new-know-false]
       [set new-know-false fput (((? * -1) - 1) * 3 + 1) new-know-false]]; compute the new knowledge obtained from vision and observation
     set know-false remove-duplicates (sentence know-false new-know-false) ; extract information and add to belief of this action remove-duplicates
-    show "know false"
-    show know-false
 
+;    show "know false"
+;    show know-false
+;
     ; Step 2: obtain those changed
 
     let tmp (sentence (map [? * -1] observation) vision-indexes)
@@ -692,14 +694,14 @@ to observe-and-learn ; ask each agent to change the vision and vision index
 
       if((member? (? * 3 + 1) know-false) and (member? (? * 3 + 2) know-false) and not (member? (? * 3 + 3) know-true))[
 
-        show "we are going to add one which is indifferent"
-        show know-true
-        show know-false
-        show "---here are the detailed changes---"
-        show (? * 3 + 1)
-        show (? * 3 + 2)
-        show (? * 3 + 3)
-
+;        show "we are going to add one which is indifferent"
+;        show know-true
+;        show know-false
+;        show "---here are the detailed changes---"
+;        show (? * 3 + 1)
+;        show (? * 3 + 2)
+;        show (? * 3 + 3)
+;
         set know-true (fput (? * 3 + 3) know-true)
         set know-false (remove (? * 3 + 1) know-false)
         set know-false (remove (? * 3 + 2) know-false)
@@ -840,9 +842,6 @@ end
 to bid ; calculate the bidding value for each agent for each action
   ;a new bidding round
   reset-bidding
-
-  ; ********* a simple planning algorithm *********
-  ; simple-bidding
 
   ; ********* depth-first searching as planning *********
 
@@ -986,18 +985,19 @@ to-report calculate-bidding [world-after] ;  compare it with the goal and calcul
   report bidding-value
 end
 
+
+
+
 to-report represent-visable-world ; to give the index of visable patches (for performing action in mind later)
-  let rep []
+  let vision-indexes []
   ; first obtain the list of visable patches
   let vision (patches in-cone-nowrap (vision-radius * width / 100) 360)
   ask vision[
-    ifelse (not (pcolor = green))
-    [set rep (fput ((pycor * width + pxcor + 1 ) * -1) rep)]; if it is black
-    [set rep (fput (pycor * width + pxcor + 1 ) rep)]; otherwise it is green, positive number
+    set vision-indexes fput (get-patch-index self)  vision-indexes
   ]
 
   ; obtain vision index
-  report rep
+  report vision-indexes
 end
 
 ; expand according to a given action
@@ -1038,8 +1038,6 @@ end
 
 to locate
   setxy random-xcor random-ycor
-  face patch-here
-  move-to patch-here
 end
 
 to walk; moves to the neighbor or current patch which has the most potential information to aquire.
@@ -1132,8 +1130,8 @@ end
 GRAPHICS-WINDOW
 380
 103
-640
-384
+638
+381
 -1
 -1
 83.33333333333333
@@ -1368,7 +1366,7 @@ noise_pct
 noise_pct
 25
 50
-32
+39
 1
 1
 NIL
@@ -1453,7 +1451,7 @@ knowledge-threshold
 knowledge-threshold
 25
 100
-25
+50
 1
 1
 %
@@ -1579,7 +1577,7 @@ SWITCH
 452
 can-communicate-at-night
 can-communicate-at-night
-1
+0
 1
 -1000
 
@@ -1600,7 +1598,7 @@ SWITCH
 402
 can-walk
 can-walk
-1
+0
 1
 -1000
 
