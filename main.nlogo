@@ -18,7 +18,7 @@ globals [
   buttons; a list of buttons, each button is a pair setting some patches to green and some to black
   button-chosen; the (index of the) button choosen to be pressed in current hour. For day 0, hour 0, it is randomly choosen
   buttons-chosen-before; all the buttons chosen before
-
+  succeed-initialise-game
   ]
 
 turtles-own[
@@ -58,8 +58,8 @@ to setup
   ;set noise 12; the randomly set points in each button that belongs to solution.
   ; set noise-dis 8; the randomly set points in each button that not belongs to solution.
   set color-list n-of num-agents [yellow magenta blue red pink brown grey];just for the sake of telling each agent apart
+  set succeed-initialise-game false
   setup-ticks
-
   open-file; set up the goal pattern.
   setup-time
   setup-button
@@ -107,7 +107,7 @@ to open-file
 
   set width read-from-string item 0 tmp
   set height read-from-string item 1 tmp
-  set-patch-size 500 / width
+  set-patch-size 250 / width
   resize-world 0 (width - 1) 0 ( height - 1)
 
   let x 0
@@ -371,7 +371,7 @@ to go
    update-belief
    exe-action
 
-
+   if (hour = 0 and ticks = 0)[setup-ticks]
    tick
    if (ticks = ticks-per-hour)
    [set hour  (hour + 1)
@@ -380,13 +380,19 @@ to go
    if (hour = num-hours)
    [set day (day + 1)
      set hour 0]
+   ; tick for communication
+   if (can-communicate-at-night and hour = num-hours - 1 and ticks = 0)
+   [set ticks-per-hour (ticks-per-hour + 1)]
+   ;[if (day = 0 and hour = 0 and ticks = 0)[set ticks-per-hour (ticks-per-hour + 1)]]
 
-   ifelse (can-communicate-at-night and hour = num-hours - 1 and ticks = 0)[
-     set ticks-per-hour (ticks-per-hour + 1)
-     ]
-   [if (day = 0 and hour = 0 and ticks = 0)[set ticks-per-hour (ticks-per-hour + 1)]]
-
+   ; remove the tick from the second hour
    if ((hour = 1) and (ticks = 0))[set ticks-per-hour (ticks-per-hour - 1)]
+   ; if the game is not initialised yet, give it a tick to set intention from empty to "to locate"
+   if (succeed-initialise-game = false) [set ticks-per-hour (ticks-per-hour + 1)]
+   ; once the game is initialised, this additional tick will never be added
+   if (succeed-initialise-game = true and ticks = 1 and hour = 1 and day = 0) [set ticks-per-hour (ticks-per-hour - 1)]
+   ; for a new day, we need an extra tick to locate itself
+   if (hour = 0 and ticks = 0) [set ticks-per-hour (ticks-per-hour + 1)]
 
    if ((hour = 0) and (ticks  = 0))
    [
@@ -399,7 +405,11 @@ to go
      ask turtles [set personal-plan []]
      ]
 
-   ;if (check-goal and not trying) [stop]
+  ifelse not any? turtles
+  [ stop ]
+  [ set succeed-initialise-game true ]
+
+
 end
 
 
@@ -468,10 +478,14 @@ to update-intention
                       ifelse(can-communicate-at-night and (hour = num-hours - 1) and (ticks != 0))
                       [set intention "to communicate"]
                       [
-                        ifelse (trying)
-                        [set intention "to choose a random action"]
-                        [set intention "to bid"]
-                        ]
+                        ifelse (hour = num-hours - 1)
+                        [set intention "to locate"]
+                        [
+                          ifelse (trying)
+                          [set intention "to choose a random action"]
+                          [set intention "to bid"]
+                          ]
+                       ]
                     ]
                     [ifelse (intention = "to communicate");==============to communicate
                       [set intention "to locate"]
@@ -1067,10 +1081,10 @@ to output-program
    ;Second, output last plans
    ifelse (last personal-plan-in-order = -1)
    [output-print "Sleep;"
-    output-print "Check results and exit."]
+    output-print "Check the result and exit."]
    [output-type "Press Button "
     output-type last  personal-plan-in-order
-    output-print ", notify all other agents: Game over."
+    output-print ", notify all other agents: Goal Achieved."
     output-print "Check results and exit."]
     output-print "========================================"
  ;]
@@ -1084,13 +1098,13 @@ end
 ; change all the "knowledge" to belief
 @#$#@#$#@
 GRAPHICS-WINDOW
-762
-92
-1007
-239
+374
+116
+634
+397
 -1
 -1
-41.666666666666664
+20.833333333333332
 1
 30
 1
@@ -1126,10 +1140,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-407
-110
-509
-143
+30
+601
+107
+634
 NIL
 go
 NIL
@@ -1143,10 +1157,10 @@ NIL
 1
 
 BUTTON
-517
-110
-624
-143
+113
+601
+185
+634
 NIL
 go
 T
@@ -1207,10 +1221,10 @@ NIL
 HORIZONTAL
 
 MONITOR
-652
-179
-735
-224
+341
+323
+430
+368
 Day
 day
 17
@@ -1286,10 +1300,10 @@ NIL
 1
 
 MONITOR
-1323
-80
-1612
-125
+692
+143
+981
+188
 buttons of Agent 0
 [buttons-assigned] of turtle 0
 17
@@ -1297,10 +1311,10 @@ buttons of Agent 0
 11
 
 BUTTON
-146
-108
-267
-156
+132
+107
+253
+155
 load and display
 load-and-display-goal
 NIL
@@ -1329,10 +1343,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-272
-107
-370
-159
+258
+106
+356
+158
 clear display
 ask patches [set pcolor black]
 NIL
@@ -1357,10 +1371,10 @@ num-agents * buttons-each
 11
 
 MONITOR
-650
-230
-738
-275
+339
+270
+430
+315
 hour
 hour
 17
@@ -1368,10 +1382,10 @@ hour
 11
 
 MONITOR
-403
-230
-639
-275
+18
+719
+201
+764
 plan so far
 reverse buttons-chosen-before
 17
@@ -1379,13 +1393,13 @@ reverse buttons-chosen-before
 11
 
 PLOT
-404
-367
-722
-602
+358
+409
+656
+571
 Agents' knowledge about their buttons
 total hour
-knowledge (percentage)
+knowledge (%)
 0.0
 10.0
 0.0
@@ -1414,10 +1428,10 @@ knowledge-threshold
 HORIZONTAL
 
 MONITOR
-404
-180
-640
-225
+19
+669
+200
+714
 bidding for current execution
 bidding
 17
@@ -1438,9 +1452,9 @@ num-hours
 TEXTBOX
 21
 82
-367
-112
-Step 1: Load a file (test.txt for example)
+312
+100
+Step 1: load a file (test.txt for example)
 12
 0.0
 1
@@ -1458,7 +1472,7 @@ Step 2: initialise the parameters
 TEXTBOX
 19
 470
-366
+342
 489
 Step 3: setup the game and initialise the buttons
 12
@@ -1466,30 +1480,30 @@ Step 3: setup the game and initialise the buttons
 1
 
 TEXTBOX
-413
-85
-691
-104
-Step 4: start the game!
+28
+574
+190
+593
+Step 4: play the game!
 12
 0.0
 1
 
 TEXTBOX
-657
-154
-807
-172
+242
+592
+310
+610
 calendar
 12
 0.0
 1
 
 TEXTBOX
-457
-155
-607
-173
+46
+644
+196
+662
 bidding and planning
 12
 0.0
@@ -1498,7 +1512,7 @@ bidding and planning
 CHOOSER
 19
 108
-142
+126
 153
 pattern-name
 pattern-name
@@ -1506,20 +1520,20 @@ pattern-name
 1
 
 TEXTBOX
-414
-290
-581
-310
+382
+79
+549
+99
 Step 5: evaluation
 12
 0.0
 1
 
 SWITCH
-177
-379
-326
-412
+171
+377
+320
+410
 debug
 debug
 1
@@ -1527,42 +1541,42 @@ debug
 -1000
 
 SWITCH
-137
+128
 416
-383
+347
 449
 can-communicate-at-night
 can-communicate-at-night
-0
+1
 1
 -1000
 
 TEXTBOX
 282
 26
-901
+1176
 53
-Multi-agent Epistemic Action Learning for Planning
+Multi-agent Epistemic Action Learning for Planning and Self-upgrading
 24
 0.0
 1
 
 SWITCH
-17
-378
-169
-411
+12
+416
+119
+449
 can-walk
 can-walk
-0
+1
 1
 -1000
 
 SWITCH
-17
-415
-130
-448
+18
+374
+162
+407
 decidable
 decidable
 0
@@ -1570,10 +1584,10 @@ decidable
 -1000
 
 MONITOR
-1323
-139
-2321
-184
+694
+201
+1692
+246
 knowledge of agent 0
 [action-knowledge] of turtle 0
 17
@@ -1581,10 +1595,10 @@ knowledge of agent 0
 11
 
 MONITOR
-1359
-596
-1509
-641
+728
+659
+878
+704
 move to target patch
 [target-patch] of turtle 0
 17
@@ -1592,20 +1606,20 @@ move to target patch
 11
 
 TEXTBOX
-1322
-20
-1679
-69
+691
+83
+1048
+132
 Additional Information:\nThe belief, desire and intention of agent 0\n1) Belief
 12
 0.0
 1
 
 MONITOR
-1323
-195
-1613
-240
+692
+258
+982
+303
 observation of turtle 0
 [observation] of turtle 0
 17
@@ -1613,20 +1627,20 @@ observation of turtle 0
 11
 
 TEXTBOX
-1328
-249
-1516
-272
+697
+312
+885
+335
 2) Desire
 12
 0.0
 1
 
 MONITOR
-1323
-272
-1613
-317
+692
+335
+982
+380
 desire
 [desire] of turtle 0
 17
@@ -1634,20 +1648,20 @@ desire
 11
 
 TEXTBOX
-1327
-330
-1515
-353
+696
+393
+884
+416
 3) Intention
 12
 0.0
 1
 
 MONITOR
-1356
-506
-1544
-551
+725
+569
+913
+614
 bidding value for next step
 first [best-node] of turtle 0
 17
@@ -1655,10 +1669,10 @@ first [best-node] of turtle 0
 11
 
 MONITOR
-1553
-505
-1746
-550
+922
+568
+1115
+613
 bidding action for next step
 item hour (reverse item 1 ([best-node] of turtle 0))
 17
@@ -1666,10 +1680,10 @@ item hour (reverse item 1 ([best-node] of turtle 0))
 11
 
 MONITOR
-404
-317
-563
-362
+517
+70
+642
+115
 status
 gamming-status
 17
@@ -1677,10 +1691,10 @@ gamming-status
 11
 
 MONITOR
-1355
-429
-1520
-474
+724
+492
+889
+537
 knowledge percentage
 [know-buttons-in-charge] of turtle 0
 17
@@ -1688,10 +1702,10 @@ knowledge percentage
 11
 
 MONITOR
-1324
-356
-1558
-401
+476
+174
+710
+219
 intention
 [intention] of turtle 0
 17
@@ -1699,50 +1713,50 @@ intention
 11
 
 TEXTBOX
-1357
-410
-1613
-440
+726
+473
+982
+503
 (1) increase knowledge about actions
 12
 0.0
 1
 
 TEXTBOX
-1356
-482
-1745
-500
+725
+545
+1114
+563
 (2) to bid for the best action according to its knowledge
 12
 0.0
 1
 
 TEXTBOX
-1358
-559
-1732
-589
+727
+622
+1101
+652
 (3) to move to the patch where it can possibly know more about the effect of actions
 12
 0.0
 1
 
 TEXTBOX
-1296
-18
-1311
-663
+665
+81
+680
+726
 |\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n|\n
 12
 0.0
 1
 
 MONITOR
-1362
-672
-1549
-717
+725
+735
+912
+780
 personal plan
 reverse ([personal-plan] of turtle 0)
 17
@@ -1750,32 +1764,53 @@ reverse ([personal-plan] of turtle 0)
 11
 
 TEXTBOX
-1363
-652
-1735
-685
+726
+715
+1098
+748
 (4) to obtain a personal plan for self-upgrading.
 12
 0.0
 1
 
 MONITOR
-578
-317
-727
-362
-ticks pe hour
+337
+216
+428
+261
+ticks per hour
 ticks-per-hour
 17
 1
 11
 
 OUTPUT
-1767
-193
-2167
-721
-18
+339
+602
+648
+760
+10
+
+TEXTBOX
+386
+585
+536
+603
+Step 6: self-upgrading
+12
+0.0
+1
+
+MONITOR
+23
+15
+190
+60
+NIL
+succeed-initialise-game
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
