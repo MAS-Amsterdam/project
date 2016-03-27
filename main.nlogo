@@ -112,10 +112,12 @@ to open-file
 
   let x 0
   let y height - 1
-
+  output-print "Goal:"
   while [not file-at-end?]
   [
     set csv file-read-line
+
+    output-print csv
     set tmp split csv delim
     foreach tmp
     [
@@ -148,7 +150,7 @@ to open-file
       ]
     ]
   ]
-
+  output-print "============================"
   file-close
 end
 
@@ -1035,8 +1037,45 @@ end
 
 
 to output-program
-  show "outputing"
-  die
+   output-type "Personal-plan of " output-type self output-print ":"
+
+   let personal-plan-in-order reverse personal-plan
+   ;First, output plans except last one.
+   let next-hour 0
+   foreach but-last personal-plan-in-order [
+     ifelse ( ? = -1)
+     [output-print "Sleep;"]
+     [output-type "Press Button " output-type ?
+      ;to figure out who owns next executing button
+
+     ifelse (item ( next-hour + 1) personal-plan-in-order != -1);if it is itself that owns next executing button
+        [output-print ", notifies itself;"
+         ];notificate itself
+
+        [ask other turtles[
+          if( item ( next-hour + 1 ) reverse personal-plan != -1)
+             [output-type ", notifies "
+              output-type self
+              output-print ";" ];notification next agent
+          ]
+        ]
+      ]
+     set next-hour next-hour + 1
+     ]
+
+
+   ;Second, output last plans
+   ifelse (last personal-plan-in-order = -1)
+   [output-print "Sleep;"
+    output-print "Check results and exit."]
+   [output-type "Press Button "
+    output-type last  personal-plan-in-order
+    output-print ", notify all other agents: Game over."
+    output-print "Check results and exit."]
+    output-print "========================================"
+ ;]
+  ;die
+  show "can i see here"
 end
 
 ; TODO: button generation can be done using "shuffle"
@@ -1734,9 +1773,9 @@ ticks-per-hour
 OUTPUT
 1767
 193
-2005
+2167
 721
-12
+18
 
 @#$#@#$#@
 ## WHAT IS IT?
