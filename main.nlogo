@@ -40,6 +40,7 @@ turtles-own[
   ; know false consists of the propositions the agent knows not going to be the case.
   personal-plan;
   button-owners;agents' belief about the owner of each buttons
+  pattern-and-plan; when the learning for this pattern finishes, the agent store the pattern and the corresponding personal plan
   ;======================desire====================================================================
   ; the agent has the desire to maximise the knowledge of the buttons it is in charge of
   ; to stop itself when informed
@@ -635,6 +636,7 @@ to exe-action
           ifelse (intention = "self-upgrade"); =================to upgrade
           [
             output-program
+            set pattern-and-plan (list goal personal-plan)
             die
             ]
           [if (intention = "to execute");======================= to execute an action
@@ -1096,11 +1098,11 @@ end
 GRAPHICS-WINDOW
 381
 79
-635
-354
+640
+359
 -1
 -1
-15.625
+62.5
 1
 30
 1
@@ -1111,9 +1113,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-15
+3
 0
-15
+3
 1
 1
 1
@@ -1210,7 +1212,7 @@ vision-radius
 vision-radius
 0
 100
-60
+80
 10
 1
 NIL
@@ -1330,9 +1332,9 @@ SLIDER
 248
 noise_pct
 noise_pct
-25
-50
-39
+10
+20
+20
 1
 1
 NIL
@@ -1389,10 +1391,10 @@ reverse buttons-chosen-before
 11
 
 PLOT
-358
-369
-656
-531
+336
+370
+665
+524
 Agents' knowledge about their buttons
 total hour
 knowledge (%)
@@ -1406,7 +1408,8 @@ true
 PENS
 "Agent 0" 1.0 0 -11085214 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 0\nset-plot-pen-color ([color] of turtle 0)] [plot 0]"
 "Agent 1" 1.0 0 -13791810 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 1\nset-plot-pen-color ([color] of turtle 1)] [plot 0]"
-"Average" 1.0 2 -16644859 true "" "plot (total-knowledge * 100)"
+"Agent 2" 1.0 2 -16644859 true "" "ifelse (not (count turtles = 0)) [plot [know-buttons-in-charge * 100] of turtle 2\nset-plot-pen-color ([color] of turtle 2)] [plot 0]"
+"Average" 1.0 0 -16777216 true "" "plot (total-knowledge * 100)"
 
 SLIDER
 17
@@ -1417,7 +1420,7 @@ knowledge-threshold
 knowledge-threshold
 40
 50
-50
+46
 1
 1
 %
@@ -1513,7 +1516,7 @@ CHOOSER
 pattern-name
 pattern-name
 "test2.txt" "smile.txt" "sad.txt" "pi.txt"
-2
+0
 
 TEXTBOX
 383
